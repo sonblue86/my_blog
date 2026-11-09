@@ -8,15 +8,13 @@
 - cron purge verified via local explorer: old dedupe row deleted, counters untouched
 - .dev.vars.example
 
+- src/scripts/api.ts + tests; ViewCount, Reactions, Comments (giscus), Analytics, Newsletter (Turnstile) — all committed
+- Branch fast-forwarded to integrated main (all agents' work present)
+
 ## Next
-1. (done) src/scripts/api.ts + tests (31 pass)
-2. ViewCount.astro
-3. Reactions.astro
-4. Comments.astro (giscus)
-5. Analytics.astro + config fields (ANALYTICS, TURNSTILE)
-6. Newsletter.astro refine (Turnstile)
-7. Browser check widgets via wrangler dev :8790 (390x844, 1440x900, light/dark)
-8. docs/CLOUDFLARE.md
+1. Browser check widgets with real backend (wrangler dev :8792) + graceful degradation (astro preview :4422)
+2. docs/CLOUDFLARE.md
+3. Final: tsc worker, vitest, astro check
 
 ## Notes
 - PostLayout renders `<Comments />` without props → Comments uses pathname mapping; no slug needed.
