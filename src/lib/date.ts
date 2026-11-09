@@ -52,7 +52,10 @@ export function timeAgo(date: Date, now: Date = new Date()): string {
   const abs = Math.abs(diff);
   if (abs < 60) return 'vừa xong';
   for (const [unit, seconds] of UNITS) {
-    if (abs >= seconds) return rtf.format(Math.round(diff / seconds), unit);
+    if (abs >= seconds) {
+      const label = rtf.format(Math.trunc(diff / seconds), unit);
+      return label.charAt(0).toLocaleLowerCase('vi') + label.slice(1);
+    }
   }
   return 'vừa xong';
 }

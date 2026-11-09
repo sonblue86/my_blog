@@ -17,7 +17,7 @@
     "icons": "node scripts/gen-icons.mjs",
     "db:migrate:local": "wrangler d1 migrations apply blog-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply blog-db --remote",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types worker/worker-configuration.d.ts"
   },
   "engines": {
     "node": ">=22.23.4"

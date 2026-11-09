@@ -31,10 +31,14 @@ describe('timeAgo (now được truyền vào)', () => {
     expect(timeAgo(ago(30 * HOUR), NOW).toLocaleLowerCase('vi')).toBe('hôm qua');
   });
 
-  // BUG đã báo (integrationNotes): CLDR trả "Hôm qua"/"Hôm kia" viết hoa, nên giữa câu hiện
-  // "· cập nhật Hôm qua". Khi src/lib/date.ts đã hạ chữ cái đầu, test này sẽ "fail" — đổi it.fails → it.
-  it.fails('hôm qua viết thường để dùng được giữa câu', () => {
+  // CLDR trả "Hôm qua" viết hoa; timeAgo hạ chữ cái đầu để dùng được giữa câu ("· cập nhật hôm qua").
+  it('hôm qua viết thường để dùng được giữa câu', () => {
     expect(timeAgo(ago(DAY), NOW)).toBe('hôm qua');
+  });
+
+  it('không làm tròn lên đơn vị kế tiếp (59 phút 50 giây ≠ "60 phút")', () => {
+    expect(timeAgo(ago(59 * MIN + 50), NOW)).toBe('59 phút trước');
+    expect(timeAgo(ago(23 * HOUR + 50 * MIN), NOW)).toBe('23 giờ trước');
   });
 
   it('ngày', () => {
