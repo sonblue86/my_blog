@@ -20,9 +20,17 @@
   Fixes: Newsletter invalid state never cleared on typing; ViewCount collapsed on failure → CLS 0.014 on mobile.
 - scripts/test-api.mjs → 41/41 (incl. --burst) vs :8792; default slug now llm-hoat-dong-the-nao, port 8787.
 - docs/CLOUDFLARE.md (Vietnamese, beginner, 19 sections; anchors/links verified by script; export commands tested locally in bash + PowerShell 5.1)
+- Final checks: `npx tsc -p worker/tsconfig.json` OK; `npx vitest run` 183/183; `npx astro check` 0 errors /
+  0 warnings (1 hint in src/scripts/share.ts, not mine); `npm run build` OK.
 
 ## Next
-1. Final: tsc worker, vitest, astro check
+- Nothing left in scope. Integrator: see notes below.
+
+## Lessons
+- `el.dataset.x = ''` makes a boolean data-attribute, but `if (el.dataset.x)` is then false → test with
+  `hasAttribute('data-x')` (or `'x' in el.dataset`). Bug hid for a whole review because the shake still played.
+- "Hide on failure" for an element that already reserved space = layout shift; keep the slot invisible instead and
+  hide before first paint on later pages (sessionStorage flag + inline script).
 
 ## Integration notes (files I don't own)
 - PostLayout: `<section class="container-page mt-20">` around `<Comments />` stays (empty, +80px gap) when GISCUS
