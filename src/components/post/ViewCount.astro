@@ -2,7 +2,9 @@
 /**
  * View counter for the article meta row: "1,2 N lượt xem".
  * - Space is reserved invisibly from the first paint, so the number fades in without moving anything.
- * - Renders nothing when the API is known to be down (inline check, before paint) or when the stats call fails.
+ * - Renders nothing when the API is known to be down (inline check, before paint). When the stats call fails
+ *   on this page, the reserved slot simply stays invisible (data-state="off") — collapsing it would shift the
+ *   cover on mobile, where the counter wraps onto its own line.
  * - Counts one view per post per tab session, and only once the reader is engaged
  *   (tab visible ≥ 10 s in total, or ≥ 30 % reading progress via `ns:progress`).
  */
@@ -53,7 +55,8 @@ const enabled = SITE.features.views;
     transition: opacity 320ms var(--ease-out);
   }
   .view-count[data-state='loading'],
-  .view-count[data-state='empty'] {
+  .view-count[data-state='empty'],
+  .view-count[data-state='off'] {
     visibility: hidden;
     opacity: 0;
   }
@@ -119,7 +122,7 @@ const enabled = SITE.features.views;
     getStats(slug).then((stats) => {
       if (!stats) {
         failed = true;
-        el.hidden = true;
+        el.dataset.state = 'off'; // keep the invisible slot: no layout shift
         return;
       }
       shown = stats.views;
