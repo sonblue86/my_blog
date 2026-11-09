@@ -71,7 +71,7 @@ describe('getStats', () => {
   });
 
   it('uses ?slug= for a single post and rejects bad slugs without a request', async () => {
-    const fetchMock = vi.fn(async () => jsonResponse(stats('xin-chao', 2)));
+    const fetchMock = vi.fn(async (_url: string) => jsonResponse(stats('xin-chao', 2)));
     vi.stubGlobal('fetch', fetchMock);
     const { getStats } = await load();
     expect(await getStats('../x')).toBeNull();
