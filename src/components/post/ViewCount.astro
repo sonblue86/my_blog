@@ -1,4 +1,143 @@
 ---
-/** STUB — View counter (API). */
+/**
+ * View counter for the article meta row: "1,2 N lượt xem".
+ * - Space is reserved invisibly from the first paint, so the number fades in without moving anything.
+ * - Renders nothing when the API is known to be down (inline check, before paint) or when the stats call fails.
+ * - Counts one view per post per tab session, and only once the reader is engaged
+ *   (tab visible ≥ 10 s in total, or ≥ 30 % reading progress via `ns:progress`).
+ */
+import { SITE } from '../../config';
+import Icon from '../ui/Icon.astro';
 
+interface Props {
+  /** Post id (same as in /bai-viet/<slug>/). */
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const enabled = SITE.features.views;
 ---
+
+{
+  enabled && (
+    <>
+      <span class="view-count" data-view-count={slug} data-state="loading" hidden>
+        <Icon name="eye" size={16} />
+        <span class="vc-text" aria-hidden="true">
+          <span class="vc-num">0</span> lượt xem
+        </span>
+        <span class="sr-only" data-vc-sr />
+      </span>
+      <script is:inline>
+        (function (s) {
+          var el = s && s.previousElementSibling;
+          if (!el) return;
+          try {
+            var v = sessionStorage.getItem('ns:api');
+            if (v && v.charAt(0) === '0' && Date.now() - Number(v.slice(2)) < 120000) return;
+          } catch (e) {}
+          el.hidden = false;
+        })(document.currentScript);
+      </script>
+    </>
+  )
+}
+
+<style>
+  .view-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    transition: opacity 320ms var(--ease-out);
+  }
+  .view-count[data-state='loading'],
+  .view-count[data-state='empty'] {
+    visibility: hidden;
+    opacity: 0;
+  }
+  .vc-num {
+    display: inline-block;
+  }
+  .view-count.is-bumped {
+    color: var(--accent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .view-count.is-bumped .vc-num {
+      animation: vc-bump 700ms var(--ease-spring);
+    }
+  }
+  @keyframes vc-bump {
+    35% {
+      transform: translateY(-4px) scale(1.12);
+    }
+    100% {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  import {
+    getStats,
+    recordView,
+    whenEngaged,
+    viewedThisSession,
+    markViewed,
+    formatCompact,
+    formatFull,
+    type Stats,
+  } from '../../scripts/api';
+
+  function render(el: HTMLElement, views: number, bump = false) {
+    if (views <= 0) {
+      el.dataset.state = 'empty';
+      return;
+    }
+    const full = `${formatFull(views)} lượt xem`;
+    el.querySelector('.vc-num')!.textContent = formatCompact(views);
+    el.querySelector('[data-vc-sr]')!.textContent = full;
+    el.title = full;
+    el.dataset.state = 'ready';
+    if (bump) {
+      el.classList.remove('is-bumped');
+      void el.offsetWidth; // restart the animation
+      el.classList.add('is-bumped');
+      setTimeout(() => el.classList.remove('is-bumped'), 1600);
+    }
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-view-count]').forEach((el) => {
+    if (el.dataset.wired) return;
+    el.dataset.wired = '1';
+    const slug = el.dataset.viewCount!;
+    if (el.hidden) return; // API known to be down for this tab: stay invisible, don't retry.
+
+    let failed = false;
+    let shown = -1;
+    getStats(slug).then((stats) => {
+      if (!stats) {
+        failed = true;
+        el.hidden = true;
+        return;
+      }
+      shown = stats.views;
+      render(el, stats.views);
+    });
+
+    // Any write (our view, a reaction) returns fresh numbers.
+    document.addEventListener('ns:stats', (e) => {
+      const s = (e as CustomEvent<Stats>).detail;
+      if (s?.slug !== slug || failed) return;
+      render(el, s.views, shown >= 0 && s.views > shown);
+      shown = s.views;
+    });
+
+    if (viewedThisSession(slug)) return;
+    whenEngaged(async () => {
+      if (failed) return;
+      if (await recordView(slug)) markViewed(slug);
+    });
+  });
+</script>

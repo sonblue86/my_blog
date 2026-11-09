@@ -1,0 +1,13 @@
+# Copy to `.dev.vars` (git-ignored) for `wrangler dev`. In production use: npx wrangler secret put <NAME>
+
+# Secret salt for the anonymous daily visitor hash (any long random string).
+# Generate one: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+HASH_SALT=thay-bang-chuoi-ngau-nhien-dai
+
+# Cloudflare Turnstile secret key (optional). Leave empty to disable the check.
+# Test keys: secret 1x0000000000000000000000000000000AA always passes, 2x0000000000000000000000000000000AA always fails.
+TURNSTILE_SECRET=
+
+# Extra origins allowed to POST to /api/* — needed when the page is served by `astro dev` (port 4321)
+# and /api is proxied to wrangler dev.
+ALLOWED_ORIGINS=http://localhost:4321,http://127.0.0.1:4321

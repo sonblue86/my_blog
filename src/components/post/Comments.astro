@@ -1,4 +1,234 @@
 ---
-/** STUB — Giscus comments, lazy-loaded. */
+/**
+ * Comments via giscus (GitHub Discussions), configured in src/config.ts → GISCUS.
+ * - giscus' client.js is injected only when the section gets within ~800px of the viewport.
+ * - Theme follows html[data-theme] at injection time and live on `ns:theme-changed` (postMessage to the iframe).
+ * - Not configured: production renders nothing; `astro dev` shows a dashed hint box.
+ */
+import { GISCUS } from '../../config';
 
+const missing = (['repo', 'repoId', 'categoryId'] as const).filter((k) => !GISCUS[k]);
+const enabled = Boolean(GISCUS.repo) && missing.length === 0;
+const dev = import.meta.env.DEV;
+
+const config = {
+  repo: GISCUS.repo,
+  repoId: GISCUS.repoId,
+  category: GISCUS.category,
+  categoryId: GISCUS.categoryId,
+  mapping: GISCUS.mapping,
+  lang: GISCUS.lang,
+};
 ---
+
+{
+  enabled && (
+    <section id="binh-luan" class="comments" aria-labelledby="binh-luan-title" data-giscus={JSON.stringify(config)}>
+      <div class="cm-head">
+        <h2 id="binh-luan-title" class="cm-title">
+          Bình luận
+        </h2>
+        <p class="cm-sub">Đăng nhập bằng GitHub để tham gia trò chuyện. Bình luận được lưu công khai trên GitHub Discussions.</p>
+      </div>
+      <div class="cm-slot" data-giscus-slot>
+        <div class="cm-skeleton" aria-hidden="true">
+          <span class="sk sk-input" />
+          <span class="sk sk-line" />
+          <span class="sk sk-line short" />
+        </div>
+        <p class="sr-only" role="status" data-giscus-status>
+          Đang tải bình luận…
+        </p>
+        <div class="giscus" />
+        <noscript>
+          <p class="cm-sub">Bạn cần bật JavaScript để xem và viết bình luận.</p>
+        </noscript>
+      </div>
+    </section>
+  )
+}
+{
+  !enabled && dev && (
+    <section id="binh-luan" class="comments-hint" aria-label="Bình luận (chưa cấu hình)">
+      <p class="font-semibold text-fg">💬 Bình luận đang tắt</p>
+      <p class="mt-1">
+        Điền <code>{missing.join(', ')}</code> trong <code>GISCUS</code> ở <code>src/config.ts</code> (lấy tại{' '}
+        <a href="https://giscus.app/vi" target="_blank" rel="noopener noreferrer">giscus.app/vi</a>) để bật bình luận.
+        Hộp gợi ý này chỉ hiện khi chạy dev — bản build production sẽ không hiển thị gì.
+      </p>
+    </section>
+  )
+}
+
+<style>
+  .comments {
+    scroll-margin-top: calc(var(--header-h) + 16px);
+  }
+  .cm-title {
+    font-size: clamp(1.5rem, 1.2rem + 1vw, 1.875rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .cm-sub {
+    margin-top: 6px;
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+  }
+  .cm-slot {
+    position: relative;
+    margin-top: 20px;
+    min-height: 220px;
+  }
+  .cm-slot[data-loaded] {
+    min-height: 0;
+  }
+  .cm-slot[data-loaded] .cm-skeleton {
+    display: none;
+  }
+  .cm-skeleton {
+    position: absolute;
+    inset: 0 0 auto;
+    display: grid;
+    gap: 12px;
+  }
+  .sk {
+    display: block;
+    height: 14px;
+    border-radius: 8px;
+    background: var(--bg-muted);
+  }
+  .sk-input {
+    height: 132px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-subtle);
+  }
+  .sk-line.short {
+    width: 55%;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sk {
+      animation: cm-pulse 1.4s ease-in-out infinite;
+    }
+  }
+  @keyframes cm-pulse {
+    50% {
+      opacity: 0.55;
+    }
+  }
+  .comments :global(.giscus),
+  .comments :global(.giscus-frame) {
+    width: 100%;
+    color-scheme: normal;
+  }
+
+  .comments-hint {
+    padding: 18px 20px;
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+  }
+  .comments-hint code {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: var(--bg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+  .comments-hint a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+</style>
+
+<script>
+  const ORIGIN = 'https://giscus.app';
+
+  type GiscusConfig = {
+    repo: string;
+    repoId: string;
+    category: string;
+    categoryId: string;
+    mapping: string;
+    lang: string;
+  };
+
+  const giscusTheme = (theme = document.documentElement.dataset.theme) => (theme === 'dark' ? 'dark' : 'light');
+
+  function inject(section: HTMLElement) {
+    if (section.dataset.injected) return;
+    section.dataset.injected = '1';
+    const cfg = JSON.parse(section.dataset.giscus || '{}') as GiscusConfig;
+    const slot = section.querySelector<HTMLElement>('[data-giscus-slot]')!;
+    const status = section.querySelector<HTMLElement>('[data-giscus-status]');
+
+    const s = document.createElement('script');
+    s.src = `${ORIGIN}/client.js`;
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    const attrs: Record<string, string> = {
+      'data-repo': cfg.repo,
+      'data-repo-id': cfg.repoId,
+      'data-category': cfg.category,
+      'data-category-id': cfg.categoryId,
+      'data-mapping': cfg.mapping || 'pathname',
+      'data-strict': '1',
+      'data-reactions-enabled': '1',
+      'data-emit-metadata': '0',
+      'data-input-position': 'top',
+      'data-theme': giscusTheme(),
+      'data-lang': cfg.lang || 'vi',
+      'data-loading': 'lazy',
+    };
+    for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+    s.addEventListener('error', () => {
+      slot.dataset.loaded = '1';
+      if (status) status.textContent = '';
+      slot.insertAdjacentHTML(
+        'beforeend',
+        '<p style="color:var(--fg-muted)">Không tải được bình luận lúc này. Bạn thử tải lại trang sau nhé.</p>',
+      );
+    });
+
+    // giscus talks to the page with postMessage once its iframe is up: hide the skeleton then.
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== ORIGIN || !(e.data && typeof e.data === 'object' && 'giscus' in e.data)) return;
+      slot.dataset.loaded = '1';
+      if (status) status.textContent = 'Đã tải bình luận.';
+      window.removeEventListener('message', onMessage);
+    };
+    window.addEventListener('message', onMessage);
+    slot.append(s);
+  }
+
+  // Live theme sync with the site's theme toggle.
+  document.addEventListener('ns:theme-changed', (e) => {
+    const theme = (e as CustomEvent<{ theme?: string }>).detail?.theme;
+    const frame = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    frame?.contentWindow?.postMessage({ giscus: { setConfig: { theme: giscusTheme(theme) } } }, ORIGIN);
+  });
+
+  const section = document.querySelector<HTMLElement>('section[data-giscus]');
+  if (section && !section.dataset.wired) {
+    section.dataset.wired = '1';
+    if (location.hash === '#binh-luan' || !('IntersectionObserver' in window)) {
+      inject(section);
+    } else {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((en) => en.isIntersecting)) {
+            io.disconnect();
+            inject(section);
+          }
+        },
+        { rootMargin: '800px 0px' },
+      );
+      io.observe(section);
+    }
+    window.addEventListener('hashchange', () => {
+      if (location.hash === '#binh-luan') inject(section);
+    });
+  }
+</script>

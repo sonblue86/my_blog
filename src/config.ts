@@ -46,6 +46,25 @@ export const GISCUS = {
   lang: 'vi',
 } as const;
 
+/**
+ * Cloudflare Web Analytics — thống kê lượt truy cập không cookie, không theo dõi cá nhân.
+ * Lấy token tại dash.cloudflare.com → Analytics & Logs → Web Analytics → Add a site.
+ * Để trống để tắt. Script chỉ được chèn vào bản build production (không chạy khi `astro dev`).
+ * Có thể đặt qua biến môi trường lúc build: PUBLIC_CF_ANALYTICS_TOKEN.
+ */
+export const ANALYTICS: { cloudflareToken: string } = {
+  cloudflareToken: '',
+};
+
+/**
+ * Cloudflare Turnstile — chống spam cho form đăng ký bản tin (thường vô hình với người đọc).
+ * `siteKey` là khoá công khai; khoá bí mật đặt bằng: npx wrangler secret put TURNSTILE_SECRET
+ * Để trống để tắt (form vẫn có honeypot chống bot đơn giản). Xem docs/CLOUDFLARE.md.
+ */
+export const TURNSTILE: { siteKey: string } = {
+  siteKey: '',
+};
+
 export type CategoryId = 'ai' | 'cong-nghe' | 'doi-song';
 
 export interface Category {

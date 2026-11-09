@@ -1,4 +1,441 @@
 ---
-/** STUB — Emoji reactions (API). */
+/**
+ * Emoji reactions at the end of an article. No login: the choice is remembered in this browser
+ * (localStorage 'ns:reactions' = Record<postId, kind[]>) and counted by the Worker (one per reader per day).
+ * Optimistic UI with a playful pop + burst (motion-safe). The whole block hides if the API is unavailable.
+ */
+import { SITE } from '../../config';
 
+interface Props {
+  /** Post id (same as in /bai-viet/<slug>/). */
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const enabled = SITE.features.reactions;
+
+const REACTIONS = [
+  { kind: 'like', emoji: '👍', label: 'Hữu ích' },
+  { kind: 'love', emoji: '❤️', label: 'Yêu thích' },
+  { kind: 'fire', emoji: '🔥', label: 'Hay quá' },
+  { kind: 'mindblown', emoji: '🤯', label: 'Wow' },
+  { kind: 'clap', emoji: '👏', label: 'Cảm ơn' },
+] as const;
 ---
+
+{
+  enabled && (
+    <>
+      <section class="reactions" data-reactions={slug} data-state="loading" aria-labelledby="reactions-title" hidden>
+        <div class="rx-head">
+          <h2 id="reactions-title" class="rx-title">
+            Bài viết này thế nào với bạn?
+          </h2>
+          <p class="rx-sub" data-rx-summary>
+            Chạm để bày tỏ cảm xúc — không cần đăng nhập.
+          </p>
+        </div>
+        <ul class="rx-list" role="list">
+          {REACTIONS.map((r) => (
+            <li>
+              <button type="button" class="rx" data-kind={r.kind} data-label={r.label} aria-pressed="false">
+                <span class="rx-emoji" aria-hidden="true">
+                  {r.emoji}
+                </span>
+                <span class="rx-label">{r.label}</span>
+                <span class="rx-count" data-count aria-hidden="true">
+                  0
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <script is:inline>
+        (function (s) {
+          var el = s && s.previousElementSibling;
+          if (!el) return;
+          try {
+            var v = sessionStorage.getItem('ns:api');
+            if (v && v.charAt(0) === '0' && Date.now() - Number(v.slice(2)) < 120000) return;
+          } catch (e) {}
+          el.hidden = false;
+        })(document.currentScript);
+      </script>
+    </>
+  )
+}
+
+<style>
+  .reactions {
+    padding: 20px 16px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(420px 140px at 50% 0%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 70%),
+      var(--bg-elevated);
+    text-align: center;
+  }
+  @media (min-width: 640px) {
+    .reactions {
+      padding: 26px 24px 22px;
+    }
+  }
+  .rx-title {
+    font-size: 1.1875rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+  .rx-sub {
+    min-height: 1.5em;
+    margin-top: 4px;
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+  .rx-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 16px;
+  }
+  @media (min-width: 640px) {
+    .rx-list {
+      gap: 10px;
+    }
+  }
+
+  .rx {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    min-height: 88px;
+    padding: 10px 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    color: var(--fg-muted);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    transition:
+      background-color 180ms var(--ease-out),
+      border-color 180ms var(--ease-out),
+      color 180ms var(--ease-out),
+      transform 180ms var(--ease-out),
+      box-shadow 180ms var(--ease-out);
+  }
+  @media (min-width: 640px) {
+    .rx {
+      min-height: 100px;
+      gap: 4px;
+    }
+  }
+  .rx:active {
+    transform: scale(0.95);
+  }
+  @media (hover: hover) {
+    .rx:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-subtle);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+  .rx[aria-pressed='true'] {
+    border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .rx-emoji {
+    display: block;
+    font-size: 1.625rem;
+    line-height: 1.15;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    transition: transform 220ms var(--ease-spring);
+  }
+  @media (min-width: 640px) {
+    .rx-emoji {
+      font-size: 1.875rem;
+    }
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .rx:hover .rx-emoji {
+      transform: translateY(-2px) rotate(-8deg) scale(1.08);
+    }
+  }
+  .rx-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  @media (min-width: 640px) {
+    .rx-label {
+      font-size: 0.8125rem;
+    }
+  }
+  .rx-count {
+    display: inline-block;
+    min-width: 2ch;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+  }
+  .rx[aria-pressed='true'] .rx-count {
+    color: var(--accent);
+  }
+  .reactions[data-state='loading'] .rx-count {
+    color: transparent;
+    border-radius: 6px;
+    background: var(--bg-muted);
+  }
+  .reactions[data-state='loading'] .rx {
+    pointer-events: none;
+  }
+
+  /* Pop + burst (only when motion is welcome) */
+  @media (prefers-reduced-motion: no-preference) {
+    .rx.is-popping .rx-emoji {
+      animation: rx-pop 560ms var(--ease-spring);
+    }
+    .rx.is-unpopping .rx-emoji {
+      animation: rx-unpop 260ms var(--ease-out);
+    }
+    .rx.is-popping .rx-count,
+    .rx.is-unpopping .rx-count {
+      animation: rx-count 360ms var(--ease-out);
+    }
+  }
+  @keyframes rx-pop {
+    0% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(1.5) rotate(-12deg);
+    }
+    55% {
+      transform: scale(0.88) rotate(6deg);
+    }
+    100% {
+      transform: scale(1) rotate(0);
+    }
+  }
+  @keyframes rx-unpop {
+    50% {
+      transform: scale(0.8);
+    }
+  }
+  @keyframes rx-count {
+    0% {
+      transform: translateY(6px);
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  .rx :global(.rx-particle) {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    pointer-events: none;
+    font-size: 0.875rem;
+    line-height: 1;
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    animation: rx-burst 720ms cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+  }
+  .rx :global(.rx-particle.is-dot) {
+    width: 6px;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--hot);
+  }
+  .rx :global(.rx-particle.is-dot:nth-child(odd)) {
+    background: var(--accent);
+  }
+  @keyframes rx-burst {
+    0% {
+      transform: translate(-50%, -50%) scale(0.4);
+      opacity: 1;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.9) rotate(var(--rot));
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  import {
+    getStats,
+    sendReaction,
+    myReactions,
+    saveMyReactions,
+    formatCompact,
+    formatFull,
+    isReactionKind,
+    REACTION_KINDS,
+    ApiError,
+    type ReactionKind,
+    type Stats,
+  } from '../../scripts/api';
+  import { toast } from '../../scripts/share';
+
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function burst(button: HTMLElement, emoji: string) {
+    if (reduceMotion()) return;
+    const n = 9;
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement('span');
+      const isDot = i % 3 !== 0;
+      p.className = isDot ? 'rx-particle is-dot' : 'rx-particle';
+      if (!isDot) p.textContent = emoji;
+      const angle = (Math.PI * 2 * i) / n + (Math.random() - 0.5) * 0.6;
+      const dist = 30 + Math.random() * 22;
+      p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+      p.style.setProperty('--dy', `${Math.sin(angle) * dist - 8}px`);
+      p.style.setProperty('--rot', `${Math.round((Math.random() - 0.5) * 80)}deg`);
+      p.setAttribute('aria-hidden', 'true');
+      p.addEventListener('animationend', () => p.remove(), { once: true });
+      button.append(p);
+      setTimeout(() => p.remove(), 1200); // safety net if animations are throttled
+    }
+  }
+
+  function restart(el: HTMLElement, cls: string) {
+    el.classList.remove('is-popping', 'is-unpopping');
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
+
+  function init(section: HTMLElement) {
+    const slug = section.dataset.reactions!;
+    const buttons = new Map<ReactionKind, HTMLButtonElement>();
+    section.querySelectorAll<HTMLButtonElement>('button[data-kind]').forEach((b) => {
+      if (isReactionKind(b.dataset.kind)) buttons.set(b.dataset.kind, b);
+    });
+    const summary = section.querySelector<HTMLElement>('[data-rx-summary]')!;
+
+    const mine = new Set(myReactions(slug));
+    /** desired = what the reader wants now; server = what the server last confirmed for this reader. */
+    const state = new Map<ReactionKind, { desired: boolean; server: boolean; inflight: boolean }>();
+    for (const k of REACTION_KINDS) state.set(k, { desired: mine.has(k), server: mine.has(k), inflight: false });
+    let base: Stats['reactions'] | null = null;
+
+    const shownCount = (k: ReactionKind) => {
+      const s = state.get(k)!;
+      const adj = s.desired === s.server ? 0 : s.desired ? 1 : -1;
+      return Math.max((base?.[k] ?? 0) + adj, s.desired ? 1 : 0);
+    };
+
+    function render() {
+      let total = 0;
+      let any = false;
+      for (const [k, b] of buttons) {
+        const s = state.get(k)!;
+        const n = shownCount(k);
+        total += n;
+        any ||= s.desired;
+        b.setAttribute('aria-pressed', String(s.desired));
+        b.querySelector('[data-count]')!.textContent = formatCompact(n);
+        b.setAttribute('aria-label', `${b.dataset.label}: ${formatFull(n)} lượt`);
+      }
+      summary.textContent = any
+        ? 'Cảm ơn bạn! Chạm lần nữa để bỏ chọn.'
+        : total > 0
+          ? `${formatFull(total)} lượt bày tỏ cảm xúc — còn bạn thì sao?`
+          : 'Chưa ai bày tỏ cảm xúc — bạn mở hàng nhé?';
+    }
+
+    function persist() {
+      saveMyReactions(
+        slug,
+        REACTION_KINDS.filter((k) => state.get(k)!.desired),
+      );
+    }
+
+    async function sync(kind: ReactionKind) {
+      const s = state.get(kind)!;
+      if (s.inflight || s.desired === s.server) return;
+      s.inflight = true;
+      const want = s.desired;
+      try {
+        const res = await sendReaction(slug, kind, !want);
+        s.server = want;
+        base = res.reactions;
+      } catch (err) {
+        s.desired = s.server; // roll back
+        persist();
+        const msg =
+          err instanceof ApiError && err.status >= 400 && err.status < 500 && err.message
+            ? err.message
+            : 'Chưa gửi được cảm xúc, bạn kiểm tra mạng rồi thử lại nhé.';
+        toast(msg, { tone: 'error' });
+      } finally {
+        s.inflight = false;
+        render();
+      }
+      if (s.desired !== s.server) sync(kind); // the reader changed their mind meanwhile
+    }
+
+    section.addEventListener('click', (e) => {
+      const b = (e.target as Element).closest<HTMLButtonElement>('button[data-kind]');
+      if (!b || !base || !isReactionKind(b.dataset.kind)) return;
+      const kind = b.dataset.kind;
+      const s = state.get(kind)!;
+      s.desired = !s.desired;
+      persist();
+      render();
+      if (s.desired) {
+        restart(b, 'is-popping');
+        burst(b, b.querySelector('.rx-emoji')?.textContent?.trim() || '✨');
+        if (!reduceMotion()) navigator.vibrate?.(12);
+      } else {
+        restart(b, 'is-unpopping');
+      }
+      sync(kind);
+    });
+    section.addEventListener('animationend', (e) => {
+      const b = (e.target as Element).closest('.rx');
+      if (b && (e.target as Element).classList.contains('rx-emoji')) b.classList.remove('is-popping', 'is-unpopping');
+    });
+
+    // Fresh numbers from any write on this page (e.g. the view counter).
+    document.addEventListener('ns:stats', (e) => {
+      const s = (e as CustomEvent<Stats>).detail;
+      if (s?.slug !== slug || !base) return;
+      base = s.reactions;
+      render();
+    });
+
+    getStats(slug).then((stats) => {
+      if (!stats) {
+        section.hidden = true;
+        return;
+      }
+      base = stats.reactions;
+      render();
+      section.dataset.state = 'ready';
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-reactions]').forEach((section) => {
+    if (section.dataset.wired || section.hidden) return;
+    section.dataset.wired = '1';
+    init(section);
+  });
+</script>
