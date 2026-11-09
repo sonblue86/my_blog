@@ -1,0 +1,39 @@
+{
+  "id": "/",
+  "name": "Nhịp Số",
+  "short_name": "Nhịp Số",
+  "description": "Blog tiếng Việt về AI, công nghệ và đời sống số — viết chậm, đọc sâu. Lưu bài để đọc cả khi không có mạng.",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#fbfaf7",
+  "background_color": "#fbfaf7",
+  "categories": ["news", "education", "lifestyle"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tìm kiếm",
+      "short_name": "Tìm kiếm",
+      "description": "Tìm bài viết theo từ khoá",
+      "url": "/tim-kiem/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Thư viện của bạn",
+      "short_name": "Thư viện",
+      "description": "Bài đã lưu, đang đọc và đã đọc",
+      "url": "/thu-vien/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
