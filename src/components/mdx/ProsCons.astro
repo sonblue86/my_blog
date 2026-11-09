@@ -139,9 +139,14 @@ const hasConsSlot = Astro.slots.has('cons');
     display: none;
   }
   .pc-mark {
+    align-self: start;
     display: inline-flex;
-    padding-top: 0.25em;
+    align-items: center;
+    height: 1.6em;
     color: var(--c);
+  }
+  .pc-mark :global(svg) {
+    flex: none;
   }
   .pc-slot > :global(*) {
     margin: 0;

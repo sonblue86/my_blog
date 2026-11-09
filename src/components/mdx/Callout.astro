@@ -72,10 +72,15 @@ const iconName = icon ?? preset.icon;
   }
 
   .callout-icon {
+    /* one text line tall, so the icon centres on the title / first line */
+    align-self: start;
     display: inline-flex;
+    align-items: center;
+    height: 1.7em;
     color: var(--c);
-    /* align with the first text line */
-    padding-top: 0.2em;
+  }
+  .callout-icon :global(svg) {
+    flex: none;
   }
 
   .callout-title {
