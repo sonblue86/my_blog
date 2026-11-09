@@ -10,7 +10,7 @@
  *   </Diagram>
  *
  * Class màu: dg-box, dg-soft, dg-accent, dg-hot, dg-ok (hình) · dg-line, dg-line-accent, dg-line-dash (đường)
- * · dg-text, dg-muted, dg-small, dg-strong, dg-text-accent, dg-text-on (chữ) · dg-fill-accent, dg-fill-hot,
+ * · dg-text, dg-muted, dg-small, dg-lg, dg-strong, dg-mono, dg-text-accent, dg-text-on (chữ) · dg-fill-accent, dg-fill-hot,
  * dg-fill-ok, dg-fill-line (tô đặc, ví dụ đầu mũi tên).
  * Không để dòng trống bên trong <svg> (MDX sẽ hiểu sai).
  */
@@ -21,13 +21,18 @@ interface Props {
   wide?: boolean;
   /** Bề rộng tối thiểu (px) trước khi cho cuộn ngang trên màn hình hẹp. Mặc định 0 = luôn co giãn. */
   minWidth?: number;
+  /** Bề rộng tối đa (px) để sơ đồ nhỏ không bị phóng quá to trên desktop. */
+  maxWidth?: number;
 }
 
-const { label, caption, wide = false, minWidth = 0 } = Astro.props;
+const { label, caption, wide = false, minWidth = 0, maxWidth = 0 } = Astro.props;
+const vars = [minWidth ? `--dg-min: ${minWidth}px` : '', maxWidth ? `--dg-max: ${maxWidth}px` : '']
+  .filter(Boolean)
+  .join('; ');
 ---
 
 <figure class:list={['dg', { wide }]}>
-  <div class="dg-canvas" role="img" aria-label={label} data-tts-skip data-pagefind-ignore style={minWidth ? `--dg-min: ${minWidth}px` : undefined}>
+  <div class="dg-canvas" role="img" aria-label={label} data-tts-skip data-pagefind-ignore style={vars || undefined}>
     <slot />
   </div>
   {caption && <figcaption>{caption}</figcaption>}
@@ -50,6 +55,7 @@ const { label, caption, wide = false, minWidth = 0 } = Astro.props;
     display: block;
     width: 100%;
     min-width: var(--dg-min, 0);
+    max-width: var(--dg-max, 100%);
     height: auto;
     margin-inline: auto;
     font-family: var(--font-sans);
@@ -128,15 +134,18 @@ const { label, caption, wide = false, minWidth = 0 } = Astro.props;
   /* text */
   .dg .dg-text {
     fill: var(--fg);
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
   }
   .dg .dg-muted {
     fill: var(--fg-muted);
-    font-size: 14px;
+    font-size: 15px;
   }
   .dg .dg-small {
-    font-size: 12.5px;
+    font-size: 13px;
+  }
+  .dg .dg-lg {
+    font-size: 21px;
   }
   .dg .dg-strong {
     font-weight: 700;

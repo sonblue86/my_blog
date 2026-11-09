@@ -1,0 +1,149 @@
+---
+title: 'LLM hoạt động thế nào? Token, dự đoán từ tiếp theo và chuyện AI "bịa"'
+description: 'Giải thích dễ hiểu cách mô hình ngôn ngữ lớn vận hành: token là gì, vì sao AI chỉ dự đoán chữ tiếp theo, cửa sổ ngữ cảnh và lý do AI đôi khi bịa chuyện.'
+pubDate: 2026-09-08
+category: ai
+tags: ['LLM', 'AI cơ bản', 'Token']
+series: 'AI cho người mới'
+seriesOrder: 1
+featured: true
+summary: 'Mô hình ngôn ngữ lớn không "hiểu" theo cách con người hiểu. Nó cắt văn bản thành token, rồi lặp đi lặp lại một việc duy nhất: đoán token tiếp theo hợp lý nhất. Nắm được cơ chế này, bạn sẽ dùng AI tỉnh táo và hiệu quả hơn.'
+takeaways:
+  - 'LLM xử lý văn bản dưới dạng token — mảnh chữ nhỏ hơn từ — và mọi giới hạn, chi phí đều tính theo token.'
+  - 'Mọi câu trả lời được tạo ra bằng cách dự đoán token tiếp theo, từng bước một, dựa trên xác suất.'
+  - 'Cửa sổ ngữ cảnh là "trí nhớ làm việc" của mô hình; thứ nằm ngoài cửa sổ coi như không tồn tại.'
+  - 'Ảo giác (bịa thông tin) là hệ quả tự nhiên của cơ chế dự đoán, nên luôn kiểm chứng thông tin quan trọng.'
+---
+
+Bạn gõ một câu hỏi, vài giây sau màn hình tuôn ra một đoạn trả lời mạch lạc, đúng giọng. Cảm giác đầu tiên của nhiều người là: "Nó hiểu mình!". Nhưng phía sau sự trơn tru ấy là một cơ chế đơn giản đến bất ngờ — và hiểu được nó là bước đầu tiên để dùng AI cho đúng.
+
+Đây là bài mở đầu của series **AI cho người mới**. Chúng ta sẽ đi qua bốn khái niệm cốt lõi: token, dự đoán từ tiếp theo, cửa sổ ngữ cảnh và ảo giác. Không cần biết lập trình hay toán cao cấp, chỉ cần một chút tò mò.
+
+## LLM là gì, nói ngắn gọn
+
+LLM (Large Language Model — mô hình ngôn ngữ lớn) là một mạng nơ-ron rất lớn được huấn luyện trên lượng văn bản khổng lồ: sách, bài báo, trang web, mã nguồn, tài liệu hỏi đáp. Mục tiêu huấn luyện ban đầu nghe có vẻ khiêm tốn: **cho một đoạn văn bản, đoán xem phần tiếp theo là gì.**
+
+Để đoán tốt trên hàng tỷ ví dụ đủ mọi chủ đề, mô hình buộc phải "nắm" ngữ pháp, cách lập luận, kiến thức phổ thông, giọng văn, cả cấu trúc mã nguồn. Không ai lập trình từng năng lực ấy; chúng hình thành dần như sản phẩm phụ của việc đoán chữ thật giỏi.
+
+Sau đó, các nhà phát triển tinh chỉnh thêm để mô hình biết trò chuyện, làm theo chỉ dẫn và từ chối yêu cầu có hại. Kết quả là những trợ lý AI bạn dùng hằng ngày.
+
+## Token: đơn vị "đọc" của mô hình
+
+Con người đọc theo chữ và từ. LLM thì đọc theo **token** — những mảnh văn bản có thể là cả một từ, một phần của từ, một dấu câu hay một khoảng trắng.
+
+Trước khi đưa vào mô hình, văn bản được một bộ tách token (tokenizer) cắt nhỏ. Các từ tiếng Anh phổ biến thường gọn trong một token. Với tiếng Việt, mỗi âm tiết có dấu như "người" hay "được" đôi khi bị tách thành vài mảnh, tuỳ bộ tách token của từng mô hình. Vì thế, cùng một nội dung, bản tiếng Việt thường tốn nhiều token hơn bản tiếng Anh.
+
+Vì sao bạn nên quan tâm đến token?
+
+- **Chi phí:** các dịch vụ API thường tính tiền theo số token đầu vào và đầu ra.
+- **Giới hạn độ dài:** cả câu hỏi lẫn câu trả lời đều bị giới hạn bởi số token, không phải số chữ.
+- **"Điểm mù" kỳ lạ:** mô hình thấy token chứ không thấy từng ký tự, nên đếm chữ cái hay đảo ngược một chuỗi có thể khó với nó hơn bạn tưởng.
+
+<Callout type="tip" title="Quy đổi nhanh">
+Không có công thức chung cho mọi mô hình, nhưng hãy nhớ một ý: văn bản càng dài thì token càng nhiều, và tiếng Việt thường "đắt" hơn tiếng Anh một chút. Nhiều nhà cung cấp có công cụ đếm token miễn phí để bạn thử.
+</Callout>
+
+## Dự đoán từ tiếp theo: trái tim của mọi câu trả lời
+
+Đây là phần quan trọng nhất. Khi bạn gửi một câu hỏi, mô hình không soạn sẵn cả câu trả lời trong đầu rồi in ra. Nó làm việc theo vòng lặp:
+
+1. Đọc toàn bộ văn bản hiện có (câu hỏi của bạn cùng phần trả lời đã viết).
+2. Tính xác suất cho **mọi token có thể xuất hiện tiếp theo**.
+3. Chọn một token dựa trên các xác suất đó.
+4. Gắn token vừa chọn vào cuối văn bản, rồi quay lại bước 1.
+
+Vòng lặp chạy cho đến khi mô hình chọn một token đặc biệt mang nghĩa "hết", hoặc chạm giới hạn độ dài. Mỗi chữ bạn thấy hiện ra dần trên màn hình chính là một vòng lặp như vậy.
+
+<Diagram
+  label="Minh hoạ: với đầu vào 'Hôm nay trời rất', mô hình tính xác suất cho token tiếp theo: đẹp 42%, nắng 27%, nóng 14%, lạnh 9%, khác 8%."
+  caption="Minh hoạ (số liệu giả định): mô hình gán xác suất cho từng ứng viên rồi chọn một token để viết tiếp."
+  maxWidth={520}
+>
+  <svg viewBox="0 0 480 362">
+    <rect class="dg-box" x="2" y="2" width="476" height="58" rx="14" />
+    <text class="dg-text dg-lg" x="24" y="39">Hôm nay trời rất <tspan class="dg-text-accent dg-strong">…</tspan></text>
+    <path class="dg-line" d="M240 60 V86" />
+    <polygon class="dg-fill-line" points="233,84 240,96 247,84" />
+    <rect class="dg-accent" x="150" y="98" width="180" height="48" rx="24" />
+    <text class="dg-text dg-strong dg-text-accent" x="240" y="128" text-anchor="middle">Mô hình</text>
+    <path class="dg-line" d="M240 146 V160" />
+    <polygon class="dg-fill-line" points="233,158 240,170 247,158" />
+    <text class="dg-text" x="84" y="199" text-anchor="end">đẹp</text>
+    <rect class="dg-fill-accent" x="96" y="181" width="280" height="24" rx="6" />
+    <text class="dg-muted dg-strong" x="386" y="199">42%</text>
+    <text class="dg-text" x="84" y="237" text-anchor="end">nắng</text>
+    <rect class="dg-accent" x="96" y="219" width="180" height="24" rx="6" />
+    <text class="dg-muted" x="286" y="237">27%</text>
+    <text class="dg-text" x="84" y="275" text-anchor="end">nóng</text>
+    <rect class="dg-accent" x="96" y="257" width="93" height="24" rx="6" />
+    <text class="dg-muted" x="199" y="275">14%</text>
+    <text class="dg-text" x="84" y="313" text-anchor="end">lạnh</text>
+    <rect class="dg-accent" x="96" y="295" width="60" height="24" rx="6" />
+    <text class="dg-muted" x="166" y="313">9%</text>
+    <text class="dg-text" x="84" y="351" text-anchor="end">khác</text>
+    <rect class="dg-soft" x="96" y="333" width="53" height="24" rx="6" />
+    <text class="dg-muted" x="159" y="351">8%</text>
+  </svg>
+</Diagram>
+
+### Nhiệt độ: liều lượng của sự bất ngờ
+
+Ở bước 3, mô hình không nhất thiết chọn token có xác suất cao nhất. Một tham số gọi là **nhiệt độ (temperature)** điều chỉnh mức "liều" khi chọn:
+
+- **Nhiệt độ thấp:** gần như luôn chọn ứng viên hàng đầu. Câu trả lời ổn định, dễ đoán — hợp với trích xuất dữ liệu, viết mã, trả lời câu hỏi có đáp án rõ.
+- **Nhiệt độ cao:** cho các ứng viên ít phổ biến hơn cơ hội được chọn. Văn phong đa dạng, bất ngờ hơn — hợp với lên ý tưởng, viết sáng tạo, nhưng cũng dễ lan man.
+
+Vì thế hỏi cùng một câu hai lần có thể nhận hai câu trả lời khác nhau: mỗi lần lấy mẫu cho ra một con đường khác.
+
+<KeyPoint>
+LLM không tra cứu một kho sự thật rồi đọc lại cho bạn. Nó tạo ra văn bản *nghe hợp lý nhất* dựa trên những gì đã học — và "hợp lý" không phải lúc nào cũng là "đúng".
+</KeyPoint>
+
+## Cửa sổ ngữ cảnh: trí nhớ làm việc có giới hạn
+
+Mỗi lần trả lời, mô hình chỉ "nhìn thấy" một lượng văn bản nhất định, gọi là **cửa sổ ngữ cảnh (context window)**, đo bằng token. Cửa sổ này chứa mọi thứ: hướng dẫn hệ thống, lịch sử trò chuyện, tài liệu bạn dán vào và cả phần trả lời đang viết.
+
+Một vài hệ quả thực tế:
+
+- **Mô hình không nhớ bạn giữa các cuộc trò chuyện**, trừ khi ứng dụng chủ động lưu lại thông tin và đưa ngược vào ngữ cảnh. Cảm giác "nó nhớ mình" thường đến từ tính năng của ứng dụng, không phải bản thân mô hình.
+- **Cuộc trò chuyện quá dài có thể bị cắt bớt.** Khi vượt giới hạn, phần cũ nhất thường bị bỏ hoặc được tóm tắt lại, nên mô hình có thể "quên" điều bạn dặn từ đầu.
+- **Cửa sổ lớn không đồng nghĩa với chú ý đều.** Kể cả khi tài liệu nằm gọn trong cửa sổ, chi tiết vùi sâu ở giữa một văn bản rất dài vẫn có thể bị bỏ sót. Đặt yêu cầu quan trọng ở chỗ rõ ràng và nhắc lại khi cần.
+
+Cửa sổ ngữ cảnh đã lớn lên rất nhanh qua các thế hệ mô hình, từ vài nghìn lên hàng trăm nghìn token. Dù vậy, "nhét hết vào" hiếm khi là chiến lược tốt nhất — bài về RAG trong series sẽ giải thích vì sao.
+
+## Ảo giác: khi AI tự tin nói sai
+
+**Ảo giác (hallucination)** là khi mô hình tạo ra thông tin sai nhưng trình bày rất trôi chảy và tự tin: một trích dẫn không tồn tại, một con số bịa, một hàm lập trình chưa từng có trong thư viện.
+
+Nhớ lại cơ chế dự đoán, bạn sẽ thấy ảo giác gần như tất yếu. Mô hình được tối ưu để viết ra thứ *trông giống* câu trả lời đúng. Khi thiếu thông tin, con đường "nghe hợp lý" vẫn luôn tồn tại — và mô hình có thể đi theo nó thay vì nói "tôi không biết".
+
+Ảo giác hay xuất hiện nhất khi:
+
+- Hỏi về chi tiết rất cụ thể, ít phổ biến: tên người, số liệu, ngày tháng, điều khoản pháp lý.
+- Hỏi về sự kiện mới xảy ra sau thời điểm dữ liệu huấn luyện kết thúc.
+- Yêu cầu nguồn tham khảo, đường dẫn hoặc trích dẫn nguyên văn.
+- Câu hỏi chứa sẵn một tiền đề sai, kiểu "Vì sao X lại làm Y?" trong khi X chưa từng làm Y.
+
+<Callout type="warning" title="Nguyên tắc an toàn">
+Với thông tin có hậu quả thật — sức khoẻ, pháp lý, tài chính, số liệu đưa vào báo cáo — hãy coi câu trả lời của AI là **bản nháp cần kiểm chứng**, không phải nguồn cuối cùng.
+</Callout>
+
+### Giảm ảo giác bằng cách nào?
+
+Bạn không thể loại bỏ hoàn toàn ảo giác, nhưng có thể giảm đáng kể:
+
+1. **Cung cấp tài liệu gốc** và yêu cầu mô hình chỉ trả lời dựa trên đó.
+2. **Cho phép mô hình nói "không biết".** Một câu đơn giản như "Nếu tài liệu không đề cập, hãy nói rõ là không có thông tin" giúp ích nhiều hơn bạn nghĩ.
+3. **Yêu cầu trích dẫn đoạn văn cụ thể** trong tài liệu bạn đưa, để dễ đối chiếu.
+4. **Hạ nhiệt độ** cho các tác vụ cần chính xác.
+5. **Dùng công cụ tìm kiếm hoặc RAG** để mô hình có dữ liệu cập nhật thay vì dựa vào trí nhớ huấn luyện.
+
+## Vậy rốt cuộc LLM có "hiểu" không?
+
+Câu hỏi này vẫn đang được tranh luận, tuỳ việc bạn định nghĩa "hiểu" thế nào. Chắc chắn là LLM nắm được những quy luật rất sâu của ngôn ngữ, đủ để giải nhiều bài toán thực tế — nhưng cũng có điểm yếu rất "phi con người": tự tin sai, thiếu ổn định, nhạy cảm với cách đặt câu hỏi.
+
+Cách nhìn hữu ích nhất: coi LLM như **một cộng sự đọc rất nhiều, viết rất nhanh, nhưng đôi khi nói quá điều mình biết**. Giao việc rõ ràng, cung cấp đủ bối cảnh và kiểm tra lại kết quả quan trọng — như khi làm việc với một đồng nghiệp mới giỏi nhưng chưa quen việc.
+
+## Tóm lại
+
+Token, dự đoán từ tiếp theo, cửa sổ ngữ cảnh và ảo giác — bốn khái niệm này giải thích phần lớn những gì bạn thấy khi dùng AI, kể cả những lúc nó làm bạn bực mình. Ở bài tiếp theo trong series, chúng ta sẽ dùng chính những hiểu biết này để **viết prompt hiệu quả**: vì sao một câu lệnh rõ ràng, có bối cảnh và ví dụ lại thay đổi chất lượng câu trả lời nhiều đến vậy.
