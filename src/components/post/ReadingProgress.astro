@@ -1,4 +1,60 @@
 ---
-/** STUB — Top reading progress bar + time left. */
-
+/**
+ * Thin reading-progress bar. Also the single source of truth for article progress:
+ * broadcasts `ns:progress` { progress: 0..1, remaining: minutes } for the TOC, rail and action bar.
+ */
+interface Props {
+  minutes: number;
+}
+const { minutes } = Astro.props;
 ---
+
+<div class="read-progress" aria-hidden="true" data-minutes={minutes}><span></span></div>
+
+<style>
+  .read-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    height: 3px;
+    pointer-events: none;
+  }
+  .read-progress span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--hot));
+    transform: scaleX(var(--read-progress, 0));
+    transform-origin: 0 50%;
+    border-radius: 0 3px 3px 0;
+  }
+</style>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('.read-progress');
+  const body = document.getElementById('post-body');
+  if (bar && body) {
+    const minutes = Number(bar.dataset.minutes) || 1;
+    let ticking = false;
+    let last = -1;
+    const update = () => {
+      ticking = false;
+      const rect = body.getBoundingClientRect();
+      const total = rect.height - innerHeight * 0.6;
+      const p = Math.min(1, Math.max(0, (innerHeight * 0.4 - rect.top) / Math.max(1, total)));
+      if (Math.abs(p - last) < 0.002) return;
+      last = p;
+      document.documentElement.style.setProperty('--read-progress', p.toFixed(4));
+      const remaining = Math.max(0, Math.ceil(minutes * (1 - p)));
+      document.dispatchEvent(new CustomEvent('ns:progress', { detail: { progress: p, remaining } }));
+    };
+    const schedule = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    addEventListener('scroll', schedule, { passive: true });
+    addEventListener('resize', schedule, { passive: true });
+    update();
+  }
+</script>

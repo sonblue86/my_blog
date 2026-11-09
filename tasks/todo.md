@@ -11,10 +11,10 @@ viết bài bằng Markdown/MDX trên GitHub, deploy miễn phí trên Cloudflar
 - OG image tự sinh lúc build (satori), cover SVG tự sinh khi bài không có ảnh
 
 ## Checklist
-- [ ] 1. Research + smoke test stack (Astro 7, Cloudflare, CMS, Pagefind, fonts)
-- [ ] 2. Foundation: config, design tokens, layout, header/footer, content schema, utils, PostCard, home, post page
-- [ ] 3. git init + commit foundation
-- [ ] 4. Feature fan-out (worktrees):
+- [x] 1. Research + smoke test stack (Astro 7, Cloudflare, CMS, Pagefind, fonts)
+- [x] 2. Foundation: config, design tokens, layout, header/footer, content schema, utils, PostCard, home, post page
+- [x] 3. git init + commit foundation
+- [ ] 4. Feature fan-out (worktrees) — đang chạy (workflow wf_1d85d811-f4e):
   - [ ] Search palette (⌘K) + trang tìm kiếm + phím tắt
   - [ ] Trải nghiệm đọc: TOC, progress, action bar mobile, lightbox, anchors, back-to-top
   - [ ] Reader settings + nghe bài (TTS) + chia sẻ trích dẫn khi bôi đen
