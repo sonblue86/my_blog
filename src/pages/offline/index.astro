@@ -1,0 +1,546 @@
+---
+/**
+ * /offline/ — precached by public/sw.js and shown for any page it can't load without a network.
+ * Static shell; src/scripts/library-offline-page.ts fills in what this device can open offline.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/ui/Icon.astro';
+import LIcon from '../../components/library/LIcon.astro';
+---
+
+<BaseLayout title="Bạn đang offline" description="Trang hiển thị khi không có kết nối mạng, kèm danh sách bài viết đã có sẵn trên máy." noindex>
+  <div class="off-page" data-offline-page>
+    <header class="off-hero">
+      <div class="container-page off-hero-inner">
+        <div class="off-badge" aria-hidden="true">
+          <span class="off-badge-ring"></span>
+          <LIcon name="cloud-off" size={30} />
+        </div>
+        <div class="min-w-0">
+          <p class="eyebrow" data-off-eyebrow>Không có kết nối</p>
+          <h1 class="off-h1" data-off-title>Bạn đang offline</h1>
+          <p class="off-lede" data-off-lede>
+            Trang này chưa có sẵn trên máy nên cần mạng mới mở được. Trong lúc chờ, những bài bên dưới vẫn đọc được ngay.
+          </p>
+          <p class="off-where" data-off-where hidden>
+            <span>Trang bạn vừa mở:</span>
+            <code data-f="path"></code>
+          </p>
+          <div class="off-actions">
+            <button type="button" class="btn btn-primary" data-off-retry>
+              <span class="off-retry-icon" data-off-icon="retry"><LIcon name="refresh" size={18} /></span>
+              <span class="off-retry-icon" data-off-icon="home" hidden><Icon name="home" size={18} /></span>
+              <span data-off-retry-label>Thử lại</span>
+            </button>
+            <a class="btn btn-ghost" href="/thu-vien/">
+              <Icon name="library" size={18} />
+              Thư viện của bạn
+            </a>
+          </div>
+          <p class="off-status" data-off-status role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-page off-body">
+      <section aria-labelledby="off-list-title" data-off-articles>
+        <div class="off-section-head">
+          <h2 id="off-list-title" class="off-h2">
+            <span class="off-h2-icon"><LIcon name="cloud-download" size={18} /></span>
+            Đọc được ngay trên máy này
+          </h2>
+          <p class="off-count" data-off-count></p>
+        </div>
+        <ul class="off-list" data-off-list aria-busy="true">
+          {
+            [0, 1, 2].map(() => (
+              <li class="off-skeleton" aria-hidden="true">
+                <span />
+                <span />
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section class="off-empty" data-off-empty hidden aria-labelledby="off-empty-title">
+        <svg class="off-illo" viewBox="0 0 220 140" aria-hidden="true">
+          <circle cx="110" cy="72" r="58" class="i-soft"></circle>
+          <path d="M74 92h66a22 22 0 0 0 2-44 30 30 0 0 0-57-6 20 20 0 0 0-11 50z" class="i-card"></path>
+          <path d="M96 66l28 28M124 66l-28 28" class="i-x"></path>
+          <path d="M168 34l3 7.5 7.5 3-7.5 3-3 7.5-3-7.5-7.5-3 7.5-3z" class="i-hot"></path>
+          <circle cx="48" cy="52" r="4" class="i-hot-soft"></circle>
+        </svg>
+        <h2 id="off-empty-title" class="off-h2 justify-center">Chưa có bài nào trên máy</h2>
+        <p class="off-empty-text">
+          Lần sau, bấm <strong>Lưu</strong> ở bài bạn thích: Nhịp Số sẽ tải sẵn về máy để bạn đọc cả khi mất sóng. Những bài vừa đọc cũng được giữ lại một thời gian.
+        </p>
+      </section>
+
+      <section class="off-pages" data-off-pages hidden aria-labelledby="off-pages-title">
+        <h2 id="off-pages-title" class="off-h3">Trang khác cũng mở được</h2>
+        <ul class="off-chips" data-off-pages-list></ul>
+      </section>
+
+      <aside class="off-tip">
+        <span class="off-tip-icon"><Icon name="bookmark" size={18} /></span>
+        <p>
+          <strong>Mẹo:</strong> bài nào bạn bấm <strong>Lưu</strong> sẽ ở lại trên máy cho tới khi bạn bỏ lưu — còn bài chỉ đọc qua thì có thể bị dọn bớt khi bộ nhớ đầy.
+        </p>
+      </aside>
+    </div>
+
+    <template data-tpl="article">
+      <li class="off-item">
+        <article class="off-card">
+          <div class="off-thumb"><img alt="" data-f="img" loading="lazy" decoding="async" /></div>
+          <div class="off-card-body">
+            <p class="off-meta">
+              <span class="off-cat" data-f="cat"><span class="off-dot"></span><span data-f="cat-name"></span></span>
+              <span class="off-pill is-saved" data-f="saved" hidden><Icon name="bookmark-check" size={13} />Đã lưu</span>
+              <span class="off-pill" data-f="visited" hidden><Icon name="history" size={13} />Đã xem gần đây</span>
+            </p>
+            <h3 class="off-title"><a class="off-link" data-f="link"></a></h3>
+            <p class="off-sub"><span data-f="minutes"></span><span data-f="progress"></span></p>
+          </div>
+        </article>
+      </li>
+    </template>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initOfflinePage } from '../../scripts/library-offline-page';
+
+  const root = document.querySelector<HTMLElement>('[data-offline-page]');
+  if (root) initOfflinePage(root);
+</script>
+
+<style is:global>
+  .off-hero {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(700px 260px at 0% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
+      radial-gradient(520px 220px at 100% 100%, color-mix(in oklab, var(--hot) 8%, transparent), transparent 70%);
+  }
+  .off-hero-inner,
+  .off-body {
+    max-width: 880px;
+  }
+  .off-hero-inner {
+    display: grid;
+    gap: 20px;
+    padding-top: 36px;
+    padding-bottom: 32px;
+  }
+  @media (min-width: 640px) {
+    .off-hero-inner {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+      padding-top: 56px;
+      padding-bottom: 44px;
+    }
+  }
+  .off-badge {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .off-badge-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 24px;
+    border: 1.5px dashed color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .off-badge-ring {
+      animation: off-spin 18s linear infinite;
+    }
+  }
+  @keyframes off-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .off-h1 {
+    margin-top: 10px;
+    font-size: clamp(2rem, 1.3rem + 3vw, 3rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+  .off-lede {
+    max-width: 60ch;
+    margin-top: 12px;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--fg-muted);
+  }
+  .off-where {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin-top: 12px;
+    font-size: 0.875rem;
+    color: var(--fg-subtle);
+  }
+  .off-where:not([hidden]) {
+    display: flex;
+  }
+  .off-where code {
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+  }
+  .off-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .off-retry-icon {
+    display: inline-flex;
+  }
+  .off-retry-icon[hidden] {
+    display: none;
+  }
+  .off-status {
+    min-height: 1.5em;
+    margin-top: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--success);
+  }
+
+  .off-body {
+    display: grid;
+    gap: 36px;
+    padding-top: 28px;
+    padding-bottom: 64px;
+  }
+  .off-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 16px;
+    margin-bottom: 14px;
+  }
+  .off-h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+  }
+  .off-h2-icon {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .off-count {
+    font-size: 0.875rem;
+    color: var(--fg-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+  .off-h3 {
+    margin-bottom: 12px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+
+  /* ---------- Cards ---------- */
+  .off-list {
+    display: grid;
+    gap: 12px;
+  }
+  .off-item {
+    min-width: 0;
+  }
+  .off-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    min-height: 96px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow 200ms var(--ease-out);
+  }
+  @media (min-width: 640px) {
+    .off-card {
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 18px;
+    }
+  }
+  @media (hover: hover) {
+    .off-card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow);
+    }
+    .off-card:hover .off-title {
+      color: var(--accent);
+    }
+  }
+  .off-card:has(.off-link:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .off-link:focus-visible {
+    outline: none;
+  }
+  .off-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .off-thumb {
+    overflow: hidden;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    background:
+      radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--c, var(--accent)) 30%, transparent), transparent 70%),
+      color-mix(in oklab, var(--c, var(--accent)) 14%, var(--bg-muted));
+  }
+  @media (min-width: 640px) {
+    .off-thumb {
+      aspect-ratio: 16 / 10;
+    }
+  }
+  .off-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .off-card-body {
+    min-width: 0;
+  }
+  .off-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    font-size: 0.8125rem;
+    color: var(--fg-subtle);
+  }
+  .off-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--c, var(--fg-muted));
+  }
+  .off-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--c, var(--fg-subtle));
+  }
+  .off-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 99px;
+    background: var(--bg-subtle);
+    color: var(--fg-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .off-pill[hidden] {
+    display: none;
+  }
+  .off-pill.is-saved {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .off-title {
+    margin-top: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 150ms var(--ease-out);
+  }
+  @media (min-width: 640px) {
+    .off-title {
+      font-size: 1.125rem;
+      -webkit-line-clamp: 2;
+    }
+  }
+  .off-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    margin-top: 6px;
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+  }
+  .off-sub:empty {
+    display: none;
+  }
+  .off-skeleton {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    height: 96px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .off-skeleton span {
+    height: 100%;
+    border-radius: 12px;
+    background: var(--bg-muted);
+  }
+  .off-skeleton span + span {
+    height: 14px;
+    border-radius: 99px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .off-skeleton span {
+      animation: off-pulse 1.4s ease-in-out infinite;
+    }
+  }
+  @keyframes off-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* ---------- Other pages ---------- */
+  .off-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .off-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--fg-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition:
+      border-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .off-chip:hover {
+    border-color: var(--border-strong);
+    color: var(--fg);
+  }
+  .off-chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Empty ---------- */
+  .off-empty {
+    display: grid;
+    justify-items: center;
+    padding: 28px 16px 8px;
+    text-align: center;
+  }
+  .off-empty[hidden] {
+    display: none;
+  }
+  .off-illo {
+    width: 200px;
+    height: auto;
+    margin-bottom: 8px;
+  }
+  .off-illo .i-soft {
+    fill: var(--accent-soft);
+  }
+  .off-illo .i-card {
+    fill: var(--bg-elevated);
+    stroke: var(--border-strong);
+    stroke-width: 2;
+  }
+  .off-illo .i-x {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+  .off-illo .i-hot {
+    fill: var(--hot);
+  }
+  .off-illo .i-hot-soft {
+    fill: color-mix(in oklab, var(--hot) 45%, transparent);
+  }
+  .off-empty-text {
+    max-width: 52ch;
+    margin-top: 8px;
+    line-height: 1.65;
+    color: var(--fg-muted);
+  }
+
+  /* ---------- Tip ---------- */
+  .off-tip {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-subtle);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--fg-muted);
+  }
+  .off-tip strong {
+    color: var(--fg);
+  }
+  .off-tip-icon {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+</style>

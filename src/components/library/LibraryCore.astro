@@ -75,6 +75,7 @@ const prod = import.meta.env.PROD;
     inProgress,
   } from '../../scripts/library-store';
   import { toast } from '../../scripts/share';
+  import { postToSW } from '../../scripts/library-offline';
 
   // ---------- Bookmark buttons ----------
   function syncButtons() {
@@ -99,8 +100,9 @@ const prod = import.meta.env.PROD;
       tone: saved ? 'ok' : 'info',
       action: saved ? { label: 'Xem', href: '/thu-vien/' } : undefined,
     });
-    // Ask the service worker to keep (or drop) an offline copy.
-    navigator.serviceWorker?.controller?.postMessage({ type: saved ? 'cache-post' : 'uncache-post', url: btn.dataset.url, cover: btn.dataset.cover });
+    // Ask the service worker to keep (or drop) an offline copy (also works on a page it doesn't control yet).
+    const url = btn.dataset.url;
+    if (url) postToSW(saved ? { type: 'cache-post', url, cover: btn.dataset.cover } : { type: 'uncache-post', url });
   }
 
   document.addEventListener('click', (e) => {
@@ -180,8 +182,12 @@ const prod = import.meta.env.PROD;
     addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
+    // Sent only when a new worker replaces an old one. Pages are network-first, so a page that was
+    // just loaded already is the new version — only tabs open for a while need the hint.
     navigator.serviceWorker.addEventListener('message', (e) => {
-      if (e.data?.type === 'updated') toast('Đã có phiên bản mới — tải lại trang để xem', { tone: 'info', duration: 6000 });
+      if (e.data?.type === 'updated' && performance.now() > 20_000) {
+        toast('Đã có phiên bản mới — tải lại trang để xem', { tone: 'info', duration: 6000 });
+      }
     });
   }
 </script>
