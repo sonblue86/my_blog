@@ -1,33 +1,40 @@
 /* Nhịp Số — service worker
  *
- * Caches (all prefixed "ns-"; anything else with that prefix is deleted on activate):
- *   ns-static-<BUILD>  precache: /offline/, /, icons, manifest (+ the CSS/JS those pages need)
- *   ns-pages-v1        HTML of pages you visited (network-first, capped)
- *   ns-assets-v1       /_astro/* CSS/JS + fonts — content-hashed → cache-first (capped)
- *   ns-images-v1       images — /_astro/* cache-first, /covers/*, /og/*… stale-while-revalidate (capped)
- *   ns-search-v1       Pagefind runtime files (hashed fragments cache-first, entry/js network-first)
- *   ns-saved-v1        articles the reader bookmarked + their CSS/JS/cover — never evicted,
- *                      managed only by messages from the page (cache-post / uncache-post / sync-saved)
+ * Caches (all prefixed "ns-"; any other "ns-" cache is deleted on activate):
+ *   ns-static-<VERSION>  precache: /offline/ and / (+ the CSS/JS they need), icons, manifest.
+ *                        Re-fetched on every SW install and, while online, at most every 6 h,
+ *                        so it follows deploys even when this file doesn't change.
+ *   ns-pages-v1          HTML of pages you visited (network-first, capped, LRU-ish)
+ *   ns-assets-v1         /_astro/* CSS/JS — content-hashed → cache-first (capped)
+ *   ns-fonts-v1          fonts — cache-first (capped; separate so page churn can't evict them)
+ *   ns-images-v1         images — /_astro/* cache-first, /covers/*, /og/*… stale-while-revalidate (capped)
+ *   ns-search-v1         Pagefind (hashed fragments cache-first, entry/js network-first) + search-index.json
+ *   ns-saved-v1          articles the reader bookmarked + their CSS/JS/images — never evicted;
+ *                        changed only by messages from the page (cache-post / uncache-post / sync-saved)
  * Never touched: non-GET, other origins, /api/*, /admin/*, /cdn-cgi/*, range requests.
  *
- * BUILD is stamped by the build (see integration notes); if it is left as-is the SW still works,
- * it just won't re-precache until this file changes.
+ * HTML is ALWAYS network-first, so a deploy is visible on the next online navigation; cached HTML
+ * is only used when the network fails, answers 5xx, or takes longer than NAV_TIMEOUT.
+ * Bump VERSION when the precache list or cache layout changes.
  */
-const BUILD = '__BUILD_ID__';
-const STATIC = `ns-static-${BUILD}`;
+const VERSION = 'v2';
+const STATIC = `ns-static-${VERSION}`;
 const PAGES = 'ns-pages-v1';
 const ASSETS = 'ns-assets-v1';
+const FONTS = 'ns-fonts-v1';
 const IMAGES = 'ns-images-v1';
 const SEARCH = 'ns-search-v1';
 const SAVED = 'ns-saved-v1';
-const KEEP = [STATIC, PAGES, ASSETS, IMAGES, SEARCH, SAVED];
-const LIMITS = { [PAGES]: 60, [ASSETS]: 250, [IMAGES]: 80, [SEARCH]: 200 };
+const KEEP = [STATIC, PAGES, ASSETS, FONTS, IMAGES, SEARCH, SAVED];
+const LIMITS = { [PAGES]: 60, [ASSETS]: 200, [FONTS]: 60, [IMAGES]: 120, [SEARCH]: 200 };
 
 const OFFLINE_URL = '/offline/';
-const PRECACHE_PAGES = [OFFLINE_URL, '/'];
-const PRECACHE_FILES = ['/manifest.webmanifest', '/favicon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+const PRECACHE_FILES = ['/manifest.webmanifest', '/favicon.svg', '/favicon.ico', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
+/** Marker written by an install that replaces a running SW; consumed on activate. */
+const UPDATE_FLAG = '/__ns-sw-updated';
 const NAV_TIMEOUT = 3000;
-const SHELL_MAX_AGE = 24 * 3600 * 1000;
+const SHELL_MAX_AGE = 6 * 3600 * 1000;
+const SHELL_CHECK_EVERY = 30 * 60 * 1000;
 
 const ORIGIN = self.location.origin;
 const MATCH = { ignoreVary: true };
@@ -37,35 +44,37 @@ const MATCH = { ignoreVary: true };
 /* ------------------------------------------------------------------ */
 
 function isBlocked(path) {
-  return (
-    path.startsWith('/api/') ||
-    path === '/api' ||
-    path.startsWith('/admin/') ||
-    path === '/admin' ||
-    path.startsWith('/cdn-cgi/') ||
-    path === '/sw.js'
-  );
+  return /^\/(?:api|admin|cdn-cgi)(?:\/|$)/.test(path) || path === '/sw.js';
 }
 
-/** Same-origin, non-blocked "path?query" for a URL coming from a message — or null. */
-function localPath(input) {
-  if (typeof input !== 'string' || !input) return null;
-  try {
-    const u = new URL(input, ORIGIN);
-    if (u.origin !== ORIGIN || isBlocked(u.pathname)) return null;
-    return u.pathname + u.search;
-  } catch {
-    return null;
-  }
-}
-
-const isPage = (url) => new URL(url, ORIGIN).pathname.endsWith('/');
+const HAS_EXT = /\.[a-z0-9]+$/i;
 const IMG_EXT = /\.(?:png|jpe?g|gif|webp|avif|svg|ico)$/i;
 const FONT_EXT = /\.(?:woff2?|ttf|otf)$/i;
 const isImage = (req, path) => req.destination === 'image' || IMG_EXT.test(path);
 const isFont = (req, path) => req.destination === 'font' || FONT_EXT.test(path);
 /** Pagefind files whose names carry a content hash (safe to cache forever). */
 const isHashedPagefind = (path) => /^\/pagefind\/(?:fragment|index|filter)\//.test(path) || /\.pf_meta$/.test(path);
+const isPagePath = (path) => path.endsWith('/');
+
+/** Same-origin, non-blocked pathname for a URL coming from a message — or null. Query/hash dropped. */
+function localPath(input) {
+  if (typeof input !== 'string' || !input) return null;
+  try {
+    const u = new URL(input, ORIGIN);
+    if (u.origin !== ORIGIN || isBlocked(u.pathname)) return null;
+    return u.pathname;
+  } catch {
+    return null;
+  }
+}
+
+/** Pages are static (the query never changes the HTML) and live at "/dir/" (trailingSlash: always). */
+function pagePath(input) {
+  const p = localPath(input);
+  if (!p) return null;
+  return isPagePath(p) || HAS_EXT.test(p) ? p : `${p}/`;
+}
+const pageKey = (path) => new URL(path, ORIGIN).href;
 
 function withTimeout(promise, ms) {
   return new Promise((resolve, reject) => {
@@ -83,10 +92,11 @@ function withTimeout(promise, ms) {
   });
 }
 
-const cacheable = (res) => res && res.ok && res.type === 'basic';
+const cacheable = (res) => !!res && res.ok && res.type === 'basic';
+const isHtml = (res) => (res.headers.get('content-type') || '').includes('text/html');
 
 const trimming = new Map();
-/** Delete the oldest entries above the cap (Cache Storage keeps insertion order). */
+/** Delete the oldest entries above the cap (Cache Storage keeps insertion order; put() re-appends). */
 function trim(name) {
   const max = LIMITS[name];
   if (!max) return Promise.resolve();
@@ -112,40 +122,88 @@ async function put(name, key, res) {
   }
 }
 
-/** HTML stored with our own headers (and never a "redirected" response, which navigations reject). */
+/**
+ * HTML stored with our own metadata. Built from text, so it is never "redirected" (navigations
+ * reject those) and must not keep the transport headers of the original body.
+ */
 function htmlResponse(html, from, extra = {}) {
   const headers = new Headers(from.headers);
+  for (const h of ['content-length', 'content-encoding', 'transfer-encoding', 'set-cookie']) headers.delete(h);
+  headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.set('X-NS-Cached-At', String(Date.now()));
   for (const [k, v] of Object.entries(extra)) headers.set(k, v);
   return new Response(html, { status: 200, statusText: 'OK', headers });
 }
 
-const ASSET_RE = /(?:href|src)=["']?(\/(?:_astro|covers)\/[^"'\s>]+)/g;
-const JS_IMPORT_RE = /(?:\bfrom|\bimport)\s*\(?\s*["'](\.{1,2}\/[^"']+?\.js)["']/g;
+/* ---------- What a page needs to work offline ---------- */
 
-/** CSS/JS/images a page references directly (root-relative /_astro/ and /covers/ URLs). */
-function extractAssets(html) {
+const LOCAL_ASSET = /^\/(?:_astro|covers|og)\//;
+const JS_IMPORT_RE = /(?:\bfrom|\bimport)\s*\(?\s*["']((?:\.{1,2}\/|\/_astro\/)[^"']+?\.js)["']/g;
+
+function attr(tag, name) {
+  const m = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(tag);
+  return m ? (m[1] ?? m[2] ?? m[3]) : null;
+}
+
+/** The largest srcset candidate (else src): one good copy; other sizes fall back to it offline. */
+function pickImage(tag) {
+  const srcset = attr(tag, 'srcset');
+  if (srcset) {
+    let best = null;
+    let bestW = -1;
+    for (const part of srcset.split(',')) {
+      const [u, d] = part.trim().split(/\s+/);
+      const w = parseFloat(d || '') || 1;
+      if (u && w > bestW) {
+        best = u;
+        bestW = w;
+      }
+    }
+    if (best) return best;
+  }
+  return attr(tag, 'src');
+}
+
+/** CSS/JS (and optionally images) a page references, as root-relative /_astro/, /covers/, /og/ paths. */
+function extractAssets(html, { images = true } = {}) {
   const out = new Set();
-  for (const m of html.matchAll(ASSET_RE)) out.add(m[1].replace(/&amp;/g, '&'));
+  const add = (u) => {
+    if (!u) return;
+    const p = localPath(u.replace(/&amp;/g, '&'));
+    if (p && LOCAL_ASSET.test(p)) out.add(p);
+  };
+  for (const [tag] of html.matchAll(/<link\b[^>]*>/gi)) {
+    if (/\brel\s*=\s*["']?(?:stylesheet|modulepreload)\b/i.test(tag)) add(attr(tag, 'href'));
+  }
+  for (const [tag] of html.matchAll(/<script\b[^>]*>/gi)) add(attr(tag, 'src'));
+  if (images) {
+    // Thumbnails of *other* posts (related cards) aren't needed to read this one offline.
+    const own = html.replace(/<article class="post-card[\s\S]*?<\/article>/g, '');
+    for (const [tag] of own.matchAll(/<img\b[^>]*>/gi)) add(pickImage(tag));
+  }
   return [...out];
 }
 
-/** Get an asset into `cache` (reusing any copy from another cache first). */
-async function cacheAsset(cache, path) {
-  let res = await cache.match(path, MATCH);
-  if (res) return res;
-  res = await caches.match(path, MATCH);
-  if (!res) {
-    res = await fetch(path, { credentials: 'same-origin' });
-    if (!cacheable(res)) throw new Error(`HTTP ${res.status} ${path}`);
+/** Get an asset into `cache` — reusing a copy from any cache unless `fresh`. */
+async function cacheAsset(cache, path, fresh = false) {
+  if (!fresh) {
+    const own = await cache.match(path, MATCH);
+    if (own) return own;
+    const other = await caches.match(path, MATCH);
+    if (other) {
+      await cache.put(path, other.clone());
+      return other;
+    }
   }
+  const res = await fetch(path, { credentials: 'same-origin', cache: fresh ? 'no-cache' : 'default' });
+  if (!cacheable(res)) throw new Error(`HTTP ${res.status} ${path}`);
   await cache.put(path, res.clone());
   return res;
 }
 
 /** Cache a page's assets plus the JS chunks its scripts import (so it works fully offline). */
-async function cachePageAssets(cache, html) {
-  const all = new Set(extractAssets(html));
+async function cachePageAssets(cache, html, opts) {
+  const all = new Set(extractAssets(html, opts));
   const queue = [...all].filter((p) => p.endsWith('.js'));
   await Promise.allSettled([...all].filter((p) => !p.endsWith('.js')).map((p) => cacheAsset(cache, p)));
   while (queue.length) {
@@ -161,39 +219,63 @@ async function cachePageAssets(cache, html) {
         }
       }
     } catch {
-      /* missing chunk: the page still renders, only that script is lost */
+      all.delete(js); // missing chunk: the page still renders, only that script is lost
     }
   }
   return [...all];
 }
 
-/** Fetch a page fresh and store it (+ its assets) in `cache`. Throws if the page can't be fetched. */
-async function cachePage(cache, path, extra = {}) {
-  const res = await fetch(new Request(path, { cache: 'no-cache', credentials: 'same-origin' }));
-  if (!res.ok || res.type !== 'basic') throw new Error(`HTTP ${res.status} ${path}`);
-  return storePageInto(cache, path, res, extra);
+/** Store page HTML (+ its assets) in `cache` under `path`. */
+async function storePage(cache, path, html, from, extra = {}, opts) {
+  const assets = await cachePageAssets(cache, html, opts);
+  await cache.put(pageKey(path), htmlResponse(html, from, { 'X-NS-Assets': assets.join(','), ...extra }));
+  return assets;
 }
 
-async function storePageInto(cache, key, res, extra = {}) {
-  const html = await res.text();
-  const assets = await cachePageAssets(cache, html);
-  await cache.put(key, htmlResponse(html, res, { 'X-NS-Assets': assets.join(','), ...extra }));
-  return assets;
+/** Fetch a page fresh and store it (+ its assets). Throws if the page can't be fetched. */
+async function cachePage(cache, path, extra = {}, opts) {
+  const res = await fetch(new Request(path, { cache: 'no-cache', credentials: 'same-origin' }));
+  if (!cacheable(res) || !isHtml(res)) throw new Error(`HTTP ${res.status} ${path}`);
+  return storePage(cache, path, await res.text(), res, extra, opts);
+}
+
+/** Drop entries no stored page references any more (pages + X-NS-Assets + X-NS-Cover + `alsoKeep`). */
+async function gcCache(name, alsoKeep = []) {
+  const cache = await caches.open(name);
+  const keys = await cache.keys();
+  const keep = new Set(alsoKeep);
+  for (const k of keys) {
+    const path = new URL(k.url).pathname;
+    if (!isPagePath(path)) continue;
+    keep.add(path);
+    const res = await cache.match(k, MATCH);
+    for (const a of (res?.headers.get('X-NS-Assets') || '').split(',')) if (a) keep.add(a);
+    const cover = res?.headers.get('X-NS-Cover');
+    if (cover) keep.add(cover);
+  }
+  for (const k of keys) if (!keep.has(new URL(k.url).pathname)) await cache.delete(k);
 }
 
 /* ------------------------------------------------------------------ */
 /* Lifecycle                                                            */
 /* ------------------------------------------------------------------ */
 
+const SHELL_OPTS = { images: false };
+
+async function precacheShell(cache) {
+  await cachePage(cache, OFFLINE_URL, {}, SHELL_OPTS); // required: without it there is no offline fallback
+  await Promise.allSettled([cachePage(cache, '/', {}, SHELL_OPTS), ...PRECACHE_FILES.map((p) => cacheAsset(cache, p, true))]);
+}
+
 self.addEventListener('install', (event) => {
+  // An active worker already exists → this install is an update, not the first visit.
+  const replacing = !!self.registration.active;
   event.waitUntil(
     (async () => {
       const cache = await caches.open(STATIC);
-      await cachePage(cache, OFFLINE_URL); // required: without it there is no offline fallback
-      await Promise.allSettled([
-        ...PRECACHE_PAGES.filter((p) => p !== OFFLINE_URL).map((p) => cachePage(cache, p)),
-        ...PRECACHE_FILES.map((p) => cacheAsset(cache, p)),
-      ]);
+      await precacheShell(cache);
+      await gcCache(STATIC, PRECACHE_FILES);
+      if (replacing) await cache.put(UPDATE_FLAG, new Response('1'));
       await self.skipWaiting();
     })(),
   );
@@ -203,13 +285,12 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
-      const stale = names.filter((n) => n.startsWith('ns-') && !KEEP.includes(n));
-      await Promise.all(stale.map((n) => caches.delete(n)));
+      await Promise.all(names.filter((n) => n.startsWith('ns-') && !KEEP.includes(n)).map((n) => caches.delete(n)));
+      if (self.registration.navigationPreload) await self.registration.navigationPreload.enable().catch(() => {});
       await self.clients.claim();
-      // A previous precache existed → this is an update, not the first install.
-      if (stale.some((n) => n.startsWith('ns-static-'))) {
-        const clients = await self.clients.matchAll({ type: 'window' });
-        for (const c of clients) c.postMessage({ type: 'updated' });
+      const cache = await caches.open(STATIC);
+      if (await cache.delete(UPDATE_FLAG)) {
+        for (const c of await self.clients.matchAll({ type: 'window' })) c.postMessage({ type: 'updated' });
       }
     })(),
   );
@@ -235,48 +316,42 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(isHashedPagefind(path) ? cacheFirst(event, SEARCH) : networkFirst(event, SEARCH));
     return;
   }
+  if (path === '/search-index.json') {
+    event.respondWith(networkFirst(event, SEARCH));
+    return;
+  }
+  if (isFont(req, path)) {
+    event.respondWith(cacheFirst(event, FONTS));
+    return;
+  }
   if (isImage(req, path)) {
     event.respondWith(path.startsWith('/_astro/') ? cacheFirst(event, IMAGES) : staleWhileRevalidate(event, IMAGES));
     return;
   }
-  if (path.startsWith('/_astro/') || isFont(req, path)) {
+  if (path.startsWith('/_astro/')) {
     event.respondWith(cacheFirst(event, ASSETS));
-    return;
-  }
-  if (path === '/search-index.json') {
-    event.respondWith(networkFirst(event, PAGES));
   }
   // Everything else: the browser's normal network behaviour.
 });
 
-/** Look a page up in every cache that may hold it; tolerant to a missing trailing slash and query. */
+/** A cached copy of a page from any page cache; tolerant to a missing trailing slash and any query. */
 async function matchPage(urlString) {
-  const u = new URL(urlString);
-  u.hash = '';
-  const exact = u.href;
-  const slash = u.pathname.endsWith('/') ? null : new URL(u.pathname + '/' + u.search, ORIGIN).href;
-  for (const key of [exact, slash]) {
-    if (!key) continue;
-    for (const cacheName of [PAGES, SAVED, STATIC]) {
-      const hit = await caches.match(key, { cacheName, ...MATCH });
-      if (hit) return hit;
-    }
-  }
-  if (u.search) {
-    for (const cacheName of [PAGES, SAVED, STATIC]) {
-      const hit = await caches.match(exact, { cacheName, ignoreSearch: true, ...MATCH });
-      if (hit) return hit;
-    }
+  const path = pagePath(urlString);
+  if (!path) return undefined;
+  const key = pageKey(path);
+  for (const cacheName of [PAGES, SAVED, STATIC]) {
+    const hit = await caches.match(key, { cacheName, ignoreSearch: true, ...MATCH });
+    if (hit) return hit;
   }
   return undefined;
 }
 
 async function offlineFallback() {
-  const hit = await caches.match(OFFLINE_URL, { cacheName: STATIC, ...MATCH });
+  const hit = await caches.match(pageKey(OFFLINE_URL), { cacheName: STATIC, ...MATCH });
   if (hit) return hit;
   return new Response(
     '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<title>Bạn đang offline · Nhịp Số</title><style>:root{color-scheme:light dark}body{font:17px/1.6 system-ui,sans-serif;max-width:34rem;margin:15vh auto;padding:0 20px}</style>' +
+      '<title>Bạn đang offline · Nhịp Số</title><style>:root{color-scheme:light dark}body{font:17px/1.6 system-ui,sans-serif;max-width:34rem;margin:15vh auto;padding:0 20px}button{font:inherit;min-height:44px;padding:0 18px}</style>' +
       '<h1>Bạn đang offline</h1><p>Không tải được trang này. Kiểm tra kết nối mạng rồi thử lại nhé.</p><p><button onclick="location.reload()">Thử lại</button></p></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } },
   );
@@ -286,18 +361,17 @@ async function offlineFallback() {
 async function navigate(event) {
   const req = event.request;
   const network = (async () => {
-    const res = await fetch(req);
-    if (cacheable(res) && (res.headers.get('content-type') || '').includes('text/html')) {
-      const copy = res.clone();
-      event.waitUntil(afterNavigation(req.url, copy));
-    }
+    const preloaded = await Promise.resolve(event.preloadResponse).catch(() => undefined);
+    const res = preloaded || (await fetch(req));
+    if (cacheable(res) && isHtml(res)) event.waitUntil(afterNavigation(req.url, res.clone()));
     return res;
   })();
   // Keep the worker alive until the network settles, even if we answered from cache first.
   event.waitUntil(network.catch(() => {}));
 
+  let res;
   try {
-    return await withTimeout(network, NAV_TIMEOUT);
+    res = await withTimeout(network, NAV_TIMEOUT);
   } catch {
     const cached = await matchPage(req.url);
     if (cached) return cached;
@@ -307,22 +381,24 @@ async function navigate(event) {
       return offlineFallback();
     }
   }
+  if (res.status >= 500) return (await matchPage(req.url)) || res;
+  return res;
 }
 
 /** Store a fresh page; refresh the saved copy if it's a bookmarked article; keep the shell fresh. */
 async function afterNavigation(urlString, res) {
   try {
-    const u = new URL(urlString);
-    u.hash = '';
-    const key = u.href;
+    const path = pagePath(urlString);
+    if (!path) return;
+    const html = await res.text();
+    await put(PAGES, pageKey(path), htmlResponse(html, res));
     const savedCache = await caches.open(SAVED);
-    const saved = await savedCache.match(key, MATCH);
+    const saved = await savedCache.match(pageKey(path), MATCH);
     if (saved) {
       const cover = saved.headers.get('X-NS-Cover') || '';
-      await storePageInto(savedCache, key, res.clone(), cover ? { 'X-NS-Cover': cover } : {});
-      await gcSaved();
+      await storePage(savedCache, path, html, res, cover ? { 'X-NS-Cover': cover } : {});
+      await gcCache(SAVED);
     }
-    await put(PAGES, key, htmlResponse(await res.text(), res));
     await refreshShell();
   } catch {
     /* best effort */
@@ -330,14 +406,16 @@ async function afterNavigation(urlString, res) {
 }
 
 let shellCheckedAt = 0;
-/** Re-precache /offline/ (and its CSS/JS) once a day, so it matches the current deploy. */
+/** While online, re-precache /offline/ and / when older than SHELL_MAX_AGE (so they match the current deploy). */
 async function refreshShell() {
-  if (Date.now() - shellCheckedAt < 3600 * 1000) return;
+  if (Date.now() - shellCheckedAt < SHELL_CHECK_EVERY) return;
   shellCheckedAt = Date.now();
   const cache = await caches.open(STATIC);
-  const hit = await cache.match(OFFLINE_URL, MATCH);
+  const hit = await cache.match(pageKey(OFFLINE_URL), MATCH);
   const at = Number(hit && hit.headers.get('X-NS-Cached-At')) || 0;
-  if (Date.now() - at > SHELL_MAX_AGE) await cachePage(cache, OFFLINE_URL).catch(() => {});
+  if (Date.now() - at < SHELL_MAX_AGE) return;
+  await precacheShell(cache);
+  await gcCache(STATIC, PRECACHE_FILES);
 }
 
 async function cacheFirst(event, name) {
@@ -349,7 +427,8 @@ async function cacheFirst(event, name) {
     if (cacheable(res)) event.waitUntil(put(name, req, res.clone()));
     return res;
   } catch {
-    return name === IMAGES ? imagePlaceholder() : Response.error();
+    if (name === IMAGES) return (await siblingImage(new URL(req.url).pathname)) || imagePlaceholder();
+    return Response.error();
   }
 }
 
@@ -378,9 +457,34 @@ async function networkFirst(event, name) {
     if (cacheable(res)) event.waitUntil(put(name, req, res.clone()));
     return res;
   } catch {
-    const hit = await caches.match(req, MATCH);
-    return hit || Response.error();
+    return (await caches.match(req, MATCH)) || Response.error();
   }
+}
+
+/** "/_astro/cover.AbCd1234_x9Y.webp" → "/_astro/cover.AbCd1234" (all sizes of one Astro image share it). */
+const VARIANT_RE = /^(\/_astro\/.+\.[\w-]{8})(?:_[\w-]+)?\.(?:webp|avif|png|jpe?g|gif)$/i;
+
+/** Offline and this size isn't cached? Any other cached size of the same picture is better than nothing. */
+async function siblingImage(path) {
+  const m = VARIANT_RE.exec(path);
+  if (!m) return undefined;
+  const base = m[1];
+  for (const name of [SAVED, IMAGES, STATIC]) {
+    try {
+      if (!(await caches.has(name))) continue;
+      const cache = await caches.open(name);
+      for (const k of await cache.keys()) {
+        const p = new URL(k.url).pathname;
+        if (p !== path && (p.startsWith(`${base}_`) || p.startsWith(`${base}.`)) && IMG_EXT.test(p)) {
+          const hit = await cache.match(k, MATCH);
+          if (hit) return hit;
+        }
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }
+  return undefined;
 }
 
 /** Neutral picture shown for images that aren't available offline (works on light and dark pages). */
@@ -397,8 +501,8 @@ function imagePlaceholder() {
 /* ------------------------------------------------------------------ */
 
 async function savePost(url, cover) {
-  const path = localPath(url);
-  if (!path) return false;
+  const path = pagePath(url);
+  if (!path || !isPagePath(path)) return false;
   const coverPath = localPath(cover) || '';
   const cache = await caches.open(SAVED);
   const extra = coverPath ? { 'X-NS-Cover': coverPath } : {};
@@ -408,10 +512,14 @@ async function savePost(url, cover) {
     ok = true;
   } catch {
     // Offline right now? Promote the copy we already have from a recent visit.
-    const hit = await matchPage(new URL(path, ORIGIN).href);
+    const hit = await matchPage(pageKey(path));
     if (hit) {
-      await storePageInto(cache, path, hit, extra).catch(() => {});
-      ok = true;
+      try {
+        await storePage(cache, path, await hit.text(), hit, extra);
+        ok = true;
+      } catch {
+        /* storage full */
+      }
     }
   }
   if (ok && coverPath) await cacheAsset(cache, coverPath).catch(() => {});
@@ -419,46 +527,25 @@ async function savePost(url, cover) {
 }
 
 async function unsavePost(url) {
-  const path = localPath(url);
+  const path = pagePath(url);
   if (!path) return;
   const cache = await caches.open(SAVED);
-  await cache.delete(path, { ignoreSearch: false, ...MATCH });
-  await gcSaved();
-}
-
-/** Drop CSS/JS/covers no longer referenced by any saved article. */
-async function gcSaved() {
-  const cache = await caches.open(SAVED);
-  const keys = await cache.keys();
-  const keep = new Set();
-  const pages = keys.filter((k) => isPage(k.url));
-  for (const k of pages) {
-    const res = await cache.match(k, MATCH);
-    if (!res) continue;
-    keep.add(new URL(k.url).pathname + new URL(k.url).search);
-    for (const a of (res.headers.get('X-NS-Assets') || '').split(',')) if (a) keep.add(a);
-    const cover = res.headers.get('X-NS-Cover');
-    if (cover) keep.add(cover);
-  }
-  for (const k of keys) {
-    const u = new URL(k.url);
-    if (!keep.has(u.pathname + u.search) && !keep.has(u.pathname)) await cache.delete(k);
-  }
+  await cache.delete(pageKey(path), MATCH);
+  await gcCache(SAVED);
 }
 
 /** Make the saved cache mirror the reader's bookmark list. Returns the paths now available. */
 async function syncSaved(posts) {
   const want = new Map();
   for (const p of Array.isArray(posts) ? posts.slice(0, 500) : []) {
-    const path = localPath(p && p.url);
-    if (path) want.set(path, p.cover);
+    const path = pagePath(p && p.url);
+    if (path && isPagePath(path)) want.set(path, p.cover);
   }
   const cache = await caches.open(SAVED);
   const have = new Set();
   for (const k of await cache.keys()) {
-    if (!isPage(k.url)) continue;
-    const u = new URL(k.url);
-    const path = u.pathname + u.search;
+    const path = new URL(k.url).pathname;
+    if (!isPagePath(path)) continue;
     if (want.has(path)) have.add(path);
     else await cache.delete(k);
   }
@@ -471,7 +558,7 @@ async function syncSaved(posts) {
     }
   });
   await Promise.all(workers);
-  await gcSaved();
+  await gcCache(SAVED);
   return [...have];
 }
 
