@@ -1,10 +1,12 @@
 ---
 /**
- * Newsletter sign-up. Posts to /api/subscribe (Cloudflare Worker + D1, see worker/).
- * Contract: POST JSON { email, website } -> { ok: true, status: 'subscribed' | 'exists' } | { ok: false, error }
+ * Newsletter sign-up. Posts to /api/subscribe (Cloudflare Worker + D1, see worker/ and docs/CLOUDFLARE.md).
+ * Contract: POST JSON { email, website, token?, source? } -> { ok: true, status: 'subscribed' | 'exists' } | { ok: false, error }
  * `website` is a honeypot field that humans never see.
+ * Optional Cloudflare Turnstile (src/config.ts → TURNSTILE.siteKey): its script loads only when the reader
+ * first focuses the form, and in "interaction-only" mode it is usually invisible.
  */
-import { SITE } from '../../config';
+import { SITE, TURNSTILE } from '../../config';
 import Icon from '../ui/Icon.astro';
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 }
 const { variant = 'card' } = Astro.props;
 const enabled = SITE.features.newsletter;
+const siteKey = TURNSTILE.siteKey.trim();
 ---
 
 {
@@ -25,11 +28,11 @@ const enabled = SITE.features.newsletter;
         </div>
       )}
       {variant === 'footer' && <p class="mb-3 font-semibold">Nhận bài mới qua email — tối đa 1 lần/tuần.</p>}
-      <form class="newsletter-form" data-newsletter novalidate>
+      <form class="newsletter-form" data-newsletter data-source={variant} data-sitekey={siteKey || undefined} novalidate>
         <label class="sr-only" for={`nl-email-${variant}`}>
           Email của bạn
         </label>
-        <div class="field">
+        <div class="field" data-field>
           <Icon name="mail" size={18} class="field-icon" />
           <input
             id={`nl-email-${variant}`}
@@ -38,15 +41,31 @@ const enabled = SITE.features.newsletter;
             required
             autocomplete="email"
             inputmode="email"
+            autocapitalize="off"
+            spellcheck="false"
             placeholder="ban@email.com"
             enterkeyhint="send"
+            aria-describedby={`nl-status-${variant}`}
           />
-          <button type="submit" class="btn btn-primary shrink-0">
+          <button type="submit" class="btn btn-primary nl-submit shrink-0">
+            <span class="nl-spinner" aria-hidden="true" />
             <span data-label>Đăng ký</span>
           </button>
         </div>
+        <div class="field nl-done" data-done tabindex="-1" hidden>
+          <span class="nl-done-icon" aria-hidden="true">
+            <Icon name="check" size={16} strokeWidth={3} />
+          </span>
+          <span class="nl-done-text" data-done-text>
+            Đã đăng ký!
+          </span>
+          <button type="button" class="nl-again" data-again>
+            Dùng email khác
+          </button>
+        </div>
+        {siteKey && <div class="nl-turnstile" data-turnstile />}
         <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
-        <p class="status" role="status" aria-live="polite" />
+        <p class="status" id={`nl-status-${variant}`} role="status" aria-live="polite" />
       </form>
     </div>
   )
@@ -64,10 +83,14 @@ const enabled = SITE.features.newsletter;
       radial-gradient(400px 200px at 0% 100%, color-mix(in oklab, var(--hot) 10%, transparent), transparent 70%),
       var(--bg-elevated);
   }
+  .newsletter-form {
+    max-width: 560px;
+  }
   .field {
     display: flex;
     align-items: center;
     gap: 6px;
+    min-height: 56px;
     padding: 5px 5px 5px 14px;
     border: 1px solid var(--border-strong);
     border-radius: 999px;
@@ -79,6 +102,34 @@ const enabled = SITE.features.newsletter;
   .field:focus-within {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+  .field[data-invalid] {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--danger) 14%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .field[data-invalid] {
+      animation: nl-shake 360ms var(--ease-out);
+    }
+    .nl-done:not([hidden]) {
+      animation: nl-in 360ms var(--ease-spring);
+    }
+  }
+  @keyframes nl-shake {
+    20%,
+    60% {
+      transform: translateX(-5px);
+    }
+    40%,
+    80% {
+      transform: translateX(5px);
+    }
+  }
+  @keyframes nl-in {
+    from {
+      transform: scale(0.96);
+      opacity: 0;
+    }
   }
   .field :global(.field-icon) {
     flex-shrink: 0;
@@ -96,6 +147,82 @@ const enabled = SITE.features.newsletter;
   }
   .field input::placeholder {
     color: var(--fg-subtle);
+  }
+  .field input:read-only {
+    color: var(--fg-muted);
+  }
+
+  .nl-submit {
+    position: relative;
+  }
+  .nl-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 99px;
+    border: 2px solid color-mix(in oklab, var(--accent-fg) 35%, transparent);
+    border-top-color: var(--accent-fg);
+  }
+  .newsletter-form[aria-busy='true'] .nl-spinner {
+    display: inline-block;
+    animation: nl-spin 700ms linear infinite;
+  }
+  .newsletter-form[aria-busy='true'] .nl-submit {
+    cursor: progress;
+    opacity: 0.92;
+  }
+  @keyframes nl-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .nl-done {
+    gap: 10px;
+    padding-left: 8px;
+    border-color: color-mix(in oklab, var(--success) 45%, var(--border));
+    background: color-mix(in oklab, var(--success) 8%, var(--bg-elevated));
+    outline: none;
+  }
+  .nl-done:focus-visible {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--success) 22%, transparent);
+  }
+  .nl-done-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 99px;
+    background: var(--success);
+    color: var(--bg-elevated);
+  }
+  .nl-done-text {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--fg);
+    line-height: 1.3;
+  }
+  .nl-again {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .nl-again:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+
+  .nl-turnstile:not(:empty) {
+    margin-top: 10px;
   }
   .hp {
     position: absolute;
@@ -120,54 +247,166 @@ const enabled = SITE.features.newsletter;
 </style>
 
 <script>
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  import { subscribe, isValidEmail } from '../../scripts/api';
 
-  document.querySelectorAll<HTMLFormElement>('form[data-newsletter]').forEach((form) => {
-    if (form.dataset.wired) return;
-    form.dataset.wired = '1';
+  type Turnstile = {
+    render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+    reset: (id: string) => void;
+  };
+  const w = window as unknown as { turnstile?: Turnstile };
+
+  let turnstileLoad: Promise<Turnstile | null> | null = null;
+  function loadTurnstile(): Promise<Turnstile | null> {
+    turnstileLoad ??= new Promise((resolve) => {
+      if (w.turnstile) return resolve(w.turnstile);
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true;
+      s.onload = () => resolve(w.turnstile ?? null);
+      s.onerror = () => {
+        turnstileLoad = null;
+        resolve(null);
+      };
+      document.head.append(s);
+    });
+    return turnstileLoad;
+  }
+
+  function wire(form: HTMLFormElement) {
     const status = form.querySelector<HTMLElement>('.status')!;
+    const field = form.querySelector<HTMLElement>('[data-field]')!;
+    const input = field.querySelector<HTMLInputElement>('input[name=email]')!;
     const button = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
     const label = button.querySelector<HTMLElement>('[data-label]')!;
+    const done = form.querySelector<HTMLElement>('[data-done]')!;
+    const doneText = done.querySelector<HTMLElement>('[data-done-text]')!;
+    const sitekey = form.dataset.sitekey || '';
+    const tsSlot = form.querySelector<HTMLElement>('[data-turnstile]');
 
     const say = (msg: string, tone: 'ok' | 'error' | '' = '') => {
       status.textContent = msg;
       status.dataset.tone = tone;
     };
+    const invalid = (on: boolean) => {
+      if (on) {
+        delete field.dataset.invalid;
+        void field.offsetWidth; // replay the shake
+        field.dataset.invalid = '';
+        input.setAttribute('aria-invalid', 'true');
+      } else {
+        delete field.dataset.invalid;
+        input.removeAttribute('aria-invalid');
+      }
+    };
+
+    // ---- Turnstile (optional) ----
+    let widgetId: string | undefined;
+    let token = '';
+    const waiters: ((t: string) => void)[] = [];
+    async function ensureWidget() {
+      if (!sitekey || !tsSlot || widgetId !== undefined) return;
+      const ts = await loadTurnstile();
+      if (!ts || widgetId !== undefined) return;
+      widgetId = ts.render(tsSlot, {
+        sitekey,
+        action: 'subscribe',
+        appearance: 'interaction-only',
+        language: 'vi',
+        theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+        callback: (t: string) => {
+          token = t;
+          waiters.splice(0).forEach((fn) => fn(t));
+        },
+        'expired-callback': () => (token = ''),
+        'error-callback': () => {
+          token = '';
+        },
+      });
+    }
+    function getToken(timeout = 8000): Promise<string> {
+      if (!sitekey) return Promise.resolve('');
+      if (token) return Promise.resolve(token);
+      return new Promise((resolve) => {
+        waiters.push(resolve);
+        ensureWidget();
+        setTimeout(() => resolve(token), timeout);
+      });
+    }
+    if (sitekey) form.addEventListener('focusin', () => ensureWidget(), { once: true });
+
+    input.addEventListener('input', () => {
+      if (field.dataset.invalid) {
+        invalid(false);
+        say('');
+      }
+    });
+
+    done.querySelector('[data-again]')!.addEventListener('click', () => {
+      done.hidden = true;
+      field.hidden = false;
+      say('');
+      input.focus();
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (form.getAttribute('aria-busy') === 'true') return;
       const data = new FormData(form);
       const email = String(data.get('email') || '').trim();
-      if (!EMAIL_RE.test(email)) {
-        say('Email chưa đúng định dạng, bạn kiểm tra lại nhé.', 'error');
-        form.querySelector('input')?.focus();
+      if (!isValidEmail(email)) {
+        invalid(true);
+        say(email ? 'Email chưa đúng định dạng, bạn kiểm tra lại nhé.' : 'Bạn nhập email để nhận bài mới nhé.', 'error');
+        input.focus();
         return;
       }
-      button.disabled = true;
+      invalid(false);
+      form.setAttribute('aria-busy', 'true');
+      input.readOnly = true;
       label.textContent = 'Đang gửi…';
       say('');
+
       try {
-        const res = await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, website: data.get('website') || '' }),
+        const t = await getToken();
+        const res = await subscribe({
+          email,
+          website: String(data.get('website') || ''),
+          ...(t ? { token: t } : {}),
+          source: `${form.dataset.source || 'form'}:${location.pathname}`,
         });
-        const json = (await res.json().catch(() => ({}))) as { ok?: boolean; status?: string; error?: string };
-        if (res.ok && json.ok) {
+        if (res.ok) {
+          const fresh = res.status !== 'exists';
+          doneText.textContent = fresh ? 'Đã đăng ký thành công!' : 'Email này đã đăng ký rồi.';
           say(
-            json.status === 'exists' ? 'Email này đã đăng ký rồi — cảm ơn bạn!' : 'Đăng ký thành công. Hẹn gặp bạn trong hộp thư!',
+            fresh
+              ? 'Hẹn gặp bạn trong hộp thư — tối đa một email mỗi tuần.'
+              : 'Cảm ơn bạn vẫn luôn đồng hành cùng Nhịp Số!',
             'ok',
           );
           form.reset();
+          field.hidden = true;
+          done.hidden = false;
+          done.focus({ preventScroll: true });
         } else {
-          say(json.error || 'Chưa đăng ký được, bạn thử lại sau nhé.', 'error');
+          invalid(/email/i.test(res.error));
+          say(res.error, 'error');
+          input.focus();
         }
-      } catch {
-        say('Mất kết nối. Bạn thử lại sau nhé.', 'error');
       } finally {
-        button.disabled = false;
+        form.removeAttribute('aria-busy');
+        input.readOnly = false;
         label.textContent = 'Đăng ký';
+        // Turnstile tokens are single-use.
+        if (widgetId !== undefined) {
+          token = '';
+          w.turnstile?.reset(widgetId);
+        }
       }
     });
+  }
+
+  document.querySelectorAll<HTMLFormElement>('form[data-newsletter]').forEach((form) => {
+    if (form.dataset.wired) return;
+    form.dataset.wired = '1';
+    wire(form);
   });
 </script>

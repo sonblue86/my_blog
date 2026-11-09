@@ -14,6 +14,7 @@ import {
   REACTION_KINDS,
   emptyStats,
   isReactionKind,
+  isValidEmail,
   isValidSlug,
   type ReactionKind,
   type Stats,
@@ -22,7 +23,7 @@ import {
 } from '../../worker/shared';
 import { read, write } from '../lib/storage';
 
-export { REACTION_KINDS, isReactionKind, type ReactionKind, type Stats, type WriteResult, type SubscribeResult };
+export { REACTION_KINDS, isReactionKind, isValidEmail, type ReactionKind, type Stats, type WriteResult, type SubscribeResult };
 
 const BASE = '/api';
 export const AVAILABILITY_KEY = 'ns:api';
