@@ -1,8 +1,8 @@
 {
   "name": "Ban biên tập Nhịp Số",
   "role": "Người viết & biên tập",
-  "bio": "Chúng tôi viết về AI, công nghệ và đời sống số theo cách dễ hiểu, có kiểm chứng và hữu ích cho công việc hằng ngày. Sửa thông tin này trong src/content/authors/nhip-so.json.",
+  "bio": "Chúng tôi viết về AI, công nghệ và đời sống số theo cách dễ hiểu, có kiểm chứng và hữu ích cho công việc hằng ngày.",
   "links": {
-    "github": "https://github.com/"
+    "website": "https://nhipso.pages.dev/"
   }
 }
