@@ -13,8 +13,11 @@
 
 - `/offline/` (commit bfef420): `src/pages/offline/index.astro` + `src/scripts/library-offline-page.ts` (+7 tests `tests/unit/library-offline-page.test.ts`). Liệt kê bài trong SAVED + PAGES (+ trang chủ precache), meta từ localStorage hoặc HTML cache (chỉ parse thẻ nút bookmark/<title> qua <template> inert). "Thử lại" = reload (khi là fallback) / về referrer hoặc / (khi mở trực tiếp); tự reload khi `online`. Build + astro check 0 lỗi.
 
+- Verify (prod build + astro preview :4424, playwright-cli): SW cài + activate + controller (clients.claim); precache có /offline/, /, icons, manifest. Bookmark → ns-saved-v1 có trang + CSS/JS + cover. Mất mạng THẬT (tắt server — `network-state-set offline` của Playwright KHÔNG chặn fetch của SW): bài đã xem + bài đã lưu (kể cả chỉ có trong SAVED, thiếu "/" cuối, có ?utm) mở được, font OK; trang lạ → /offline/ với danh sách 2 bài + chip "Trang chủ/AI/Thư viện"; sự kiện `online` → tự reload. Update SW: first install KHÔNG gửi `updated`; thay SW → gửi `updated`, cờ bị xoá, /offline/ precache lại với CSS mới, CSS cũ bị GC. /thu-vien/ badge "Đọc offline được" + "1/1 bài…"; xoá cache rồi vào /thu-vien/ → sync-saved tải lại. Manifest: Chrome `getAppManifest` 0 lỗi, icon kích thước khớp, favicon/apple-touch 200. Ảnh 390/1440 light/dark trong scratchpad/shots-library. Fix trong lúc verify: căn hero/list /offline/, copy khi mở trực tiếp lúc online ("Đọc offline" / "Về trang chủ" + icon nhà).
+- Cuối: vitest 196/196, astro check 0 lỗi 0 cảnh báo, build xanh.
+
 ## Next
-7. Verify: npm run build + astro preview --port 4424; SW install/activate; bookmark → saved cache; offline → bài đã xem/lưu mở được, trang lạ → /offline/; /thu-vien/ badge; manifest/icons; 390x844 + 1440x900 light/dark cho /offline/ & /thu-vien/. astro check + vitest.
+- (xong) Còn lại chỉ là ghi chú tích hợp: thêm `!page.includes('/offline/')` vào sitemap filter trong astro.config (không thuộc quyền mình).
 
 ## Notes
 - Toaster chỉ hỗ trợ action dạng link (href) → undo làm inline ngay trên thẻ đã xoá (không sửa Toaster).
