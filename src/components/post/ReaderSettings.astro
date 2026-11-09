@@ -298,9 +298,8 @@ const widthBar = ['46%', '64%', '86%'];
       .rs[data-closing] {
         animation: rs-down 200ms var(--ease-out) forwards;
       }
-      .rs[data-dragging] {
-        animation: none;
-      }
+      /* No `[data-dragging] { animation: none }`: dropping it again would replay rs-up after a snap-back.
+         The drag handler finishes the open animation instead. */
     }
   }
   @keyframes rs-up {
@@ -638,8 +637,9 @@ const widthBar = ['46%', '64%', '86%'];
     border: 1px solid var(--border);
     border-radius: 999px;
     background: color-mix(in oklab, var(--bg-elevated) 88%, transparent);
-    backdrop-filter: blur(12px);
+    /* Prefixed first: Lightning CSS drops a standard declaration that is followed by its -webkit- twin. */
     -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     color: var(--fg-muted);
     font-size: 0.875rem;
     font-weight: 600;
@@ -678,14 +678,13 @@ const widthBar = ['46%', '64%', '86%'];
   html[data-focus-mode] .post-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
+  /* The mobile action bar slides away too (a dimmed bar let the text bleed through it); the exit pill stays. */
   html[data-focus-mode] [data-action-bar] {
-    opacity: 0.38;
+    transform: translate(-50%, calc(100% + 40px)) !important;
+    visibility: hidden;
     transition:
-      opacity 200ms var(--ease-out),
-      transform 320ms var(--ease-out);
-  }
-  html[data-focus-mode] [data-action-bar]:is(:hover, :focus-within) {
-    opacity: 1;
+      transform 320ms var(--ease-out),
+      visibility 0s linear 320ms;
   }
   html[data-focus-mode] .post-hero {
     padding-top: clamp(64px, 8vw, 88px);
@@ -838,14 +837,24 @@ const widthBar = ['46%', '64%', '86%'];
     // ---------- focus mode ----------
     function setFocusMode(on: boolean) {
       if (on === inFocus()) return;
-      root.toggleAttribute('data-focus-mode', on);
+      // The header / TOC appear or vanish and the column re-flows: keep the paragraph being read in place.
+      keepReadingPosition(() => root.toggleAttribute('data-focus-mode', on));
       if (exitBtn) exitBtn.hidden = !on;
       syncUI();
       document.dispatchEvent(new CustomEvent('ns:focus-mode', { detail: { on } }));
       if (on && !isSheet()) toast('Đang ở chế độ tập trung — nhấn Esc để thoát');
     }
     focusSwitch.addEventListener('click', () => setFocusMode(!inFocus()));
-    exitBtn?.addEventListener('click', () => setFocusMode(false));
+    exitBtn?.addEventListener('click', () => {
+      setFocusMode(false);
+      // The pill just hid itself: hand focus to a visible "Tuỳ chỉnh đọc" button instead of dropping it on <body>.
+      [...triggers()]
+        .find((t) => {
+          const r = t.getBoundingClientRect();
+          return r.width > 0 && r.bottom > 0 && r.top < innerHeight;
+        })
+        ?.focus({ preventScroll: true });
+    });
     document.addEventListener('ns:toggle-focus', () => setFocusMode(!inFocus()));
 
     // ---------- open / close ----------
@@ -972,6 +981,7 @@ const widthBar = ['46%', '64%', '86%'];
         if (!dragging && dy > 8) {
           dragging = true;
           panel.setAttribute('data-dragging', '');
+          panel.getAnimations().forEach((a) => a.finish()); // a running rs-up would override the inline transform
           panel.style.transition = 'none';
         }
         if (dragging) panel.style.transform = `translateY(${Math.max(0, dy)}px)`;
