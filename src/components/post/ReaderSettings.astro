@@ -638,8 +638,9 @@ const widthBar = ['46%', '64%', '86%'];
     border: 1px solid var(--border);
     border-radius: 999px;
     background: color-mix(in oklab, var(--bg-elevated) 88%, transparent);
-    backdrop-filter: blur(12px);
+    /* Prefixed first: Lightning CSS drops a standard declaration that is followed by its -webkit- twin. */
     -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     color: var(--fg-muted);
     font-size: 0.875rem;
     font-weight: 600;
@@ -838,14 +839,24 @@ const widthBar = ['46%', '64%', '86%'];
     // ---------- focus mode ----------
     function setFocusMode(on: boolean) {
       if (on === inFocus()) return;
-      root.toggleAttribute('data-focus-mode', on);
+      // The header / TOC appear or vanish and the column re-flows: keep the paragraph being read in place.
+      keepReadingPosition(() => root.toggleAttribute('data-focus-mode', on));
       if (exitBtn) exitBtn.hidden = !on;
       syncUI();
       document.dispatchEvent(new CustomEvent('ns:focus-mode', { detail: { on } }));
       if (on && !isSheet()) toast('Đang ở chế độ tập trung — nhấn Esc để thoát');
     }
     focusSwitch.addEventListener('click', () => setFocusMode(!inFocus()));
-    exitBtn?.addEventListener('click', () => setFocusMode(false));
+    exitBtn?.addEventListener('click', () => {
+      setFocusMode(false);
+      // The pill just hid itself: hand focus to a visible "Tuỳ chỉnh đọc" button instead of dropping it on <body>.
+      [...triggers()]
+        .find((t) => {
+          const r = t.getBoundingClientRect();
+          return r.width > 0 && r.bottom > 0 && r.top < innerHeight;
+        })
+        ?.focus({ preventScroll: true });
+    });
     document.addEventListener('ns:toggle-focus', () => setFocusMode(!inFocus()));
 
     // ---------- open / close ----------

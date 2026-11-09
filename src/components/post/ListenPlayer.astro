@@ -67,7 +67,7 @@ const ico = (svg: string, size = 20) =>
     <div class="nv-primary" data-nv-primary></div>
 
     <details class="nv-more">
-      <summary>Hướng dẫn cho thiết bị khác</summary>
+      <summary>Hướng dẫn cho thiết bị khác <Icon name="chevron-down" size={16} /></summary>
       <div data-nv-others>
         <section class="nv-step" data-nv-platform="windows">
           <h3>Windows 10 / 11</h3>
@@ -135,8 +135,9 @@ const ico = (svg: string, size = 20) =>
     border: 1px solid var(--border);
     border-radius: 20px;
     background: color-mix(in oklab, var(--bg-elevated) 92%, transparent);
-    backdrop-filter: saturate(1.6) blur(16px);
+    /* Prefixed first: Lightning CSS drops a standard declaration that is followed by its -webkit- twin. */
     -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    backdrop-filter: saturate(1.6) blur(16px);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     transition: translate 320ms var(--ease-out);
@@ -432,11 +433,23 @@ const ico = (svg: string, size = 20) =>
   .nv-more summary {
     display: flex;
     align-items: center;
+    gap: 6px;
+    width: fit-content;
     min-height: 44px;
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--fg-muted);
     cursor: pointer;
+    list-style: none;
+  }
+  .nv-more summary::-webkit-details-marker {
+    display: none;
+  }
+  .nv-more summary :global(svg) {
+    transition: rotate 200ms var(--ease-out);
+  }
+  .nv-more[open] summary :global(svg) {
+    rotate: 180deg;
   }
   .nv-more summary:hover {
     color: var(--fg);
@@ -495,6 +508,19 @@ const ico = (svg: string, size = 20) =>
 <style is:global>
   ::highlight(tts-sentence) {
     background-color: color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+  /* Toasts (Toaster.astro, bottom: 16px + --toast-offset) stack above the mini player instead of covering it. */
+  html:has([data-listen-player]:not([hidden])) {
+    --toast-offset: 137px; /* player: bottom 80px + 65px tall, 8px gap */
+  }
+  html:has([data-listen-player][data-bar-hidden]:not([hidden])) {
+    --toast-offset: 71px;
+  }
+  @media (min-width: 1024px) {
+    html:has([data-listen-player]:not([hidden])),
+    html:has([data-listen-player][data-bar-hidden]:not([hidden])) {
+      --toast-offset: 81px; /* bottom 24px, no action bar */
+    }
   }
 </style>
 
@@ -575,6 +601,7 @@ const ico = (svg: string, size = 20) =>
       btnRate.setAttribute('aria-label', `Tốc độ đọc ${fmtRate(r.rate)}. Nhấn để đổi`);
       toggles().forEach((t) => t.setAttribute('aria-pressed', String(playing)));
       if (r.state === 'idle') highlightRange();
+      else if (paused) highlightRange(r.chunks[r.index]?.range); // prev/next while paused: show where it resumes
       if (r.state !== lastState) {
         lastState = r.state;
         document.dispatchEvent(new CustomEvent('ns:listen-state', { detail: { playing, paused } }));
