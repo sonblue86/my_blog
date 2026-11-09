@@ -7,11 +7,14 @@
   xin-chao/index.mdx đang chứa phần "Thử thành phần MDX" (sẽ xoá cả bài khi có bài thật).
 - Bài 1/9 llm-hoat-dong-the-nao (mdx, Diagram inline, featured) · 2/9 viet-prompt-hieu-qua (mdx, updatedDate)
   · 3/9 rag-la-gi (mdx, Figure + rag-pipeline.svg co-located, code TS, featured). Build OK.
+- 4/9 dung-blog-astro-github-cloudflare (mdx, featured) · 5/9 passkey-dang-nhap-khong-can-mat-khau (mdx, cover.webp)
+  · 6/9 git-12-lenh-moi-ngay (mdx, Diagram inline) · 7/9 digital-detox-30-ngay (.md, cover.webp, updatedDate)
+  · 8/9 deep-work-giua-thoi-dai-thong-bao (.md).
+- Cover sinh bằng sharp: <scratchpad>/make-covers.mjs (passkey, digital-detox, zettelkasten — cover.webp đã có sẵn cả 3).
 
 ## Next
 2. 9 bài viết (commit sau mỗi bài):
-   - cong-nghe: dung-blog-astro-cloudflare, passkey-dang-nhap-khong-mat-khau, git-12-lenh-moi-ngay
-   - doi-song: digital-detox-30-ngay, deep-work-thoi-dai-thong-bao, ghi-chep-zettelkasten
+   - còn: ghi-chep-thong-minh-zettelkasten (doi-song, pubDate 2026-10-27, mdx + Diagram inline + cover.webp có sẵn)
    - xoá xin-chao khi có bài thật; cập nhật authors/nhip-so.json
 3. OG images: src/lib/og.ts, src/pages/og/[...slug].png.ts, src/pages/og/index.png.ts, tests/unit/og.test.ts
 4. docs/WRITING.md
