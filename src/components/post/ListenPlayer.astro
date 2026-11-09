@@ -1,4 +1,802 @@
 ---
-/** STUB — Text-to-speech player (vi-VN). */
+/**
+ * "Nghe bài viết" — Vietnamese text-to-speech of #post-body (Web Speech API, engine in src/scripts/tts.ts).
+ * Toggles on any [data-listen-toggle] click or `ns:toggle-listen`; keeps aria-pressed in sync on every toggle and
+ * emits `ns:listen-state` { playing, paused }. Compact floating mini-player (above the mobile action bar,
+ * bottom-centre on desktop). When the device has no Vietnamese voice (and isn't Android, which speaks lang="vi-VN"
+ * anyway), a friendly sheet explains how to install one instead of reading Vietnamese with an English voice.
+ * Remembers speed + voice in localStorage 'ns:tts'.
+ */
+import { SkipBack, SkipForward, AudioLines } from 'lucide-static';
+import Icon from '../ui/Icon.astro';
 
+const ico = (svg: string, size = 20) =>
+  svg
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\s(width|height)="24"/g, '')
+    .replace(/class="[^"]*"/, `class="icon" width="${size}" height="${size}" aria-hidden="true" focusable="false"`)
+    .replace(/\s*\n\s*/g, ' ');
 ---
+
+<div class="lp" data-listen-player role="region" aria-label="Trình nghe bài viết" data-state="idle" hidden>
+  <div class="lp-progress" aria-hidden="true"><span data-lp-fill></span></div>
+  <div class="lp-row">
+    <button type="button" class="lp-btn lp-play" data-lp-toggle aria-label="Tạm dừng">
+      <span class="lp-i-pause"><Icon name="pause" size={20} /></span>
+      <span class="lp-i-play"><Icon name="play" size={20} /></span>
+    </button>
+    <button type="button" class="lp-btn" data-lp-prev aria-label="Câu trước">
+      <Fragment set:html={ico(SkipBack, 18)} />
+    </button>
+    <button type="button" class="lp-btn" data-lp-next aria-label="Câu tiếp theo">
+      <Fragment set:html={ico(SkipForward, 18)} />
+    </button>
+    <div class="lp-meta">
+      <span class="lp-status">
+        <span class="lp-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span data-lp-status>Đang đọc</span>
+      </span>
+      <span class="lp-count" data-lp-count>Câu 1/1</span>
+    </div>
+    <button type="button" class="lp-btn lp-rate" data-lp-rate aria-label="Tốc độ đọc 1×. Nhấn để đổi">1×</button>
+    <label class="lp-btn lp-voice" data-lp-voice-wrap title="Giọng đọc" hidden>
+      <Fragment set:html={ico(AudioLines, 18)} />
+      <select data-lp-voice aria-label="Chọn giọng đọc"></select>
+    </label>
+    <button type="button" class="lp-btn" data-lp-close aria-label="Dừng nghe và đóng trình phát">
+      <Icon name="x" size={18} />
+    </button>
+  </div>
+</div>
+
+<dialog class="nv" id="tts-novoice" aria-labelledby="nv-title" aria-describedby="nv-desc">
+  <div class="nv-inner">
+    <div class="nv-grab" aria-hidden="true"><span></span></div>
+    <div class="nv-head">
+      <span class="nv-icon" aria-hidden="true"><Icon name="headphones" size={22} /></span>
+      <button type="button" class="btn-icon -mr-2 -mt-1" data-nv-close aria-label="Đóng">
+        <Icon name="x" />
+      </button>
+    </div>
+    <h2 id="nv-title" class="nv-title">Máy của bạn chưa có giọng đọc tiếng Việt</h2>
+    <p id="nv-desc" class="nv-text">
+      Để nghe bài bằng giọng Việt chuẩn (thay vì một giọng nước ngoài đọc sai dấu), bạn cài thêm giọng tiếng Việt miễn
+      phí theo hướng dẫn dưới đây, rồi bấm <strong>Thử lại</strong> nhé.
+    </p>
+
+    <div class="nv-primary" data-nv-primary></div>
+
+    <details class="nv-more">
+      <summary>Hướng dẫn cho thiết bị khác</summary>
+      <div data-nv-others>
+        <section class="nv-step" data-nv-platform="windows">
+          <h3>Windows 10 / 11</h3>
+          <ol>
+            <li>Mở <strong>Cài đặt › Thời gian &amp; ngôn ngữ › Giọng nói</strong>.</li>
+            <li>Ở mục <strong>Quản lý giọng nói</strong>, bấm <strong>Thêm giọng nói</strong>, tìm <strong>Tiếng Việt</strong> rồi cài đặt.</li>
+            <li>Đóng hẳn trình duyệt và mở lại.</li>
+          </ol>
+          <p class="nv-tip">
+            <Icon name="lightbulb" size={16} />
+            <span>Mẹo: trình duyệt <strong>Microsoft Edge</strong> có sẵn giọng đọc tự nhiên Hoài My và Nam Minh — mở bài này bằng Edge là nghe được ngay.</span>
+          </p>
+        </section>
+        <section class="nv-step" data-nv-platform="android">
+          <h3>Android</h3>
+          <ol>
+            <li>Cài hoặc cập nhật ứng dụng <strong>Dịch vụ lời nói của Google</strong> (Speech Services by Google) trên CH Play.</li>
+            <li>Vào <strong>Cài đặt › Hệ thống › Ngôn ngữ › Đầu ra chuyển văn bản sang lời nói</strong>, chọn công cụ của Google.</li>
+            <li>Bấm biểu tượng bánh răng › <strong>Cài đặt dữ liệu giọng nói</strong> › tải <strong>Tiếng Việt</strong>.</li>
+          </ol>
+        </section>
+        <section class="nv-step" data-nv-platform="ios">
+          <h3>iPhone / iPad</h3>
+          <ol>
+            <li>Mở <strong>Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói</strong>.</li>
+            <li>Chọn <strong>Tiếng Việt</strong> và tải giọng <strong>Linh</strong>.</li>
+            <li>Quay lại Safari và bấm <strong>Thử lại</strong>.</li>
+          </ol>
+        </section>
+        <section class="nv-step" data-nv-platform="mac">
+          <h3>macOS</h3>
+          <ol>
+            <li>Mở <strong>Cài đặt hệ thống › Trợ năng › Nội dung được đọc</strong>.</li>
+            <li>Ở <strong>Giọng hệ thống</strong>, chọn <strong>Quản lý giọng nói…</strong> và tích <strong>Tiếng Việt (Linh)</strong>.</li>
+            <li>Đóng hẳn trình duyệt và mở lại.</li>
+          </ol>
+        </section>
+        <section class="nv-step" data-nv-platform="linux">
+          <h3>Linux / Chromebook</h3>
+          <ol>
+            <li>Cài <strong>speech-dispatcher</strong> và <strong>espeak-ng</strong> (có giọng tiếng Việt cơ bản).</li>
+            <li>Hoặc mở bài trên điện thoại — Android và iPhone có giọng Việt tự nhiên hơn.</li>
+          </ol>
+        </section>
+      </div>
+    </details>
+
+    <div class="nv-actions">
+      <button type="button" class="btn btn-ghost" data-nv-retry>Thử lại</button>
+      <button type="button" class="btn btn-primary" data-nv-close>Đã hiểu</button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  /* ---------- mini player ---------- */
+  .lp {
+    --lp-y: 0px;
+    position: fixed;
+    left: 50%;
+    bottom: calc(80px + env(safe-area-inset-bottom)); /* sits above the mobile action bar */
+    z-index: 46;
+    width: min(520px, calc(100vw - 24px));
+    translate: -50% var(--lp-y);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: color-mix(in oklab, var(--bg-elevated) 92%, transparent);
+    backdrop-filter: saturate(1.6) blur(16px);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    transition: translate 320ms var(--ease-out);
+  }
+  .lp[data-bar-hidden] {
+    --lp-y: 66px; /* the action bar slid away: drop into its place */
+  }
+  @media (min-width: 1024px) {
+    .lp {
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      width: 500px;
+    }
+    .lp[data-bar-hidden] {
+      --lp-y: 0px;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .lp:not([hidden]) {
+      animation: lp-in 300ms var(--ease-out);
+    }
+    .lp[data-leaving] {
+      animation: lp-out 180ms var(--ease-out) forwards;
+    }
+  }
+  @keyframes lp-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
+  }
+  @keyframes lp-out {
+    to {
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+    }
+  }
+
+  .lp-progress {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: var(--bg-muted);
+  }
+  .lp-progress span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(var(--p, 0));
+    transform-origin: 0 50%;
+    transition: transform 300ms var(--ease-out);
+  }
+  .lp-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 9px 6px 6px 8px;
+  }
+  .lp-btn {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    color: var(--fg-muted);
+    cursor: pointer;
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      transform 150ms var(--ease-out),
+      opacity 150ms var(--ease-out);
+  }
+  .lp-btn:hover:not(:disabled) {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .lp-btn:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+  .lp-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .lp-play {
+    width: 48px;
+    height: 48px;
+    margin-right: 2px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: var(--shadow-sm);
+  }
+  .lp-play:hover:not(:disabled) {
+    background: var(--accent-hover);
+    color: var(--accent-fg);
+  }
+  .lp-i-play,
+  .lp-i-pause {
+    display: grid;
+    place-items: center;
+  }
+  .lp-i-play :global(svg) {
+    translate: 1px 0;
+  }
+  .lp[data-state='playing'] .lp-i-play,
+  .lp:not([data-state='playing']) .lp-i-pause {
+    display: none;
+  }
+  .lp-meta {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    padding: 0 6px;
+    line-height: 1.3;
+  }
+  .lp-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+  .lp-status > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lp-count {
+    font-size: 0.75rem;
+    color: var(--fg-subtle);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .lp-eq {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+  .lp-eq i {
+    width: 3px;
+    height: 40%;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+  .lp:not([data-state='playing']) .lp-eq i {
+    background: var(--fg-subtle);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .lp[data-state='playing'] .lp-eq i {
+      animation: lp-eq 900ms ease-in-out infinite;
+    }
+    .lp[data-state='playing'] .lp-eq i:nth-child(2) {
+      animation-delay: -300ms;
+    }
+    .lp[data-state='playing'] .lp-eq i:nth-child(3) {
+      animation-delay: -600ms;
+    }
+  }
+  @keyframes lp-eq {
+    0%,
+    100% {
+      height: 30%;
+    }
+    50% {
+      height: 100%;
+    }
+  }
+  .lp-rate {
+    width: auto;
+    min-width: 44px;
+    padding: 0 6px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+  }
+  .lp-voice select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    font-size: 16px; /* no iOS zoom */
+    cursor: pointer;
+  }
+  .lp-voice:has(select:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  @media (max-width: 359px) {
+    .lp-voice {
+      display: none;
+    }
+  }
+
+  /* ---------- "no Vietnamese voice" sheet ---------- */
+  .nv {
+    width: min(520px, calc(100vw - 32px));
+    max-height: min(88dvh, 760px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-lg);
+  }
+  .nv::backdrop {
+    background: rgb(10 10 16 / 0.42);
+    backdrop-filter: blur(3px);
+  }
+  .nv-inner {
+    padding: 18px 22px 20px;
+  }
+  .nv-grab {
+    display: none;
+  }
+  .nv-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .nv-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .nv-title {
+    margin-top: 12px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+  .nv-text {
+    margin-top: 8px;
+    color: var(--fg-muted);
+    line-height: 1.6;
+  }
+  .nv-primary:not(:empty) {
+    margin-top: 16px;
+  }
+  .nv-step {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--bg-subtle);
+  }
+  .nv-step h3 {
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+  .nv-step ol {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+    padding-left: 1.25em;
+    list-style: decimal;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--fg-muted);
+  }
+  .nv-step ol ::marker {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .nv-step strong {
+    color: var(--fg);
+    font-weight: 600;
+  }
+  .nv-tip {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+  }
+  .nv-tip :global(svg) {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--warning);
+  }
+  .nv-more {
+    margin-top: 12px;
+  }
+  .nv-more summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    cursor: pointer;
+  }
+  .nv-more summary:hover {
+    color: var(--fg);
+  }
+  .nv-more [data-nv-others] {
+    display: grid;
+    gap: 8px;
+  }
+  .nv-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  @media (max-width: 639px) {
+    .nv {
+      inset: auto 0 0;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      border-width: 1px 0 0;
+      border-radius: 24px 24px 0 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nv-inner {
+      padding: 6px 18px 16px;
+    }
+    .nv-grab {
+      display: grid;
+      place-items: center;
+      height: 18px;
+    }
+    .nv-grab span {
+      width: 40px;
+      height: 5px;
+      border-radius: 99px;
+      background: var(--border-strong);
+    }
+    .nv-actions > :global(*) {
+      flex: 1;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .nv[open] {
+        animation: nv-up 280ms var(--ease-out);
+      }
+    }
+  }
+  @keyframes nv-up {
+    from {
+      transform: translateY(40%);
+      opacity: 0;
+    }
+  }
+</style>
+
+<style is:global>
+  ::highlight(tts-sentence) {
+    background-color: color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+</style>
+
+<script>
+  import {
+    getSynth,
+    pickVietnameseVoices,
+    buildChunks,
+    Reader,
+    highlightRange,
+    isOutOfView,
+    voiceLabel,
+    detectPlatform,
+    type VoicePick,
+  } from '../../scripts/tts';
+  import { read, write } from '../../lib/storage';
+  import { toast } from '../../scripts/share';
+
+  interface TtsPrefs {
+    rate?: number;
+    voice?: string;
+  }
+  const RATES = [0.8, 1, 1.2, 1.5];
+
+  const player = document.querySelector<HTMLElement>('[data-listen-player]');
+  const postBody = document.getElementById('post-body');
+  const noVoice = document.getElementById('tts-novoice') as HTMLDialogElement | null;
+
+  if (player && postBody && noVoice && !player.dataset.wired) {
+    player.dataset.wired = '';
+    const synth = getSynth();
+    const $ = <T extends Element>(sel: string) => player.querySelector<T>(sel)!;
+    const btnToggle = $<HTMLButtonElement>('[data-lp-toggle]');
+    const btnPrev = $<HTMLButtonElement>('[data-lp-prev]');
+    const btnNext = $<HTMLButtonElement>('[data-lp-next]');
+    const btnRate = $<HTMLButtonElement>('[data-lp-rate]');
+    const btnClose = $<HTMLButtonElement>('[data-lp-close]');
+    const voiceWrap = $<HTMLElement>('[data-lp-voice-wrap]');
+    const voiceSelect = $<HTMLSelectElement>('[data-lp-voice]');
+    const statusEl = $<HTMLElement>('[data-lp-status]');
+    const countEl = $<HTMLElement>('[data-lp-count]');
+    const fill = $<HTMLElement>('[data-lp-fill]');
+    const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const prefs = read<TtsPrefs>('tts', {});
+    let pick: VoicePick | null = null;
+    let picking: Promise<VoicePick> | null = null;
+    let reader: Reader | null = null;
+    let allVoices: SpeechSynthesisVoice[] = [];
+    let lastToggle: HTMLElement | null = null;
+    let lastState = '';
+
+    const toggles = () => document.querySelectorAll<HTMLElement>('[data-listen-toggle]');
+    toggles().forEach((t) => t.setAttribute('aria-pressed', 'false'));
+
+    const ensureVoices = () => (picking ??= pickVietnameseVoices(synth).then((p) => (pick = p)));
+    // Warm the voice list up so the first tap can speak synchronously (iOS needs the user activation).
+    if (synth) {
+      const idle = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+      if (idle) idle(() => void ensureVoices());
+      else setTimeout(() => void ensureVoices(), 1200);
+    }
+
+    // ---------- rendering ----------
+    const fmtRate = (r: number) => `${r.toLocaleString('vi-VN')}×`;
+    function render(r: Reader) {
+      const playing = r.state === 'playing';
+      const paused = r.state === 'paused';
+      player!.dataset.state = r.state;
+      btnToggle.setAttribute('aria-label', playing ? 'Tạm dừng' : r.state === 'idle' ? 'Nghe lại từ đầu' : 'Tiếp tục nghe');
+      statusEl.textContent = playing ? 'Đang đọc' : paused ? 'Đã tạm dừng' : 'Đã nghe hết bài';
+      const shown = r.state === 'idle' ? r.total : r.index + 1;
+      countEl.textContent = `Câu ${shown}/${r.total}`;
+      fill.style.setProperty('--p', String(r.total ? shown / r.total : 0));
+      btnPrev.disabled = r.state === 'idle' || r.index === 0;
+      btnNext.disabled = r.state === 'idle' || r.index >= r.total - 1;
+      btnRate.textContent = fmtRate(r.rate);
+      btnRate.setAttribute('aria-label', `Tốc độ đọc ${fmtRate(r.rate)}. Nhấn để đổi`);
+      toggles().forEach((t) => t.setAttribute('aria-pressed', String(playing)));
+      if (r.state === 'idle') highlightRange();
+      if (r.state !== lastState) {
+        lastState = r.state;
+        document.dispatchEvent(new CustomEvent('ns:listen-state', { detail: { playing, paused } }));
+        void wakeLock(playing);
+      }
+    }
+
+    // ---------- follow the voice, gently ----------
+    let userScrollAt = 0;
+    const markUserScroll = () => (userScrollAt = performance.now());
+    addEventListener('wheel', markUserScroll, { passive: true });
+    addEventListener('touchmove', markUserScroll, { passive: true });
+    addEventListener('keydown', (e) => {
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(e.key)) markUserScroll();
+    });
+
+    function onSentence(chunk: { range: Range }) {
+      highlightRange(chunk.range);
+      if (performance.now() - userScrollAt < 4000) return; // the reader is looking elsewhere — don't fight them
+      const rect = chunk.range.getBoundingClientRect();
+      if (!rect.height || !isOutOfView(rect, innerHeight, 80, innerWidth < 1024 ? 170 : 120)) return;
+      scrollBy({ top: rect.top - innerHeight * 0.33, behavior: reduce() ? 'instant' : 'smooth' });
+    }
+
+    // ---------- show / hide ----------
+    let leaveTimer = 0;
+    function show() {
+      clearTimeout(leaveTimer);
+      player!.removeAttribute('data-leaving');
+      player!.hidden = false;
+    }
+    function hide() {
+      if (player!.hidden) return;
+      if (reduce()) {
+        player!.hidden = true;
+        return;
+      }
+      player!.setAttribute('data-leaving', '');
+      leaveTimer = window.setTimeout(() => {
+        player!.hidden = true;
+        player!.removeAttribute('data-leaving');
+      }, 190);
+    }
+
+    // Sit just above the mobile action bar; drop into its place when it slides away.
+    const bar = document.querySelector<HTMLElement>('[data-action-bar]');
+    const syncBar = () => player!.toggleAttribute('data-bar-hidden', !bar || !bar.hasAttribute('data-visible'));
+    if (bar) new MutationObserver(syncBar).observe(bar, { attributes: true, attributeFilter: ['data-visible'] });
+    syncBar();
+
+    // ---------- voices ----------
+    function fillVoices() {
+      voiceSelect.replaceChildren(
+        ...allVoices.map((v, i) => {
+          const o = document.createElement('option');
+          o.value = String(i);
+          o.textContent = voiceLabel(v);
+          return o;
+        }),
+      );
+      voiceWrap.hidden = allVoices.length < 2;
+      syncVoiceSelect();
+    }
+    function syncVoiceSelect() {
+      const current = reader?.voice;
+      const i = current ? allVoices.indexOf(current) : -1;
+      if (i >= 0) voiceSelect.value = String(i);
+      voiceWrap.title = current ? `Giọng đọc: ${voiceLabel(current)}` : 'Giọng đọc';
+    }
+    voiceSelect.addEventListener('change', () => {
+      const v = allVoices[Number(voiceSelect.value)];
+      if (!v || !reader) return;
+      reader.setVoice(v);
+      prefs.voice = v.voiceURI || v.name;
+      write('tts', prefs);
+      syncVoiceSelect();
+    });
+
+    function createReader(p: VoicePick) {
+      allVoices = p.voices;
+      let voices = p.voices;
+      const saved = voices.find((v) => v.voiceURI === prefs.voice || v.name === prefs.voice);
+      if (saved) voices = [saved, ...voices.filter((v) => v !== saved)];
+      const rate = RATES.includes(prefs.rate ?? 1) ? (prefs.rate ?? 1) : 1;
+      reader = new Reader(buildChunks(postBody!), voices, {
+        rate,
+        onChange: render,
+        onSentence,
+        onVoiceFallback: () => {
+          syncVoiceSelect();
+          toast('Giọng đọc trực tuyến không phản hồi, mình chuyển sang giọng khác nhé', { tone: 'info' });
+        },
+        onFatal: () => {
+          hide();
+          openNoVoice();
+        },
+      });
+      fillVoices();
+    }
+
+    /** Start where the reader is: the first sentence on screen once they've scrolled into the article. */
+    function startIndex(): number {
+      if (!reader || postBody!.getBoundingClientRect().top > 0) return 0;
+      // Binary search: ranges are in document order, top → bottom.
+      const line = 90;
+      let lo = 0;
+      let hi = reader.total - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (reader.chunks[mid].range.getBoundingClientRect().bottom < line) lo = mid + 1;
+        else hi = mid;
+      }
+      return lo;
+    }
+
+    // ---------- actions ----------
+    async function toggle(from?: HTMLElement | null) {
+      if (from) lastToggle = from;
+      if (!synth) {
+        toast('Trình duyệt này chưa hỗ trợ đọc to bài viết — bạn thử Chrome, Edge hoặc Safari nhé', { tone: 'info' });
+        return;
+      }
+      if (reader && reader.state !== 'idle') {
+        reader.toggle();
+        return;
+      }
+      const p = pick ?? (await ensureVoices()); // usually already warm → stays synchronous
+      if (!p.voices.length && !p.bestEffort) {
+        openNoVoice();
+        return;
+      }
+      if (!reader) createReader(p);
+      if (!reader!.total) {
+        toast('Bài này chưa có đoạn nào để đọc', { tone: 'info' });
+        return;
+      }
+      show();
+      reader!.play(startIndex());
+    }
+
+    function closePlayer() {
+      reader?.stop();
+      highlightRange();
+      hide();
+      const back = lastToggle && lastToggle.offsetParent ? lastToggle : null;
+      (back ?? document.querySelector<HTMLElement>('[data-listen-toggle]'))?.focus({ preventScroll: true });
+    }
+
+    document.addEventListener('click', (e) => {
+      const t = (e.target as Element).closest<HTMLElement>('[data-listen-toggle]');
+      if (t) void toggle(t);
+    });
+    document.addEventListener('ns:toggle-listen', () => void toggle());
+    btnToggle.addEventListener('click', () => {
+      if (!reader) return;
+      if (reader.state === 'idle') reader.play(0);
+      else reader.toggle();
+    });
+    btnPrev.addEventListener('click', () => reader?.prev());
+    btnNext.addEventListener('click', () => reader?.next());
+    btnRate.addEventListener('click', () => {
+      if (!reader) return;
+      const next = RATES[(RATES.indexOf(reader.rate) + 1) % RATES.length];
+      reader.setRate(next);
+      prefs.rate = next;
+      write('tts', prefs);
+    });
+    btnClose.addEventListener('click', closePlayer);
+
+    // Leaving the page (or going into bfcache) must silence the voice.
+    addEventListener('pagehide', () => {
+      reader?.destroy();
+      highlightRange();
+    });
+
+    // Keep the screen on while listening (phones stop speech when the screen locks).
+    let lock: { release(): Promise<void> } | null = null;
+    async function wakeLock(on: boolean) {
+      const wl = (navigator as Navigator & { wakeLock?: { request(t: 'screen'): Promise<{ release(): Promise<void> }> } }).wakeLock;
+      try {
+        if (on && wl && !lock && document.visibilityState === 'visible') lock = await wl.request('screen');
+        else if (!on && lock) {
+          await lock.release();
+          lock = null;
+        }
+      } catch {
+        lock = null;
+      }
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && reader?.state === 'playing') {
+        lock = null;
+        void wakeLock(true);
+      }
+    });
+
+    // ---------- "no Vietnamese voice" sheet ----------
+    const primary = noVoice.querySelector<HTMLElement>('[data-nv-primary]')!;
+    const platform = detectPlatform(navigator.userAgent, navigator.maxTouchPoints || 0);
+    const mine = noVoice.querySelector<HTMLElement>(`[data-nv-platform="${platform}"]`);
+    if (mine) primary.append(mine);
+    else noVoice.querySelector('details')?.setAttribute('open', '');
+
+    function openNoVoice() {
+      if (!noVoice!.open) noVoice!.showModal();
+    }
+    noVoice.querySelectorAll('[data-nv-close]').forEach((b) => b.addEventListener('click', () => noVoice.close()));
+    noVoice.addEventListener('click', (e) => {
+      if (e.target === noVoice) noVoice.close();
+    });
+    noVoice.querySelector('[data-nv-retry]')!.addEventListener('click', async () => {
+      picking = null;
+      pick = null;
+      reader = null;
+      const p = await ensureVoices();
+      if (p.voices.length || p.bestEffort) {
+        noVoice.close();
+        toast('Đã tìm thấy giọng tiếng Việt — bắt đầu đọc nhé', { tone: 'ok' });
+        void toggle();
+      } else {
+        toast('Vẫn chưa thấy giọng tiếng Việt. Bạn thử đóng hẳn trình duyệt rồi mở lại nhé', { tone: 'info' });
+      }
+    });
+  }
+</script>
