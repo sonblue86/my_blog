@@ -1,0 +1,966 @@
+---
+/**
+ * /thu-vien/ — "Thư viện của bạn": saved posts, in-progress and finished reads.
+ * All data lives in this browser (localStorage via src/scripts/library-store.ts); the page is a
+ * static shell and src/scripts/library-page.ts renders the lists from <template>s (textContent only).
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/ui/Icon.astro';
+import LIcon from '../../components/library/LIcon.astro';
+import LibraryEmpty from '../../components/library/LibraryEmpty.astro';
+
+const TABS = [
+  { kind: 'saved', hash: 'da-luu', label: 'Đã lưu', heading: 'Bài đã lưu', icon: 'bookmark' },
+  { kind: 'reading', hash: 'dang-doc', label: 'Đang đọc', heading: 'Bài đang đọc dở', icon: 'book-open' },
+  { kind: 'done', hash: 'da-doc', label: 'Đã đọc', heading: 'Bài đã đọc xong', icon: 'circle-check' },
+] as const;
+---
+
+<BaseLayout
+  title="Thư viện của bạn"
+  description="Bài đã lưu, đang đọc dở và đã đọc xong — gom lại một chỗ, chỉ lưu trên trình duyệt của bạn."
+  noindex
+>
+  <div class="lib-page" data-library>
+    <header class="lib-hero">
+      <div class="container-page lib-hero-inner">
+        <p class="eyebrow flex items-center gap-2">
+          <span class="lib-hero-icon" aria-hidden="true"><Icon name="library" size={16} /></span>
+          Thư viện cá nhân
+        </p>
+        <h1 class="lib-h1">Thư viện của bạn</h1>
+        <p class="lib-lede">Những bài bạn đã lưu, đang đọc dở và đã đọc xong — gom lại một chỗ để quay lại bất cứ lúc nào.</p>
+        <p class="lib-privacy">
+          <LIcon name="shield" size={18} />
+          <span>Dữ liệu chỉ lưu trên trình duyệt này — không ai khác thấy được.</span>
+        </p>
+      </div>
+    </header>
+
+    <div class="container-page lib-layout">
+      <section class="lib-main" aria-label="Danh sách bài viết trong thư viện">
+        <div class="lib-tabbar">
+          <div class="lib-tabs" role="tablist" aria-label="Thư viện của bạn">
+            {
+              TABS.map((t, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  class="lib-tab"
+                  id={`lib-tab-${t.kind}`}
+                  aria-controls={`lib-panel-${t.kind}`}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  tabindex={i === 0 ? 0 : -1}
+                  data-tab={t.kind}
+                  data-hash={t.hash}
+                  data-label={t.label}
+                >
+                  <span class="lib-tab-icon">
+                    <Icon name={t.icon} size={17} />
+                  </span>
+                  <span>{t.label}</span>
+                  <span class="lib-count" data-count={t.kind}>
+                    0
+                  </span>
+                </button>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="lib-tools" data-lib-tools hidden>
+          <p class="lib-total" data-lib-total></p>
+          <div class="flex items-center gap-1">
+            <label class="lib-sort">
+              <span class="sr-only">Sắp xếp</span>
+              <LIcon name="sort" size={16} />
+              <select data-lib-sort aria-label="Sắp xếp theo thời gian">
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+              </select>
+            </label>
+            <button type="button" class="lib-clear" data-lib-clear>
+              <LIcon name="trash" size={16} />
+              <span>Xoá tất cả</span>
+            </button>
+          </div>
+        </div>
+
+        {
+          TABS.map((t, i) => (
+            <div role="tabpanel" class="lib-panel" id={`lib-panel-${t.kind}`} aria-labelledby={`lib-tab-${t.kind}`} data-panel={t.kind} hidden={i !== 0}>
+              <h2 class="sr-only">{t.heading}</h2>
+              <div class="lib-banner" data-banner hidden>
+                <LIcon name="trash" size={18} />
+                <p class="flex-1" data-banner-text></p>
+                <button type="button" class="lib-undo-btn" data-banner-undo>
+                  <LIcon name="undo" size={16} />
+                  Hoàn tác
+                </button>
+              </div>
+              <ul class="lib-list" data-list aria-busy={i === 0 ? 'true' : undefined}>
+                {i === 0 &&
+                  [0, 1, 2].map(() => (
+                    <li class="lib-skeleton" aria-hidden="true">
+                      <span></span>
+                      <span></span>
+                    </li>
+                  ))}
+              </ul>
+              <LibraryEmpty kind={t.kind} />
+            </div>
+          ))
+        }
+
+        <noscript>
+          <p class="lib-noscript">Thư viện cần bật JavaScript, vì dữ liệu của bạn nằm ngay trên trình duyệt này chứ không ở máy chủ.</p>
+        </noscript>
+      </section>
+
+      <aside class="lib-side" aria-label="Tiện ích thư viện">
+        <section class="lib-side-card" data-offline-card hidden>
+          <h2 class="lib-side-title">
+            <span class="lib-side-icon is-ok"><LIcon name="cloud-download" size={18} /></span>
+            Đọc khi không có mạng
+          </h2>
+          <p class="lib-side-text">Bài bạn lưu được tải sẵn về máy, nên vẫn đọc được lúc đi máy bay hay mất sóng.</p>
+          <p class="lib-side-stat" data-offline-count></p>
+        </section>
+
+        <section class="lib-side-card">
+          <h2 class="lib-side-title">
+            <span class="lib-side-icon"><LIcon name="transfer" size={18} /></span>
+            Chuyển sang thiết bị khác
+          </h2>
+          <p class="lib-side-text">Xuất thư viện ra một file nhỏ rồi nhập ở trình duyệt khác — không cần tài khoản.</p>
+          <div class="lib-side-actions">
+            <button type="button" class="btn btn-ghost lib-side-btn" data-lib-export>
+              <LIcon name="download" size={17} />
+              Xuất file
+            </button>
+            <button type="button" class="btn btn-ghost lib-side-btn" data-lib-import>
+              <LIcon name="upload" size={17} />
+              Nhập file
+            </button>
+            <input type="file" accept=".json,application/json" data-lib-file hidden />
+          </div>
+        </section>
+
+        <section class="lib-side-card lib-side-plain">
+          <h2 class="lib-side-title">
+            <span class="lib-side-icon"><Icon name="lightbulb" size={18} /></span>
+            Mẹo nhỏ
+          </h2>
+          <ul class="lib-tips">
+            <li>Nhấn <Icon name="bookmark" size={15} class="inline align-[-2px]" /> trên mọi bài để lưu đọc sau.</li>
+            <li class="lib-tip-keys">Đang đọc trên máy tính? Phím <kbd class="kbd">B</kbd> lưu nhanh, <kbd class="kbd">/</kbd> mở tìm kiếm.</li>
+            <li>Mở lại bài đang đọc dở, Nhịp Số sẽ gợi ý nhảy tới đúng chỗ bạn dừng.</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+
+    <p class="sr-only" aria-live="polite" data-lib-live></p>
+
+    <dialog class="lib-dialog" data-lib-confirm aria-labelledby="lib-confirm-title" aria-describedby="lib-confirm-text">
+      <form method="dialog" class="lib-dialog-body">
+        <span class="lib-dialog-icon" aria-hidden="true"><LIcon name="trash" size={22} /></span>
+        <h2 id="lib-confirm-title" class="lib-dialog-title" data-confirm-title>Xoá tất cả?</h2>
+        <p id="lib-confirm-text" class="lib-dialog-text" data-confirm-text></p>
+        <div class="lib-dialog-actions">
+          <button type="submit" value="cancel" class="btn btn-ghost" autofocus>Huỷ</button>
+          <button type="submit" value="confirm" class="btn lib-danger" data-confirm-ok>Xoá tất cả</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template data-tpl="card">
+      <li class="lib-item">
+        <article class="lib-card">
+          <div class="lib-thumb" data-f="thumb">
+            <img alt="" loading="lazy" decoding="async" width="320" height="200" data-f="img" />
+          </div>
+          <div class="lib-body">
+            <p class="lib-meta">
+              <span class="lib-cat" data-f="cat"><span class="lib-dot" aria-hidden="true"></span><span data-f="cat-name"></span></span>
+              <time data-f="time"></time>
+            </p>
+            <h3 class="lib-title"><a class="lib-link" data-f="link"></a></h3>
+            <p class="lib-desc" data-f="desc"></p>
+            <div class="lib-progress" data-f="progress" hidden>
+              <div class="lib-track"><span data-f="bar"></span></div>
+              <p class="lib-progress-text" data-f="progress-text"></p>
+            </div>
+          </div>
+          <div class="lib-foot">
+            <span class="lib-pill" data-f="minutes"><Icon name="clock" size={14} /><span data-f="minutes-text"></span></span>
+            <span class="lib-pill is-done" data-f="done" hidden><LIcon name="circle-check-big" size={14} />Đã đọc xong</span>
+            <span class="lib-pill is-offline" data-f="offline" hidden><LIcon name="cloud-download" size={14} />Đọc offline được</span>
+            <button type="button" class="lib-remove" data-f="remove">
+              <LIcon name="trash" size={18} />
+            </button>
+          </div>
+        </article>
+      </li>
+    </template>
+
+    <template data-tpl="undo">
+      <li class="lib-item lib-undo-item">
+        <div class="lib-undo">
+          <LIcon name="trash" size={18} />
+          <p class="lib-undo-text" data-f="msg"></p>
+          <button type="button" class="lib-undo-btn" data-f="undo">
+            <LIcon name="undo" size={16} />
+            Hoàn tác
+          </button>
+        </div>
+      </li>
+    </template>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* ---------- Hero ---------- */
+  .lib-hero {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(760px 260px at 0% 0%, color-mix(in oklab, var(--accent) 13%, transparent), transparent 70%),
+      radial-gradient(520px 220px at 100% 100%, color-mix(in oklab, var(--hot) 8%, transparent), transparent 70%);
+  }
+  .lib-hero-inner {
+    padding-top: 36px;
+    padding-bottom: 28px;
+  }
+  @media (min-width: 640px) {
+    .lib-hero-inner {
+      padding-top: 56px;
+      padding-bottom: 40px;
+    }
+  }
+  .lib-hero-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .lib-h1 {
+    margin-top: 12px;
+    font-size: clamp(2rem, 1.3rem + 3vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+  .lib-lede {
+    max-width: 60ch;
+    margin-top: 12px;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--fg-muted);
+  }
+  .lib-privacy {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 8px 14px 8px 10px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--success) 10%, transparent);
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  .lib-privacy svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--success);
+  }
+
+  /* ---------- Layout ---------- */
+  .lib-layout {
+    display: grid;
+    gap: 40px;
+    padding-top: 8px;
+    padding-bottom: 64px;
+  }
+  @media (min-width: 1024px) {
+    .lib-layout {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 48px;
+      padding-top: 24px;
+    }
+    .lib-side {
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+      align-self: start;
+    }
+  }
+  .lib-main {
+    min-width: 0;
+  }
+
+  /* ---------- Tabs ---------- */
+  .lib-tabbar {
+    position: sticky;
+    top: calc(var(--header-h) + env(safe-area-inset-top));
+    z-index: 30;
+    margin-inline: -16px;
+    padding: 10px 16px;
+    background: color-mix(in oklab, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  }
+  @media (min-width: 640px) {
+    .lib-tabbar {
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+  }
+  .lib-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 4px;
+    border-radius: 16px;
+    background: var(--bg-muted);
+  }
+  @media (min-width: 640px) {
+    .lib-tabs {
+      display: inline-grid;
+      grid-template-columns: repeat(3, auto);
+    }
+  }
+  .lib-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    white-space: nowrap;
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
+  }
+  @media (min-width: 640px) {
+    .lib-tab {
+      padding: 0 16px;
+    }
+  }
+  .lib-tab:hover {
+    color: var(--fg);
+  }
+  .lib-tab[aria-selected='true'] {
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-sm);
+  }
+  .lib-tab-icon {
+    display: none;
+  }
+  @media (min-width: 640px) {
+    .lib-tab-icon {
+      display: grid;
+      color: var(--fg-subtle);
+    }
+    .lib-tab[aria-selected='true'] .lib-tab-icon {
+      color: var(--accent);
+    }
+  }
+  .lib-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 99px;
+    background: color-mix(in oklab, var(--fg) 8%, transparent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .lib-tab[aria-selected='true'] .lib-count {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* ---------- Toolbar ---------- */
+  .lib-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 6px 0 12px;
+  }
+  .lib-tools:not([hidden]) {
+    display: flex;
+  }
+  .lib-total {
+    font-size: 0.875rem;
+    color: var(--fg-subtle);
+  }
+  .lib-sort {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: var(--fg-muted);
+  }
+  .lib-sort svg {
+    position: absolute;
+    left: 12px;
+    pointer-events: none;
+  }
+  .lib-sort select {
+    appearance: none;
+    height: 44px;
+    padding: 0 14px 0 36px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--fg-muted);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms var(--ease-out);
+  }
+  @media (min-width: 768px) {
+    .lib-sort select {
+      font-size: 0.9rem;
+    }
+  }
+  .lib-sort select:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .lib-sort select option {
+    background: var(--bg-elevated);
+    color: var(--fg);
+  }
+  .lib-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    color: var(--danger);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 150ms var(--ease-out);
+  }
+  .lib-clear:hover {
+    background: color-mix(in oklab, var(--danger) 10%, transparent);
+  }
+
+  /* ---------- List & cards ---------- */
+  .lib-list {
+    display: grid;
+    gap: 12px;
+  }
+  .lib-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px;
+    grid-template-areas:
+      'body thumb'
+      'foot foot';
+    column-gap: 14px;
+    row-gap: 6px;
+    padding: 14px 14px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow 200ms var(--ease-out),
+      transform 200ms var(--ease-out);
+  }
+  @media (min-width: 640px) {
+    .lib-card {
+      grid-template-columns: 176px minmax(0, 1fr);
+      grid-template-areas:
+        'thumb body'
+        'thumb foot';
+      column-gap: 20px;
+      padding: 14px 14px 8px;
+    }
+  }
+  @media (hover: hover) {
+    .lib-card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow);
+    }
+    .lib-card:hover .lib-thumb img {
+      transform: scale(1.04);
+    }
+    .lib-card:hover .lib-title {
+      color: var(--accent);
+    }
+  }
+  .lib-card:has(.lib-link:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .lib-link:focus-visible {
+    outline: none;
+  }
+  .lib-thumb {
+    grid-area: thumb;
+    position: relative;
+    overflow: hidden;
+    align-self: start;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    background:
+      radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--c, var(--accent)) 30%, transparent), transparent 70%),
+      color-mix(in oklab, var(--c, var(--accent)) 14%, var(--bg-muted));
+  }
+  @media (min-width: 640px) {
+    .lib-thumb {
+      aspect-ratio: 16 / 10;
+      align-self: stretch;
+      max-height: 124px;
+    }
+  }
+  .lib-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 400ms var(--ease-out);
+  }
+  .lib-body {
+    grid-area: body;
+    min-width: 0;
+  }
+  .lib-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    font-size: 0.8125rem;
+    color: var(--fg-subtle);
+  }
+  .lib-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--c, var(--fg-muted));
+  }
+  .lib-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--c, var(--fg-subtle));
+  }
+  .lib-title {
+    margin-top: 6px;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    transition: color 150ms var(--ease-out);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .lib-title {
+      font-size: 1.15rem;
+      -webkit-line-clamp: 2;
+    }
+  }
+  .lib-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+  }
+  .lib-desc {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--fg-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  @media (max-width: 639.98px) {
+    .lib-desc {
+      display: none;
+    }
+  }
+  .lib-progress {
+    margin-top: 10px;
+  }
+  .lib-track {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--bg-muted);
+    overflow: hidden;
+  }
+  .lib-track span {
+    display: block;
+    height: 100%;
+    min-width: 6px;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--hot));
+  }
+  .lib-progress-text {
+    margin-top: 6px;
+    font-size: 0.8125rem;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .lib-foot {
+    grid-area: foot;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+  }
+  .lib-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 9px;
+    border-radius: 99px;
+    background: var(--bg-subtle);
+    color: var(--fg-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .lib-pill:not([hidden]) {
+    display: inline-flex;
+  }
+  .lib-pill.is-done {
+    color: var(--success);
+    background: color-mix(in oklab, var(--success) 11%, transparent);
+  }
+  .lib-pill.is-offline {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .lib-remove {
+    position: relative;
+    z-index: 2;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+    margin-right: -6px;
+    border-radius: 999px;
+    color: var(--fg-subtle);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .lib-remove:hover {
+    color: var(--danger);
+    background: color-mix(in oklab, var(--danger) 10%, transparent);
+  }
+  .lib-remove:active {
+    transform: scale(0.92);
+  }
+
+  /* Undo rows & banner */
+  .lib-undo,
+  .lib-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    padding: 8px 8px 8px 16px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg-subtle);
+    color: var(--fg-muted);
+    font-size: 0.9rem;
+  }
+  .lib-banner {
+    margin-bottom: 12px;
+  }
+  .lib-banner:not([hidden]) {
+    display: flex;
+  }
+  .lib-undo svg,
+  .lib-banner > svg {
+    flex-shrink: 0;
+    color: var(--fg-subtle);
+  }
+  .lib-undo-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lib-undo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--fg);
+    color: var(--bg);
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: transform 150ms var(--ease-out);
+  }
+  .lib-undo-btn:active {
+    transform: scale(0.96);
+  }
+  .lib-undo-btn svg {
+    color: inherit !important;
+  }
+  .lib-item[data-leaving] {
+    overflow: hidden;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .lib-item {
+      animation: lib-in 260ms var(--ease-out) both;
+    }
+    .lib-item[data-leaving] {
+      animation: lib-out 220ms var(--ease-out) forwards;
+    }
+  }
+  @keyframes lib-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes lib-out {
+    to {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+  }
+
+  /* Skeleton */
+  .lib-skeleton {
+    display: grid;
+    grid-template-columns: 1fr 84px;
+    gap: 14px;
+    height: 128px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+  }
+  .lib-skeleton span {
+    border-radius: 10px;
+    background: var(--bg-muted);
+  }
+  .lib-skeleton span:first-child {
+    height: 44px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .lib-skeleton span {
+      animation: lib-pulse 1.4s ease-in-out infinite;
+    }
+  }
+  @keyframes lib-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+  .lib-noscript {
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-subtle);
+    color: var(--fg-muted);
+  }
+
+  /* ---------- Side cards ---------- */
+  .lib-side {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+  .lib-side-card {
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+  }
+  .lib-side-plain {
+    background: transparent;
+    border-style: dashed;
+  }
+  .lib-side-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .lib-side-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .lib-side-icon.is-ok {
+    background: color-mix(in oklab, var(--success) 12%, transparent);
+    color: var(--success);
+  }
+  .lib-side-text {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--fg-muted);
+  }
+  .lib-side-stat {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .lib-side-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .lib-side-btn {
+    padding: 0 12px;
+    font-size: 0.9rem;
+  }
+  .lib-tips {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--fg-muted);
+  }
+  .lib-tips li {
+    position: relative;
+    padding-left: 16px;
+  }
+  .lib-tips li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0.6em;
+    width: 5px;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--accent);
+  }
+  @media (pointer: coarse) {
+    .lib-tip-keys {
+      display: none;
+    }
+  }
+
+  /* ---------- Confirm dialog (bottom sheet on phones) ---------- */
+  .lib-dialog {
+    width: min(420px, calc(100vw - 32px));
+    max-width: none;
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-lg);
+  }
+  .lib-dialog::backdrop {
+    background: rgb(0 0 0 / 0.42);
+    backdrop-filter: blur(2px);
+  }
+  @media (max-width: 639.98px) {
+    .lib-dialog {
+      width: 100%;
+      margin: auto 0 0;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      border-bottom: 0;
+    }
+  }
+  .lib-dialog-body {
+    display: grid;
+    justify-items: start;
+    padding: 24px 22px calc(20px + env(safe-area-inset-bottom));
+  }
+  .lib-dialog-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--danger) 12%, transparent);
+    color: var(--danger);
+  }
+  .lib-dialog-title {
+    margin-top: 14px;
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+  .lib-dialog-text {
+    margin-top: 8px;
+    color: var(--fg-muted);
+    line-height: 1.6;
+  }
+  .lib-dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-top: 22px;
+  }
+  .lib-danger {
+    background: var(--danger);
+    color: var(--bg);
+  }
+  .lib-danger:hover {
+    background: color-mix(in oklab, var(--danger) 88%, var(--fg));
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .lib-dialog[open] {
+      animation: lib-dialog-in 260ms var(--ease-out);
+    }
+    .lib-dialog[open]::backdrop {
+      animation: lib-fade 200ms var(--ease-out);
+    }
+  }
+  @keyframes lib-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+  }
+  @keyframes lib-fade {
+    from {
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  import { initLibraryPage } from '../../scripts/library-page';
+  initLibraryPage();
+</script>

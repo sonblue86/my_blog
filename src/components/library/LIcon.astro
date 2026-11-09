@@ -1,0 +1,45 @@
+---
+/**
+ * Extra Lucide icons used only by the library / offline pages (not in ui/Icon.astro).
+ * Same rendering as Icon.astro: inline SVG at build time, decorative unless `label` is given.
+ * Integrator: these could be folded into ui/Icon.astro later.
+ */
+import { Trash2, Undo2, Download, Upload, ShieldCheck, ArrowDownUp, CloudDownload, CloudOff, CircleCheckBig, ArrowRightLeft, RefreshCw, BookMarked, Compass } from 'lucide-static';
+
+const ICONS = {
+  trash: Trash2,
+  undo: Undo2,
+  download: Download,
+  upload: Upload,
+  shield: ShieldCheck,
+  sort: ArrowDownUp,
+  'cloud-download': CloudDownload,
+  'cloud-off': CloudOff,
+  'circle-check-big': CircleCheckBig,
+  transfer: ArrowRightLeft,
+  refresh: RefreshCw,
+  'book-marked': BookMarked,
+  compass: Compass,
+} as const;
+
+export type LIconName = keyof typeof ICONS;
+
+interface Props {
+  name: LIconName;
+  size?: number;
+  class?: string;
+  label?: string;
+  strokeWidth?: number;
+}
+
+const { name, size = 20, class: className = '', label, strokeWidth = 2 } = Astro.props;
+const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true" focusable="false"';
+const svg = ICONS[name]
+  .replace(/<!--[\s\S]*?-->/g, '')
+  .replace(/\s(width|height)="24"/g, '')
+  .replace('stroke-width="2"', `stroke-width="${strokeWidth}"`)
+  .replace(/class="[^"]*"/, `class="icon ${className}" width="${size}" height="${size}" ${a11y}`)
+  .replace(/\s*\n\s*/g, ' ');
+---
+
+<Fragment set:html={svg} />
