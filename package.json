@@ -6,11 +6,18 @@
   "description": "Blog tiếng Việt về AI, công nghệ và đời sống — Astro + Cloudflare",
   "scripts": {
     "dev": "astro dev",
+    "dev:api": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\" && wrangler dev --port 8787",
+    "dev:all": "concurrently -k -n astro,api \"npm:dev\" \"npm:dev:api\"",
     "build": "astro build && pagefind --site dist",
-    "preview": "wrangler dev",
+    "preview": "npm run build && wrangler dev --port 8787",
+    "deploy": "npm run build && wrangler deploy",
     "check": "astro check",
     "test": "vitest run",
-    "new": "node scripts/new-post.mjs"
+    "new": "node scripts/new-post.mjs",
+    "icons": "node scripts/gen-icons.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply blog-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply blog-db --remote",
+    "cf-typegen": "wrangler types"
   },
   "engines": {
     "node": ">=22.23.4"
@@ -40,6 +47,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@cloudflare/workers-types": "^5.20261109.1",
+    "concurrently": "^10.0.7",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0",
     "wrangler": "^4.158.0"

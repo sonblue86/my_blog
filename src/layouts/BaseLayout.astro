@@ -10,6 +10,8 @@ import Toaster from '../components/ui/Toaster.astro';
 import SearchPalette from '../components/search/SearchPalette.astro';
 import Shortcuts from '../components/search/Shortcuts.astro';
 import LibraryCore from '../components/library/LibraryCore.astro';
+import BackToTop from '../components/ui/BackToTop.astro';
+import Analytics from '../components/layout/Analytics.astro';
 import { SITE } from '../config';
 
 interface Props extends SeoProps {
@@ -41,6 +43,8 @@ const { autoHideHeader = false, mainClass = '', pageType = 'page', ...seo } = As
     <SearchPalette />
     <Shortcuts />
     <LibraryCore />
+    <BackToTop />
+    <Analytics />
     <slot name="end" />
   </body>
 </html>

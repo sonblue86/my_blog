@@ -26,6 +26,7 @@ import ResumeReading from '../components/post/ResumeReading.astro';
 import Newsletter from '../components/widgets/Newsletter.astro';
 import { SITE, getCategory } from '../config';
 import { formatDate, timeAgo } from '../lib/date';
+import { fold } from '../lib/text';
 import {
   type Post,
   getPosts,
@@ -70,6 +71,8 @@ const initials = authorName
 
 const tocHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3 && h.slug !== 'footnote-label');
 const coverSrc = typeof post.data.cover === 'object' ? post.data.cover.src : `/covers/${post.id}.svg`;
+// Pagefind folds most diacritics but not đ/Đ: a folded copy lets 'duong' find 'đường'.
+const searchAscii = fold([title, description, ...tags, ...headings.map((h) => h.text)].join(' '));
 const vtTitle = `title-${post.id.replace(/[^a-z0-9-]/gi, '-')}`;
 
 const jsonLd = [
@@ -152,6 +155,7 @@ const jsonLd = [
         <h1 class="post-title" style={`view-transition-name: ${vtTitle}`}>{title}</h1>
         <p class="post-lede">{description}</p>
 
+        <meta data-pagefind-meta="ascii[content]" content={searchAscii} />
         <span hidden data-pagefind-filter="category">{cat.name}</span>
         <span hidden data-pagefind-meta="category">{cat.id}</span>
         <span hidden data-pagefind-meta="image">{coverSrc}</span>
@@ -210,7 +214,7 @@ const jsonLd = [
 
     <div class="container-page post-grid">
       <aside class="post-rail" aria-label="Công cụ bài viết">
-        <ActionBar variant="rail" post={{ id: post.id, title, url, description }} />
+        <ActionBar variant="rail" post={post} minutes={minutes} />
       </aside>
 
       <div class="post-main">
@@ -379,7 +383,7 @@ const jsonLd = [
     </section>
   </article>
 
-  <ActionBar variant="bar" post={{ id: post.id, title, url, description }} />
+  <ActionBar variant="bar" post={post} minutes={minutes} />
   <ReaderSettings />
   <ListenPlayer />
   <SelectionShare />

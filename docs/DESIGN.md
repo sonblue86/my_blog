@@ -63,3 +63,38 @@ Dark mode: `data-theme="dark"` trên `<html>`; variant Tailwind `dark:` đã đ�
 | Giới thiệu | `/gioi-thieu/` |
 
 Luôn có dấu `/` cuối (trailingSlash: 'always').
+
+## Hợp đồng giữa các tính năng (events & data attributes)
+Mọi tính năng giao tiếp qua `CustomEvent` trên `document` hoặc data-attribute — không import chéo component của nhau.
+
+| Tín hiệu | Ai phát | Ai nghe / xử lý |
+|---|---|---|
+| `ns:toast` `{ message, tone?: 'ok'\|'info'\|'error', action?: {label, href}, duration? }` | bất kỳ | `ui/Toaster.astro` |
+| `ns:open-search` (hoặc click `[data-open-search]`) | Header, trang chủ, phím tắt | `search/SearchPalette.astro` |
+| `ns:theme-changed` `{ theme, pref }` | `scripts/theme.ts` | Giscus, bất kỳ |
+| click `[data-open-settings]` / `ns:open-settings` | ActionBar, meta bài viết, phím `S` | `post/ReaderSettings.astro` |
+| click `[data-listen-toggle]` / `ns:toggle-listen` | ActionBar, meta bài viết, phím `L` | `post/ListenPlayer.astro` (tự cập nhật `aria-pressed` cho mọi `[data-listen-toggle]`) |
+| `ns:listen-state` `{ playing, paused }` | ListenPlayer | ActionBar (nếu cần) |
+| click `[data-open-toc]` / `ns:open-toc` | ActionBar (mobile) | `post/Toc.astro` (bottom sheet) |
+| click `[data-bookmark]` (xem `library/BookmarkButton.astro`) | mọi nơi | `library/LibraryCore.astro` (delegation; đặt `aria-pressed`) |
+| `ns:bookmarks-changed` `{ ids }` | LibraryCore | bất kỳ |
+| `ns:toggle-bookmark-current` | phím `B` | LibraryCore (bookmark bài đang đọc) |
+
+Trang bài viết có sẵn: `html[data-page-type="article"]`, `article.post[data-post-id][data-post-url][data-post-title][data-minutes]`,
+nội dung bài ở `#post-body.prose`.
+
+### localStorage (qua `src/lib/storage.ts`, tiền tố `ns:`)
+| Key | Dạng | Chủ sở hữu |
+|---|---|---|
+| `theme` | `'light' \| 'dark' \| 'system'` | theme.ts |
+| `reader` | `{ font?: 'sans'\|'serif'\|'display', scale?: number, leading?: number, width?: number /*ch*/ }` — được áp dụng TRƯỚC khi vẽ bởi script inline trong `Head.astro` | ReaderSettings |
+| `bookmarks` | `Array<{ id, title, url, description, category, minutes, cover, date, savedAt }>` | LibraryCore |
+| `history` | `Array<{ id, title, url, cover, category, minutes, progress /*0..1*/, scrollY, lastReadAt }>` | LibraryCore |
+| `recent-searches` | `string[]` | SearchPalette |
+| `reactions` | `Record<postId, string[]>` | Reactions |
+
+### Phân lớp z-index
+header 40 · action bar/back-to-top 45 · reading progress 50 · popover (selection share) 60 · dialog/sheet (native `<dialog>` top-layer) · toaster 100.
+
+### Breakpoints (Tailwind mặc định)
+sm 640 · md 768 · lg 1024 (TOC hiện) · xl 1280 (rail trái hiện). Dưới md: action bar dưới đáy thay cho nút trong meta.
