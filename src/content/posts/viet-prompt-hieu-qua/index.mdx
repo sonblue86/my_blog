@@ -1,0 +1,157 @@
+---
+title: 'Viết prompt hiệu quả: 7 nguyên tắc kèm ví dụ trước và sau'
+description: 'Cách viết prompt để AI trả lời đúng ý ngay từ lần đầu: nói rõ mục tiêu, cho bối cảnh, mô tả đầu ra, đưa ví dụ. Kèm ví dụ trước/sau và khung mẫu dùng ngay.'
+pubDate: 2026-09-29
+updatedDate: 2026-10-20
+category: ai
+tags: ['Prompt', 'LLM', 'Năng suất']
+series: 'AI cho người mới'
+seriesOrder: 2
+summary: 'Prompt tốt không cần "câu thần chú". Nó giống một bản giao việc rõ ràng: mục tiêu, bối cảnh, dữ liệu, định dạng mong muốn và cách xử lý khi thiếu thông tin. Bài này đi qua 7 nguyên tắc, mỗi nguyên tắc có ví dụ trước/sau.'
+takeaways:
+  - 'Hãy viết prompt như giao việc cho một đồng nghiệp giỏi nhưng chưa biết gì về bối cảnh của bạn.'
+  - 'Mô tả cụ thể đầu ra (định dạng, độ dài, giọng văn) là cách nhanh nhất để nâng chất lượng.'
+  - 'Một hai ví dụ mẫu thường hiệu quả hơn cả đoạn mô tả dài.'
+  - 'Prompt là cuộc trò chuyện: chạy thử, xem kết quả, rồi sửa đúng chỗ còn mơ hồ.'
+---
+
+Ở [bài trước](/bai-viet/llm-hoat-dong-the-nao/), chúng ta biết rằng mô hình ngôn ngữ viết ra câu trả lời bằng cách dự đoán chữ tiếp theo dựa trên mọi thứ nằm trong cửa sổ ngữ cảnh. Hệ quả trực tiếp: **chất lượng câu trả lời phụ thuộc rất nhiều vào những gì bạn đưa vào.** Prompt mơ hồ thì mô hình phải tự đoán phần còn thiếu — và nó sẽ đoán theo hướng "trung bình", chung chung nhất.
+
+Tin tốt là viết prompt hiệu quả không đòi hỏi mẹo bí truyền. Nó gần với kỹ năng giao việc hơn là kỹ năng lập trình. Dưới đây là 7 nguyên tắc mình dùng hằng ngày, kèm ví dụ trước và sau.
+
+<KeyPoint>
+Hãy tưởng tượng bạn giao việc cho một đồng nghiệp rất giỏi nhưng **vừa vào làm hôm nay**: họ không biết dự án, không biết người đọc là ai, không biết bạn thích kiểu trình bày nào. Những gì bạn cần nói với họ chính là prompt.
+</KeyPoint>
+
+## 1. Nói rõ mục tiêu và người đọc
+
+Cùng một chủ đề, bài viết cho học sinh lớp 8 khác hẳn bài viết cho kỹ sư. Nếu bạn không nói, mô hình sẽ chọn một đối tượng mơ hồ ở giữa.
+
+```text title="Trước"
+Viết về lợi ích của việc đọc sách.
+```
+
+```text title="Sau"
+Viết một bài đăng Facebook khoảng 150 chữ cho fanpage của thư viện quận,
+khuyến khích phụ huynh đọc sách cùng con 15 phút mỗi tối.
+Người đọc là phụ huynh bận rộn, có con 5–10 tuổi.
+Mục tiêu: họ thử áp dụng ngay tối nay.
+```
+
+Bản "sau" trả lời ba câu hỏi: viết cái gì, cho ai, để đạt điều gì. Chỉ vậy thôi đã đủ thay đổi giọng văn, độ dài và lời kêu gọi ở cuối bài.
+
+## 2. Cung cấp bối cảnh mà chỉ bạn biết
+
+Mô hình không biết công ty bạn bán gì, sếp bạn khó tính ra sao hay dự án đang vướng ở đâu. Những chi tiết đó nằm trong đầu bạn, và bạn cần viết chúng ra.
+
+Bối cảnh hữu ích thường gồm: bạn là ai, tình huống hiện tại, những gì đã thử, và ràng buộc thực tế (thời gian, ngân sách, công cụ đang dùng).
+
+## 3. Mô tả cụ thể đầu ra mong muốn
+
+Đây là nguyên tắc mang lại hiệu quả nhanh nhất. Hãy nói rõ:
+
+- **Định dạng:** gạch đầu dòng, bảng, đoạn văn, JSON, email.
+- **Độ dài:** "khoảng 200 chữ", "tối đa 5 ý", "một câu".
+- **Giọng văn:** thân mật, trang trọng, hài hước nhẹ, trung lập.
+- **Cấu trúc:** các mục cần có và thứ tự của chúng.
+
+```text title="Trước"
+Tóm tắt biên bản họp này.
+```
+
+```text title="Sau"
+Tóm tắt biên bản họp bên dưới thành 3 phần:
+1. Quyết định đã chốt (gạch đầu dòng).
+2. Việc cần làm: bảng gồm cột Việc – Người phụ trách – Hạn chót.
+3. Câu hỏi còn bỏ ngỏ.
+Viết ngắn gọn, không thêm thông tin ngoài biên bản.
+```
+
+Với bản "sau", bạn có thể dán thẳng kết quả vào email gửi nhóm mà gần như không phải sửa.
+
+## 4. Tách bạch chỉ dẫn và dữ liệu
+
+Khi prompt có cả lời dặn lẫn tài liệu dài (email, báo cáo, mã nguồn), hãy đặt tài liệu vào một khối riêng có ranh giới rõ ràng. Cách này giúp mô hình không nhầm nội dung tài liệu thành mệnh lệnh, và giúp chính bạn dễ đọc lại prompt.
+
+```text title="Tách dữ liệu bằng thẻ"
+Đọc phản hồi khách hàng trong thẻ <phan_hoi> và phân loại mỗi phản hồi
+vào một trong ba nhóm: Giao hàng, Chất lượng, Thái độ phục vụ.
+
+<phan_hoi>
+1. Áo đẹp nhưng giao trễ 4 ngày.
+2. Nhân viên tư vấn nhiệt tình, sẽ ủng hộ tiếp.
+3. Đường may bị bung sau lần giặt đầu.
+</phan_hoi>
+```
+
+Thẻ kiểu `<phan_hoi>` không có gì đặc biệt về mặt kỹ thuật — bạn có thể dùng dấu `"""` hoặc tiêu đề in hoa. Điều quan trọng là ranh giới phải nhất quán.
+
+## 5. Cho ví dụ thay vì chỉ mô tả
+
+Khi muốn một phong cách hay định dạng cụ thể, một hai ví dụ thường hiệu quả hơn cả đoạn mô tả dài. Kỹ thuật này hay được gọi là *few-shot prompting*.
+
+```text title="Prompt có ví dụ"
+Viết lại tên sản phẩm thành mô tả ngắn, vui, dưới 12 chữ.
+
+Ví dụ:
+- Bình giữ nhiệt 500ml → Giữ trà nóng từ sáng đến lúc tan ca.
+- Đèn bàn kẹp → Kẹp đâu sáng đó, góc học tập gọn gàng.
+
+Giờ đến lượt:
+- Ba lô chống nước 20L →
+```
+
+<Callout type="tip" title="Ví dụ nên đa dạng">
+Nếu mọi ví dụ đều giống nhau về độ dài hay cấu trúc, mô hình sẽ bắt chước cả những điểm bạn không cố ý. Hãy chọn ví dụ khác nhau ở những chỗ được phép khác nhau.
+</Callout>
+
+## 6. Chia nhỏ việc phức tạp, cho phép mô hình "nghĩ"
+
+Một prompt yêu cầu "phân tích thị trường, đề xuất chiến lược và viết kế hoạch triển khai" cùng lúc thường cho kết quả nông ở cả ba phần. Hãy tách thành từng bước, kiểm tra kết quả mỗi bước rồi mới đi tiếp.
+
+Với bài toán cần lập luận — tính toán, so sánh phương án, gỡ lỗi — hãy đề nghị mô hình trình bày cách nghĩ trước khi kết luận, hoặc lập dàn ý trước khi viết. Vì mô hình viết từng token nối tiếp, phần lập luận viết ra trước sẽ trở thành bối cảnh cho phần kết luận phía sau.
+
+<Steps>
+
+1. **Lập dàn ý.** "Đề xuất dàn ý 5 mục cho bài viết này, mỗi mục một câu mô tả."
+2. **Duyệt và sửa dàn ý.** Bạn gạch bỏ, thêm, đổi thứ tự — phần việc chỉ bạn làm được.
+3. **Viết từng phần.** "Viết mục 2 theo dàn ý đã chốt, khoảng 250 chữ."
+4. **Rà soát.** "Đọc lại toàn bài, chỉ ra chỗ lặp ý hoặc thiếu ví dụ."
+
+</Steps>
+
+## 7. Nói rõ cách xử lý khi thiếu thông tin
+
+Như đã nói ở bài trước, mô hình có xu hướng lấp chỗ trống bằng thứ "nghe hợp lý". Bạn có thể chặn điều đó bằng một câu:
+
+```text title="Một câu nhỏ, tác dụng lớn"
+Chỉ dựa vào tài liệu được cung cấp. Nếu tài liệu không có thông tin,
+hãy trả lời "Không có trong tài liệu" thay vì phỏng đoán.
+Nếu yêu cầu của tôi chưa rõ, hãy hỏi lại trước khi làm.
+```
+
+Câu cuối đặc biệt hữu ích với những việc lớn: để mô hình hỏi lại vài câu trước khi làm thường tiết kiệm hơn nhiều so với sửa một bản nháp đi sai hướng.
+
+## Khung prompt dùng ngay
+
+Gộp các nguyên tắc trên lại, bạn có một khung đơn giản. Không phải lúc nào cũng cần đủ năm phần, nhưng khi kết quả chưa như ý, hãy xem mình đang thiếu phần nào.
+
+```text title="khung-prompt.txt"
+[Bối cảnh]   Tôi là…, đang làm…, cho đối tượng…
+[Nhiệm vụ]   Hãy… để đạt được…
+[Dữ liệu]    <tai_lieu> … </tai_lieu>
+[Đầu ra]     Định dạng…, độ dài…, giọng văn…
+[Ràng buộc]  Không…, nếu thiếu thông tin thì…
+```
+
+## Còn "đóng vai" thì sao?
+
+Mở đầu bằng "Bạn là một chuyên gia marketing 20 năm kinh nghiệm" là mẹo rất phổ biến. Nó có tác dụng định hướng giọng văn và góc nhìn, nhưng **không thay thế được bối cảnh và yêu cầu cụ thể**. Một vai diễn hoành tráng đi kèm yêu cầu mơ hồ vẫn cho ra câu trả lời mơ hồ. Hãy dùng vai như gia vị, không phải món chính.
+
+## Lặp lại: prompt là một cuộc trò chuyện
+
+Hiếm khi prompt đầu tiên cho kết quả hoàn hảo, và điều đó hoàn toàn bình thường. Thay vì viết lại từ đầu, hãy phản hồi cụ thể như khi góp ý cho đồng nghiệp: "Ngắn lại một nửa", "Bỏ thuật ngữ chuyên môn", "Ý thứ hai thiếu ví dụ, thêm một ví dụ đời thường".
+
+Khi tìm được prompt hiệu quả cho việc lặp lại hằng tuần — báo cáo, trả lời email mẫu, tóm tắt họp — hãy lưu nó lại. Một thư viện prompt nhỏ của riêng bạn là khoản đầu tư rất đáng.
+
+Ở bài cuối của series, chúng ta sẽ đi xa hơn một bước: thay vì tự tay dán tài liệu vào prompt, làm sao để hệ thống **tự tìm đúng đoạn tài liệu cần thiết** rồi đưa cho mô hình. Đó là ý tưởng đằng sau RAG.
