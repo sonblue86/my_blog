@@ -13,3 +13,6 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Viết file có nhiều dấu nháy bằng công cụ Write, không dùng heredoc bash dài (đã hỏng parse một lần).
 - Astro 7: `compressHTML` mặc định 'jsx' nuốt khoảng trắng giữa thẻ inline → đặt `compressHTML: true`.
 - Pagefind không gập "đ" → thêm meta `ascii` (đã fold) để gõ không dấu vẫn tìm được.
+- Vite 8 / Lightning CSS: viết `-webkit-backdrop-filter` TRƯỚC `backdrop-filter`. Ngược lại, minifier giữ mỗi bản có
+  tiền tố và Chrome bỏ qua nó → header/thanh công cụ mất hiệu ứng mờ. Lý do: lỗi chỉ lộ ra ở bản build, không thấy khi dev.
+- Kiểm thử offline cho service worker: tắt server thật. `setOffline`/`network-state-set offline` của Playwright không chặn fetch của chính SW.

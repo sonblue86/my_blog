@@ -174,7 +174,7 @@ Frontmatter tối thiểu:
 ---
 title: 'Prompt hiệu quả cho người mới'
 description: 'Mô tả 120–160 ký tự, hiện trên Google và khi chia sẻ.'
-pubDate: 2026-11-09            # hoặc 2026-12-01T08:00:00+07:00 để hẹn giờ
+pubDate: 2026-11-09            # hoặc 2026-12-01T00:00:00+07:00 để hẹn giờ
 category: ai
 tags: ['Prompt', 'ChatGPT']
 cover: ./cover.jpg             # tuỳ chọn — bỏ trống sẽ có ảnh bìa tự sinh
@@ -216,9 +216,10 @@ Hướng dẫn chi tiết từng bước, kèm xử lý lỗi thường gặp: *
 2. **Đăng nhập Cloudflare từ máy:** `npx wrangler login`.
 3. **Tạo database D1:** `npx wrangler d1 create blog-db --location apac --binding DB --update-config`
    (lệnh tự điền `database_id` vào `wrangler.jsonc`) → commit.
-4. **Tạo bảng & secret:** `npm run db:migrate:remote`, rồi `npx wrangler secret put HASH_SALT` (một chuỗi ngẫu nhiên bất kỳ).
+4. **Tạo bảng:** `npm run db:migrate:remote`.
 5. **Kết nối repo:** Dashboard Cloudflare → *Workers & Pages → Create → Import a repository* → chọn repo.
-   Build command `npm run build`, deploy command `npx wrangler deploy`. Từ giờ mỗi lần push lên `main` là site tự cập nhật.
+   Build command `npm run build`, deploy command `npx wrangler deploy`. Sau lần deploy đầu, đặt secret:
+   `npx wrangler secret put HASH_SALT` (một chuỗi ngẫu nhiên bất kỳ). Từ giờ mỗi lần push lên `main` là site tự cập nhật.
 6. **Tên miền & URL:** gắn domain riêng (tuỳ chọn), rồi đổi `SITE.url` trong `src/config.ts` và `site_url` trong
    `public/admin/config.yml` cho khớp.
 
@@ -229,7 +230,7 @@ Hướng dẫn chi tiết từng bước, kèm xử lý lỗi thường gặp: *
 
 Site tĩnh chỉ build khi có commit mới, nên bài có `pubDate` trong tương lai sẽ chờ tới lần build kế tiếp.
 Workflow [`.github/workflows/scheduled-deploy.yml`](.github/workflows/scheduled-deploy.yml) build lại **mỗi ngày lúc
-06:00 giờ Việt Nam** (và chạy tay được ở tab *Actions*). Thêm **một** trong hai bộ secret
+07:05 giờ Việt Nam** (và chạy tay được ở tab *Actions*). Thêm **một** trong hai bộ secret
 (*Settings → Secrets and variables → Actions*):
 
 | Cách | Secret | Khi nào dùng |

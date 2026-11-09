@@ -14,8 +14,10 @@ interface Props {
   variant: 'bar' | 'rail';
   post: Post;
   minutes: number;
+  /** Show the "jump to comments" button (only when the page has a comments section). */
+  comments?: boolean;
 }
-const { variant, post } = Astro.props;
+const { variant, post, comments = false } = Astro.props;
 const url = postUrl(post);
 ---
 
@@ -57,9 +59,13 @@ const url = postUrl(post);
       <button type="button" class="rail-btn" data-share={url} data-share-title={post.data.title} aria-label="Sao chép liên kết" data-tip="Sao chép liên kết">
         <Icon name="link" size={19} />
       </button>
-      <a href="#binh-luan" class="rail-btn" aria-label="Tới phần bình luận" data-tip="Bình luận (C)">
-        <Icon name="message" size={19} />
-      </a>
+      {
+        comments && (
+          <a href="#binh-luan" class="rail-btn" aria-label="Tới phần bình luận" data-tip="Bình luận (C)">
+            <Icon name="message" size={19} />
+          </a>
+        )
+      }
     </div>
   )
 }
@@ -78,8 +84,8 @@ const url = postUrl(post);
     border: 1px solid var(--border);
     border-radius: 999px;
     background: color-mix(in oklab, var(--bg-elevated) 86%, transparent);
-    backdrop-filter: saturate(1.6) blur(16px);
     -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    backdrop-filter: saturate(1.6) blur(16px);
     box-shadow: var(--shadow-lg);
     transform: translate(-50%, calc(100% + 40px));
     transition: transform 320ms var(--ease-out);

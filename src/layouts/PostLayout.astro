@@ -24,7 +24,7 @@ import ViewCount from '../components/post/ViewCount.astro';
 import Comments from '../components/post/Comments.astro';
 import ResumeReading from '../components/post/ResumeReading.astro';
 import Newsletter from '../components/widgets/Newsletter.astro';
-import { SITE, getCategory } from '../config';
+import { SITE, GISCUS, getCategory } from '../config';
 import { formatDate, timeAgo } from '../lib/date';
 import { fold } from '../lib/text';
 import {
@@ -69,6 +69,9 @@ const initials = authorName
   .join('')
   .toUpperCase();
 
+// No empty gap when Giscus is not configured yet (dev still shows the setup hint).
+const commentsOn = Boolean(GISCUS.repo && GISCUS.repoId && GISCUS.categoryId);
+const showComments = post.data.comments && (commentsOn || import.meta.env.DEV);
 const tocHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3 && h.slug !== 'footnote-label');
 const coverSrc = typeof post.data.cover === 'object' ? post.data.cover.src : `/covers/${post.id}.svg`;
 // Pagefind folds most diacritics but not đ/Đ: a folded copy lets 'duong' find 'đường'.
@@ -214,7 +217,7 @@ const jsonLd = [
 
     <div class="container-page post-grid">
       <aside class="post-rail" aria-label="Công cụ bài viết">
-        <ActionBar variant="rail" post={post} minutes={minutes} />
+        <ActionBar variant="rail" post={post} minutes={minutes} comments={showComments} />
       </aside>
 
       <div class="post-main">
@@ -369,7 +372,7 @@ const jsonLd = [
     }
 
     {
-      post.data.comments && (
+      showComments && (
         <section class="container-page mt-20" data-pagefind-ignore>
           <div class="mx-auto max-w-3xl">
             <Comments />

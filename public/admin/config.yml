@@ -77,7 +77,7 @@ collections:
       editable: [create]
       hint: Đường dẫn của bài là /bai-viet/<slug>/. Chỉ sửa được khi tạo bài — đổi sau sẽ làm hỏng link đã chia sẻ.
       pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', 'Chỉ dùng chữ thường không dấu, số và dấu gạch ngang (-).']
-    # {{dirname}} = tên thư mục của bài (ví dụ "xin-chao"), đúng với URL Astro sinh ra.
+    # {{dirname}} = tên thư mục của bài (ví dụ "rag-la-gi"), đúng với URL Astro sinh ra.
     preview_path: '/bai-viet/{{dirname}}/'
     preview_path_date_field: pubDate
     summary: "{{draft | ternary('[Nháp] ', '')}}{{title}} · {{pubDate | date('DD/MM/YYYY')}}"

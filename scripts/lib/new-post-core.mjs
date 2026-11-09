@@ -222,7 +222,7 @@ export function buildPost({ title, category, tags = [], date, mdx = false }) {
     "  - 'TODO: Ý chính thứ hai'",
     "  - 'TODO: Ý chính thứ ba'",
     '# ── Tuỳ chọn: xoá dấu # ở đầu dòng để dùng ──',
-    '# Hẹn giờ đăng: đặt pubDate trong tương lai, ví dụ pubDate: 2026-12-01T08:00:00+07:00',
+    '# Hẹn giờ đăng: đặt pubDate trong tương lai, ví dụ pubDate: 2026-12-01T00:00:00+07:00',
     `# updatedDate: ${date}`,
     '# cover: ./cover.jpg        # ảnh đặt cùng thư mục với bài; bỏ trống = ảnh bìa tự sinh',
     "# coverAlt: 'Mô tả ngắn nội dung ảnh bìa'",
