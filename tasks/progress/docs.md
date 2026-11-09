@@ -21,9 +21,13 @@ Phạm vi: Sveltia CMS (`public/admin/**`), `scripts/new-post.mjs` + `scripts/li
   `Math.round` cho "60 phút trước"/"24 giờ trước". Fix đã thử ở scratchpad (trunc + hạ chữ đầu) → ghi vào integrationNotes.
   Test casing để `it.fails` — khi integrator sửa src/lib/date.ts thì đổi thành `it`.
 
+- [x] `.github/workflows/ci.yml` (push main + PR: npm ci → check → test → build) và `scheduled-deploy.yml` (cron
+  `0 23 * * *` = 06:00 VN + workflow_dispatch → build → `npx wrangler deploy`; thiếu secrets thì tự bỏ qua bằng
+  ::notice, không fail hằng ngày). actions/checkout@v7, setup-node@v7 (bản mới nhất, kiểm tra qua GitHub API).
+  YAML hợp lệ theo schema github-workflow (schemastore) bằng ajv. CHƯA chạy thật trên GitHub.
+
 ## Next
 4. `README.md` + `LICENSE`
-5. `.github/workflows/ci.yml` + `scheduled-deploy.yml`
 6. Kiểm tra: astro build, astro check, vitest, xem /admin trong trình duyệt (390 & 1440)
 
 ## Notes

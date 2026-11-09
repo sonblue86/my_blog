@@ -1,0 +1,72 @@
+# Build & deploy lại site mỗi sáng để các bài HẸN GIỜ (pubDate trong tương lai) tự lên trang.
+#
+# TUỲ CHỌN. Site tĩnh chỉ được build khi có commit mới, nên bài hẹn giờ sẽ "nằm chờ" tới lần build sau.
+# - Nếu bạn deploy bằng Cloudflare Workers Builds (kết nối repo GitHub trong dashboard), push vẫn tự deploy
+#   như thường; workflow này chỉ cần khi bạn dùng bài hẹn giờ. Không dùng thì cứ để đó — thiếu secrets
+#   thì job tự bỏ qua, không báo lỗi.
+# - Cần 2 secrets (Settings → Secrets and variables → Actions → New repository secret):
+#     CLOUDFLARE_API_TOKEN   token tạo từ mẫu "Edit Cloudflare Workers"
+#     CLOUDFLARE_ACCOUNT_ID  Account ID trong dashboard Cloudflare
+# - Chạy tay: tab Actions → "Deploy hằng ngày" → Run workflow.
+# Lưu ý: GitHub tự tắt lịch chạy của repo không có hoạt động trong 60 ngày.
+name: Deploy hằng ngày
+
+on:
+  schedule:
+    # 23:00 UTC = 06:00 sáng giờ Việt Nam (UTC+7). Muốn chạy nhiều lần/ngày: '0 23,5,11 * * *'.
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy lên Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Kiểm tra secrets
+        id: secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Bỏ qua deploy::Chưa có secret CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID — xem README, mục 'Bài hẹn giờ'."
+          fi
+
+      - name: Lấy mã nguồn
+        if: steps.secrets.outputs.enabled == 'true'
+        uses: actions/checkout@v7
+
+      - name: Cài Node theo .nvmrc
+        if: steps.secrets.outputs.enabled == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cài dependencies
+        if: steps.secrets.outputs.enabled == 'true'
+        run: npm ci
+
+      - name: Build (Astro + Pagefind)
+        if: steps.secrets.outputs.enabled == 'true'
+        run: npm run build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+
+      - name: Deploy (wrangler deploy)
+        if: steps.secrets.outputs.enabled == 'true'
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

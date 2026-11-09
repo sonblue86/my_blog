@@ -1,0 +1,46 @@
+# Kiểm tra mỗi lần push lên main và mỗi pull request: type-check, unit test, build (Astro + Pagefind).
+# Không deploy — việc deploy do Cloudflare Workers Builds (hoặc workflow scheduled-deploy.yml) đảm nhận.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Kiểm tra & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v7
+
+      - name: Cài Node theo .nvmrc
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cài dependencies
+        run: npm ci
+
+      - name: Kiểm tra kiểu (astro check)
+        run: npm run check
+
+      - name: Unit test (vitest)
+        run: npm test
+
+      - name: Build (Astro + Pagefind)
+        run: npm run build
+        env:
+          # Tuỳ chọn: đặt biến repository SITE_URL (Settings → Secrets and variables → Actions → Variables)
+          # nếu domain thật khác SITE.url trong src/config.ts.
+          SITE_URL: ${{ vars.SITE_URL }}
