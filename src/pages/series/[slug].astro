@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/listing/PageHeader.astro';
+import Icon from '../../components/ui/Icon.astro';
+import { getSeries, postUrl, getReadingTime } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  return (await getSeries()).map((s) => ({ params: { slug: s.slug }, props: s }));
+}
+const { name, posts } = Astro.props;
+const total = posts.reduce((n, p) => n + getReadingTime(p).minutes, 0);
+---
+
+<BaseLayout title={`Series: ${name}`} description={`Series ${name} — ${posts.length} phần, khoảng ${total} phút đọc.`}>
+  <PageHeader eyebrow={`Series · ${posts.length} phần · ~${total} phút`} title={name} description="Đọc theo thứ tự để có bức tranh đầy đủ. Những phần bạn đã đọc sẽ được đánh dấu ✓.">
+    {posts[0] && <a href={postUrl(posts[0])} class="btn btn-primary mt-6">Bắt đầu đọc <Icon name="arrow-right" size={16} /></a>}
+  </PageHeader>
+  <ol class="container-page mt-10 grid max-w-3xl! gap-3">
+    {
+      posts.map((p, i) => (
+        <li>
+          <a href={postUrl(p)} class="part" data-part={p.id}>
+            <span class="part-num">{i + 1}</span>
+            <span class="min-w-0 flex-1">
+              <span class="block font-display text-lg font-bold leading-snug">{p.data.title}</span>
+              <span class="mt-1 block text-sm text-fg-muted line-clamp-2">{p.data.description}</span>
+              <span class="mt-2 block text-xs text-fg-subtle">{getReadingTime(p).minutes} phút đọc</span>
+            </span>
+            <span class="part-done" aria-label="Đã đọc" hidden>✓</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</BaseLayout>
+
+<style>
+  .part {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    transition: border-color 150ms var(--ease-out);
+  }
+  .part:hover {
+    border-color: var(--border-strong);
+  }
+  .part-num {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .part-done {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    background: color-mix(in oklab, var(--success) 15%, transparent);
+    color: var(--success);
+    font-weight: 800;
+  }
+  .part-done:not([hidden]) {
+    display: grid;
+  }
+</style>
+
+<script>
+  import { getHistory, FINISHED } from '../../scripts/library-store';
+  const done = new Set(getHistory().filter((h) => h.progress >= FINISHED).map((h) => h.id));
+  document.querySelectorAll<HTMLElement>('[data-part]').forEach((a) => {
+    const mark = a.querySelector<HTMLElement>('.part-done');
+    if (mark) mark.hidden = !done.has(a.dataset.part!);
+  });
+</script>

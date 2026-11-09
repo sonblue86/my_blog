@@ -16,6 +16,8 @@ export default defineConfig({
   // Astro 7 defaults to 'jsx' whitespace handling, which eats spaces between inline elements.
   compressHTML: true,
   build: { format: 'directory' },
+  // Project-local caches: worktrees can share one node_modules (junction) without clobbering each other.
+  cacheDir: './.cache/astro',
   prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
   integrations: [
     // Expressive Code must come before MDX so code blocks in .mdx are handled too.
@@ -66,6 +68,7 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    cacheDir: './.cache/vite',
     // `npm run dev:api` runs the Cloudflare Worker (views, reactions, newsletter) on :8787.
     server: { proxy: { '/api': { target: 'http://127.0.0.1:8787', changeOrigin: false } } },
   },

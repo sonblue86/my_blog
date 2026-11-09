@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/listing/PageHeader.astro';
+import PostCard from '../../components/post/PostCard.astro';
+import { getPosts, getTags, tagSlug } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const [posts, tags] = await Promise.all([getPosts(), getTags()]);
+  return tags.map((t) => ({
+    params: { tag: t.slug },
+    props: { name: t.name, posts: posts.filter((p) => p.data.tags.some((x) => tagSlug(x) === t.slug)) },
+  }));
+}
+const { name, posts } = Astro.props;
+---
+
+<BaseLayout title={`#${name}`} description={`Các bài viết về ${name} trên Nhịp Số.`}>
+  <PageHeader eyebrow={`Thẻ · ${posts.length} bài viết`} title={`#${name}`}>
+    <a href="/the/" class="link mt-5 inline-block text-sm font-semibold">← Tất cả thẻ</a>
+  </PageHeader>
+  <section class="container-page mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+    {posts.map((p) => <PostCard post={p} />)}
+  </section>
+</BaseLayout>

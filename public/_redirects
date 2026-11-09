@@ -1,0 +1,4 @@
+/feed      /rss.xml     301
+/feed/     /rss.xml     301
+/search    /tim-kiem/   301
+/blog/*    /bai-viet/:splat 301

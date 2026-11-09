@@ -1,0 +1,38 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/listing/PageHeader.astro';
+import Pagination from '../../../components/listing/Pagination.astro';
+import PostCard from '../../../components/post/PostCard.astro';
+import { CATEGORIES, SITE, type Category } from '../../../config';
+import { getPosts, type Post } from '../../../lib/posts';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = await getPosts();
+  return CATEGORIES.flatMap((cat) =>
+    paginate(
+      posts.filter((p) => p.data.category === cat.id),
+      { params: { cat: cat.id }, props: { cat }, pageSize: SITE.postsPerPage },
+    ),
+  );
+}) satisfies GetStaticPaths;
+
+const { page, cat } = Astro.props as { page: Page<Post>; cat: Category };
+const title = page.currentPage > 1 ? `${cat.name} — trang ${page.currentPage}` : cat.name;
+---
+
+<BaseLayout title={title} description={cat.description}>
+  <PageHeader eyebrow={`Chuyên mục · ${page.total} bài viết`} title={cat.name} description={cat.description} color={cat.color} icon={cat.icon} />
+  <section class="container-page mt-12">
+    {
+      page.data.length ? (
+        <div class="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {page.data.map((p, i) => <PostCard post={p} eager={i < 3} />)}
+        </div>
+      ) : (
+        <p class="py-16 text-center text-fg-muted">Chuyên mục này đang được chuẩn bị. Quay lại sớm nhé!</p>
+      )
+    }
+    <Pagination current={page.currentPage} last={page.lastPage} base={`/chuyen-muc/${cat.id}/`} />
+  </section>
+</BaseLayout>

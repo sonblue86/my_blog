@@ -1,0 +1,64 @@
+---
+import Icon from '../ui/Icon.astro';
+interface Props {
+  current: number;
+  last: number;
+  base: string; // e.g. /chuyen-muc/ai/
+}
+const { current, last, base } = Astro.props;
+const href = (n: number) => (n === 1 ? base : `${base}${n}/`);
+const pages = Array.from({ length: last }, (_, i) => i + 1).filter((n) => n === 1 || n === last || Math.abs(n - current) <= 1);
+---
+
+{
+  last > 1 && (
+    <nav class="pager" aria-label="Phân trang">
+      {current > 1 ? <a class="pg pg-wide" href={href(current - 1)} rel="prev"><Icon name="arrow-left" size={16} />Trước</a> : <span />}
+      <ol class="flex items-center gap-1">
+        {pages.map((n, i) => (
+          <>
+            {i > 0 && n - pages[i - 1] > 1 && <li class="px-1 text-fg-subtle">…</li>}
+            <li>
+              <a class="pg" href={href(n)} aria-current={n === current ? 'page' : undefined}>{n}</a>
+            </li>
+          </>
+        ))}
+      </ol>
+      {current < last ? <a class="pg pg-wide" href={href(current + 1)} rel="next">Sau<Icon name="arrow-right" size={16} /></a> : <span />}
+    </nav>
+  )
+}
+
+<style>
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 56px;
+  }
+  .pg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: var(--fg-muted);
+  }
+  .pg:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .pg[aria-current='page'] {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .pg-wide {
+    border: 1px solid var(--border);
+    padding: 0 16px;
+  }
+</style>

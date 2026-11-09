@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/listing/PageHeader.astro';
+import { getTags, tagUrl } from '../../lib/posts';
+import { fold } from '../../lib/text';
+
+const tags = await getTags();
+const max = Math.max(1, ...tags.map((t) => t.count));
+---
+
+<BaseLayout title="Tất cả thẻ" description="Duyệt bài viết theo chủ đề nhỏ.">
+  <PageHeader eyebrow={`${tags.length} thẻ`} title="Chủ đề" description="Mỗi thẻ là một sợi chỉ nối các bài viết cùng chủ đề. Gõ để lọc nhanh — có dấu hay không dấu đều được.">
+    <input class="tag-filter mt-6" type="search" placeholder="Lọc thẻ…" aria-label="Lọc thẻ" data-tag-filter />
+  </PageHeader>
+  <section class="container-page mt-10">
+    <ul class="flex flex-wrap gap-2.5" data-tag-list>
+      {
+        tags.map((t) => (
+          <li data-key={fold(t.name)}>
+            <a href={tagUrl(t.name)} class="tag-pill" style={`--w:${0.85 + (t.count / max) * 0.35}rem`}>
+              #{t.name}
+              <span class="tag-count">{t.count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="mt-8 text-fg-muted" data-tag-empty hidden>Không có thẻ nào khớp.</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .tag-filter {
+    width: min(100%, 420px);
+    height: 48px;
+    padding: 0 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--bg-elevated);
+    color: var(--fg);
+    font-size: 1rem;
+    outline: 0;
+  }
+  .tag-filter:focus {
+    border-color: var(--accent);
+  }
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    font-size: var(--w);
+    font-weight: 600;
+    transition:
+      border-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .tag-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .tag-count {
+    font-size: 0.75rem;
+    color: var(--fg-subtle);
+  }
+</style>
+
+<script>
+  import { fold } from '../../lib/text';
+  const input = document.querySelector<HTMLInputElement>('[data-tag-filter]');
+  const items = [...document.querySelectorAll<HTMLElement>('[data-tag-list] li')];
+  const empty = document.querySelector<HTMLElement>('[data-tag-empty]')!;
+  input?.addEventListener('input', () => {
+    const q = fold(input.value.trim());
+    let n = 0;
+    for (const li of items) {
+      const show = !q || li.dataset.key!.includes(q);
+      li.hidden = !show;
+      if (show) n++;
+    }
+    empty.hidden = n > 0;
+  });
+</script>

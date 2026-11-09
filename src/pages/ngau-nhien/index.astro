@@ -1,0 +1,23 @@
+---
+import { getPosts, postUrl } from '../../lib/posts';
+const urls = (await getPosts()).map((p) => postUrl(p));
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đang chọn một bài ngẫu nhiên…</title>
+    <script is:inline define:vars={{ urls }}>
+      if (urls.length) location.replace(urls[Math.floor(Math.random() * urls.length)]);
+      else location.replace('/');
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p>Trang này cần JavaScript để chọn bài ngẫu nhiên. <a href="/luu-tru/">Xem tất cả bài viết</a>.</p>
+    </noscript>
+  </body>
+</html>

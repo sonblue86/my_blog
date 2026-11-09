@@ -1,0 +1,52 @@
+---
+/** Header for listing pages (category, tag, series, archive). Optionally tinted with a color. */
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+}
+const { eyebrow, title, description, color = 'var(--accent)', icon } = Astro.props;
+---
+
+<header class="page-header" style={`--c:${color}`}>
+  <div class="container-page py-10 sm:py-16">
+    {eyebrow && <p class="eyebrow mb-3 flex items-center gap-2">{icon && <span class="ph-icon" aria-hidden="true">{icon}</span>}{eyebrow}</p>}
+    <h1 class="ph-title">{title}</h1>
+    {description && <p class="ph-desc">{description}</p>}
+    <slot />
+  </div>
+</header>
+
+<style>
+  .page-header {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(800px 260px at 0% 0%, color-mix(in oklab, var(--c) 12%, transparent), transparent 70%),
+      radial-gradient(600px 220px at 100% 100%, color-mix(in oklab, var(--c) 6%, transparent), transparent 70%);
+  }
+  .ph-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    color: var(--c);
+    background: color-mix(in oklab, var(--c) 14%, transparent);
+    font-size: 0.95rem;
+  }
+  .ph-title {
+    font-size: clamp(2rem, 1.3rem + 3vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+  .ph-desc {
+    margin-top: 14px;
+    max-width: 62ch;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--fg-muted);
+  }
+</style>

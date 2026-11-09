@@ -26,3 +26,6 @@ playwright-report/
 
 # agent worktrees
 .claude/worktrees/
+
+# local caches
+.cache/
