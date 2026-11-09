@@ -1,4 +1,1005 @@
 ---
-/** STUB — Reader settings sheet (font, size, leading, width). */
+/**
+ * "Tuỳ chỉnh đọc" — reader settings.
+ *  - Mobile (< 768px): modal bottom sheet (drag handle, swipe down to close), light backdrop so changes show live.
+ *  - Desktop: non-modal floating panel (keep scrolling while you tweak; Esc / outside click closes).
+ * Opens on any [data-open-settings] click (delegated) or `ns:open-settings`.
+ * Prefs live in localStorage 'ns:reader' (see src/scripts/reader-settings.ts); Head.astro applies them before paint.
+ * Also owns "Chế độ tập trung" (html[data-focus-mode]) — toggled here, by `ns:toggle-focus`, exited with Esc.
+ */
+import { Minus, Plus, RotateCcw, Focus, Minimize2 } from 'lucide-static';
+import Icon from '../ui/Icon.astro';
+import { FONTS, SCALES, LEADINGS, WIDTHS } from '../../scripts/reader-settings';
 
+// Icons not registered in Icon.astro — inlined from lucide-static.
+const ico = (svg: string, size = 18) =>
+  svg
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\s(width|height)="24"/g, '')
+    .replace(/class="[^"]*"/, `class="icon" width="${size}" height="${size}" aria-hidden="true" focusable="false"`)
+    .replace(/\s*\n\s*/g, ' ');
+
+const themes = [
+  { value: 'light', label: 'Sáng', icon: 'sun' },
+  { value: 'dark', label: 'Tối', icon: 'moon' },
+  { value: 'system', label: 'Tự động', icon: 'monitor' },
+] as const;
+const leadGap = [3, 5, 7];
+const widthBar = ['46%', '64%', '86%'];
 ---
+
+<dialog id="reader-settings" class="rs" aria-labelledby="rs-title" data-reader-settings>
+  <div class="rs-inner">
+    <div class="rs-grab" aria-hidden="true"><span></span></div>
+    <div class="rs-head">
+      <h2 id="rs-title" class="rs-title">
+        <Icon name="text-size" size={20} />
+        Tuỳ chỉnh đọc
+      </h2>
+      <button type="button" class="btn-icon -mr-2" data-rs-close aria-label="Đóng tuỳ chỉnh đọc">
+        <Icon name="x" />
+      </button>
+    </div>
+
+    <div class="rs-body" data-rs-body>
+      <fieldset class="rs-group">
+        <legend class="rs-label">Phông chữ</legend>
+        <div class="rs-choices">
+          {
+            FONTS.map((f) => (
+              <label class="rs-choice">
+                <input type="radio" name="rs-font" value={f.value} class="rs-input" />
+                <span class="rs-face" data-face={f.value} aria-hidden="true">
+                  Aa
+                </span>
+                <span class="rs-choice-label">{f.label}</span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <div class="rs-group" role="group" aria-labelledby="rs-size-label">
+        <div class="rs-row-head">
+          <span id="rs-size-label" class="rs-label">Cỡ chữ</span>
+          <output class="rs-value" data-rs-size-out aria-live="polite">100%</output>
+        </div>
+        <div class="rs-stepper">
+          <button type="button" class="rs-step" data-rs-size="-1" aria-label="Giảm cỡ chữ">
+            <span class="rs-a rs-a-sm" aria-hidden="true">A</span><Fragment set:html={ico(Minus, 14)} />
+          </button>
+          <div class="rs-dots" data-rs-dots aria-hidden="true">
+            {SCALES.map((_, i) => <span class="rs-dot" style={`--i:${i}`} />)}
+          </div>
+          <button type="button" class="rs-step" data-rs-size="1" aria-label="Tăng cỡ chữ">
+            <span class="rs-a rs-a-lg" aria-hidden="true">A</span><Fragment set:html={ico(Plus, 14)} />
+          </button>
+        </div>
+      </div>
+
+      <fieldset class="rs-group">
+        <legend class="rs-label">Giãn dòng</legend>
+        <div class="rs-choices">
+          {
+            LEADINGS.map((l, i) => (
+              <label class="rs-choice rs-choice-row">
+                <input type="radio" name="rs-leading" value={l.value} class="rs-input" />
+                <span class="rs-lines" style={`--gap:${leadGap[i]}px`} aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span class="rs-choice-label">{l.label}</span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="rs-group rs-width-group">
+        <legend class="rs-label">Độ rộng cột chữ</legend>
+        <div class="rs-choices">
+          {
+            WIDTHS.map((w, i) => (
+              <label class="rs-choice rs-choice-row">
+                <input type="radio" name="rs-width" value={w.value} class="rs-input" />
+                <span class="rs-width" style={`--w:${widthBar[i]}`} aria-hidden="true">
+                  <i />
+                </span>
+                <span class="rs-choice-label">{w.label}</span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="rs-group">
+        <legend class="rs-label">Giao diện</legend>
+        <div class="rs-choices">
+          {
+            themes.map((t) => (
+              <label class="rs-choice rs-choice-row">
+                <input type="radio" name="rs-theme" value={t.value} class="rs-input" />
+                <Icon name={t.icon} size={18} />
+                <span class="rs-choice-label">{t.label}</span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <button type="button" role="switch" aria-checked="false" class="rs-focus" data-rs-focus aria-describedby="rs-focus-hint">
+        <span class="rs-focus-icon" aria-hidden="true"><Fragment set:html={ico(Focus, 20)} /></span>
+        <span class="rs-focus-text">
+          <span class="rs-focus-title">Chế độ tập trung</span>
+          <span class="rs-hint" id="rs-focus-hint">Ẩn menu, mục lục và mọi thứ xung quanh — chỉ còn bạn và con chữ.</span>
+        </span>
+        <span class="rs-switch" aria-hidden="true"><span></span></span>
+      </button>
+    </div>
+
+    <div class="rs-foot">
+      <button type="button" class="rs-reset" data-rs-reset>
+        <Fragment set:html={ico(RotateCcw, 16)} />
+        Khôi phục mặc định
+      </button>
+      <span class="rs-kbd" aria-hidden="true">Phím tắt <kbd class="kbd">S</kbd></span>
+    </div>
+  </div>
+</dialog>
+
+<button type="button" class="focus-exit" data-focus-exit hidden>
+  <Fragment set:html={ico(Minimize2, 16)} />
+  <span>Thoát tập trung</span>
+  <kbd class="kbd focus-exit-kbd" aria-hidden="true">Esc</kbd>
+</button>
+
+<style>
+  /* ---------- shell: desktop floating panel ---------- */
+  .rs {
+    position: fixed;
+    inset: calc(var(--header-h) + 12px) max(24px, env(safe-area-inset-right)) auto auto;
+    z-index: 70; /* non-modal on desktop → not in the top layer */
+    width: 372px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - var(--header-h) - 24px);
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .rs[open] {
+    display: flex;
+  }
+  .rs-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+  }
+  .rs-grab {
+    display: none;
+  }
+  .rs-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px 6px 20px;
+  }
+  .rs-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .rs-title :global(svg) {
+    color: var(--accent);
+  }
+  .rs-body {
+    display: grid;
+    gap: 18px;
+    padding: 8px 20px 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .rs-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px 8px 8px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-subtle);
+  }
+  .rs-kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--fg-subtle);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .rs[open] {
+      animation: rs-pop 220ms var(--ease-out);
+    }
+    .rs[data-closing] {
+      animation: rs-pop-out 160ms var(--ease-out) forwards;
+    }
+  }
+  @keyframes rs-pop {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.98);
+    }
+  }
+  @keyframes rs-pop-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+  }
+
+  /* ---------- mobile: bottom sheet ---------- */
+  @media (max-width: 767px) {
+    .rs {
+      inset: auto 0 0 0;
+      width: 100%;
+      max-width: 560px;
+      max-height: min(86dvh, 720px);
+      margin: 0 auto;
+      border-width: 1px 0 0;
+      border-radius: 24px 24px 0 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .rs::backdrop {
+      /* light: the article stays visible above the sheet, so every change previews live */
+      background: rgb(0 0 0 / 0.16);
+    }
+    .rs-grab {
+      display: grid;
+      place-items: center;
+      height: 22px;
+      touch-action: none;
+      cursor: grab;
+    }
+    .rs-grab span {
+      width: 40px;
+      height: 5px;
+      border-radius: 99px;
+      background: var(--border-strong);
+    }
+    .rs-head {
+      padding-top: 0;
+      touch-action: none;
+    }
+    .rs-body {
+      gap: 16px;
+    }
+    .rs-width-group,
+    .rs-kbd {
+      display: none; /* the column is already narrower than 60ch on phones */
+    }
+    .rs-foot {
+      justify-content: center;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .rs[open] {
+        animation: rs-up 300ms var(--ease-out);
+      }
+      .rs[data-closing] {
+        animation: rs-down 200ms var(--ease-out) forwards;
+      }
+      .rs[data-dragging] {
+        animation: none;
+      }
+    }
+  }
+  @keyframes rs-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes rs-down {
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  /* ---------- controls ---------- */
+  .rs-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .rs-label {
+    display: block;
+    margin-bottom: 8px;
+    padding: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+  .rs-row-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .rs-value {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-muted);
+  }
+  .rs-choices {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--bg-muted);
+  }
+  .rs-choice {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 64px;
+    padding: 6px 4px;
+    border-radius: 10px;
+    color: var(--fg-muted);
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
+  }
+  .rs-choice-row {
+    flex-direction: row;
+    gap: 8px;
+    min-height: 44px;
+  }
+  .rs-choice:hover {
+    color: var(--fg);
+  }
+  .rs-choice:has(:checked) {
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-sm);
+  }
+  .rs-choice:has(:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .rs-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .rs-choice-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .rs-face {
+    font-size: 1.5rem;
+    line-height: 1.15;
+    font-weight: 500;
+    color: var(--fg);
+  }
+  .rs-face[data-face='sans'] {
+    font-family: var(--font-sans);
+  }
+  .rs-face[data-face='serif'] {
+    font-family: var(--font-serif);
+  }
+  .rs-face[data-face='display'] {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+  .rs-choice:has(:checked) .rs-face {
+    color: var(--accent);
+  }
+
+  .rs-lines {
+    display: grid;
+    gap: var(--gap);
+    width: 16px;
+  }
+  .rs-lines i {
+    display: block;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+  .rs-lines i:last-child {
+    width: 70%;
+  }
+  .rs-width {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 22px;
+    height: 16px;
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+  }
+  .rs-width i {
+    display: block;
+    width: var(--w);
+    height: 6px;
+    border-radius: 1px;
+    background: currentColor;
+    opacity: 0.85;
+  }
+
+  .rs-stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--bg-muted);
+  }
+  .rs-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: 64px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform 150ms var(--ease-out),
+      opacity 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .rs-step:hover:not(:disabled) {
+    color: var(--accent);
+  }
+  .rs-step:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+  .rs-step:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .rs-a {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .rs-a-sm {
+    font-size: 0.9rem;
+  }
+  .rs-a-lg {
+    font-size: 1.25rem;
+  }
+  .rs-dots {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 44px;
+    padding: 10px 4px;
+    cursor: pointer;
+  }
+  .rs-dot {
+    width: 6px;
+    height: calc(8px + var(--i) * 3px);
+    border-radius: 99px;
+    background: var(--border-strong);
+    transition:
+      background-color 200ms var(--ease-out),
+      transform 200ms var(--ease-out);
+  }
+  .rs-dot[data-on] {
+    background: color-mix(in oklab, var(--accent) 50%, var(--bg-muted));
+  }
+  .rs-dot[data-current] {
+    background: var(--accent);
+    transform: scaleX(1.35);
+  }
+
+  .rs-focus {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-align: left;
+    color: var(--fg);
+    transition:
+      background-color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out);
+  }
+  .rs-focus:hover {
+    background: var(--bg-subtle);
+  }
+  .rs-focus[aria-checked='true'] {
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+    background: var(--accent-soft);
+  }
+  .rs-focus-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--bg-muted);
+    color: var(--accent);
+  }
+  .rs-focus[aria-checked='true'] .rs-focus-icon {
+    background: var(--bg-elevated);
+  }
+  .rs-focus-text {
+    display: grid;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .rs-focus-title {
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+  .rs-hint {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--fg-subtle);
+  }
+  .rs-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 44px;
+    height: 26px;
+    border-radius: 99px;
+    background: var(--border-strong);
+    transition: background-color 200ms var(--ease-out);
+  }
+  .rs-switch span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 99px;
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-sm);
+    transition: transform 200ms var(--ease-spring);
+  }
+  .rs-focus[aria-checked='true'] .rs-switch {
+    background: var(--accent);
+  }
+  .rs-focus[aria-checked='true'] .rs-switch span {
+    transform: translateX(18px);
+  }
+
+  .rs-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .rs-reset:hover:not(:disabled) {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .rs-reset:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  /* ---------- focus-mode exit pill ---------- */
+  .focus-exit {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--bg-elevated) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    opacity: 0.72;
+    transition:
+      opacity 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .focus-exit:hover,
+  .focus-exit:focus-visible {
+    opacity: 1;
+    color: var(--fg);
+  }
+  @media (pointer: coarse) {
+    .focus-exit-kbd {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .focus-exit:not([hidden]) {
+      animation: rs-pop 260ms var(--ease-out);
+    }
+  }
+</style>
+
+<style is:global>
+  /* Focus mode: only the article remains. */
+  html[data-focus-mode] #site-header,
+  html[data-focus-mode] .post-rail,
+  html[data-focus-mode] .post-toc,
+  html[data-focus-mode] article.post > section,
+  html[data-focus-mode] .post .breadcrumbs {
+    display: none !important;
+  }
+  html[data-focus-mode] .post-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html[data-focus-mode] [data-action-bar] {
+    opacity: 0.38;
+    transition:
+      opacity 200ms var(--ease-out),
+      transform 320ms var(--ease-out);
+  }
+  html[data-focus-mode] [data-action-bar]:is(:hover, :focus-within) {
+    opacity: 1;
+  }
+  html[data-focus-mode] .post-hero {
+    padding-top: clamp(64px, 8vw, 88px);
+  }
+</style>
+
+<script>
+  import {
+    SCALES,
+    DEFAULTS,
+    loadPrefs,
+    savePrefs,
+    applyPrefs,
+    resolvePrefs,
+    stepScale,
+    scaleIndex,
+    isDefault,
+    percent,
+    type ResolvedPrefs,
+    type ReadingFont,
+  } from '../../scripts/reader-settings';
+  import { setTheme, getPref, type ThemePref } from '../../scripts/theme';
+  import { toast } from '../../scripts/share';
+
+  const panel = document.getElementById('reader-settings') as HTMLDialogElement | null;
+  const exitBtn = document.querySelector<HTMLButtonElement>('[data-focus-exit]');
+  const root = document.documentElement;
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isSheet = () => matchMedia('(max-width: 767px)').matches;
+
+  if (panel && !panel.dataset.wired) {
+    panel.dataset.wired = '';
+    let prefs: ResolvedPrefs = loadPrefs();
+    let opener: HTMLElement | null = null;
+
+    const $ = <T extends Element>(sel: string) => panel.querySelector<T>(sel)!;
+    const body = $<HTMLElement>('[data-rs-body]');
+    const sizeOut = $<HTMLOutputElement>('[data-rs-size-out]');
+    const dots = [...panel.querySelectorAll<HTMLElement>('.rs-dot')];
+    const minus = $<HTMLButtonElement>('[data-rs-size="-1"]');
+    const plus = $<HTMLButtonElement>('[data-rs-size="1"]');
+    const focusSwitch = $<HTMLButtonElement>('[data-rs-focus]');
+    const resetBtn = $<HTMLButtonElement>('[data-rs-reset]');
+    const inFocus = () => root.hasAttribute('data-focus-mode');
+
+    // ---------- UI <-> prefs ----------
+    function syncUI() {
+      const check = (name: string, value: string | number) => {
+        panel!.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`).forEach((i) => {
+          i.checked = i.value === String(value);
+        });
+      };
+      check('rs-font', prefs.font);
+      check('rs-leading', prefs.leading);
+      check('rs-width', prefs.width);
+      check('rs-theme', getPref());
+      const idx = scaleIndex(prefs.scale);
+      dots.forEach((d, i) => {
+        d.toggleAttribute('data-on', i <= idx);
+        d.toggleAttribute('data-current', i === idx);
+      });
+      sizeOut.value = percent(prefs.scale);
+      minus.disabled = idx === 0;
+      plus.disabled = idx === SCALES.length - 1;
+      focusSwitch.setAttribute('aria-checked', String(inFocus()));
+      resetBtn.disabled = isDefault(prefs) && !inFocus();
+    }
+
+    /** Re-flowing text moves the paragraph you are reading; keep it at the same spot on screen. */
+    function keepReadingPosition(change: () => void) {
+      const post = document.getElementById('post-body');
+      const line = 96;
+      let anchor: Element | null = null;
+      let ratio = 0;
+      if (post && post.getBoundingClientRect().top < line) {
+        for (const el of post.children) {
+          const r = el.getBoundingClientRect();
+          if (r.bottom > line) {
+            anchor = el;
+            ratio = r.height ? (line - r.top) / r.height : 0;
+            break;
+          }
+        }
+      }
+      if (!anchor) return change();
+      root.style.overflowAnchor = 'none'; // don't let native scroll anchoring adjust a second time
+      change();
+      const r = anchor.getBoundingClientRect();
+      scrollBy({ top: r.top + ratio * r.height - line, behavior: 'instant' });
+      requestAnimationFrame(() => root.style.removeProperty('overflow-anchor'));
+    }
+
+    function update(patch: Partial<ResolvedPrefs>) {
+      const next = resolvePrefs({ ...prefs, ...patch });
+      const changed = (Object.keys(next) as (keyof ResolvedPrefs)[]).some((k) => next[k] !== prefs[k]);
+      prefs = next;
+      if (changed) keepReadingPosition(() => applyPrefs(prefs));
+      savePrefs(prefs);
+      syncUI();
+      if (changed) document.dispatchEvent(new CustomEvent('ns:reader-changed', { detail: { ...prefs } }));
+    }
+
+    panel.addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      if (input.name === 'rs-font') update({ font: input.value as ReadingFont });
+      else if (input.name === 'rs-leading') update({ leading: Number(input.value) });
+      else if (input.name === 'rs-width') update({ width: Number(input.value) });
+      else if (input.name === 'rs-theme') setTheme(input.value as ThemePref, lastPoint);
+    });
+    // Theme: the click point drives the circular reveal (keyboard changes have no point → instant).
+    let lastPoint: { x: number; y: number } | undefined;
+    panel.addEventListener('click', (e) => {
+      lastPoint = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : undefined;
+    }, true);
+    panel.addEventListener('keydown', () => (lastPoint = undefined), true);
+    document.addEventListener('ns:theme-changed', syncUI);
+
+    minus.addEventListener('click', () => update({ scale: stepScale(prefs.scale, -1) }));
+    plus.addEventListener('click', () => update({ scale: stepScale(prefs.scale, 1) }));
+    $<HTMLElement>('[data-rs-dots]').addEventListener('click', (e) => {
+      // Pointer shortcut: tap a bar to jump to that size (keyboard users have the A−/A+ buttons).
+      let best = 0;
+      let dist = Infinity;
+      dots.forEach((d, i) => {
+        const r = d.getBoundingClientRect();
+        const dx = Math.abs(r.left + r.width / 2 - e.clientX);
+        if (dx < dist) {
+          dist = dx;
+          best = i;
+        }
+      });
+      update({ scale: SCALES[best] });
+    });
+
+    resetBtn.addEventListener('click', () => {
+      setFocusMode(false);
+      update({ ...DEFAULTS });
+      toast('Đã khôi phục cài đặt đọc mặc định');
+      $<HTMLElement>('input[name="rs-font"]:checked')?.focus();
+    });
+
+    // Other tabs.
+    addEventListener('storage', (e) => {
+      if (e.key !== 'ns:reader' && e.key !== null) return;
+      prefs = loadPrefs();
+      applyPrefs(prefs);
+      syncUI();
+    });
+
+    // ---------- focus mode ----------
+    function setFocusMode(on: boolean) {
+      if (on === inFocus()) return;
+      root.toggleAttribute('data-focus-mode', on);
+      if (exitBtn) exitBtn.hidden = !on;
+      syncUI();
+      document.dispatchEvent(new CustomEvent('ns:focus-mode', { detail: { on } }));
+      if (on && !isSheet()) toast('Đang ở chế độ tập trung — nhấn Esc để thoát');
+    }
+    focusSwitch.addEventListener('click', () => setFocusMode(!inFocus()));
+    exitBtn?.addEventListener('click', () => setFocusMode(false));
+    document.addEventListener('ns:toggle-focus', () => setFocusMode(!inFocus()));
+
+    // ---------- open / close ----------
+    const triggers = () => document.querySelectorAll<HTMLElement>('[data-open-settings]');
+    triggers().forEach((t) => t.setAttribute('aria-haspopup', 'dialog'));
+    const setExpanded = (v: boolean) => triggers().forEach((t) => t.setAttribute('aria-expanded', String(v)));
+
+    function open(from?: HTMLElement | null) {
+      if (panel!.open) {
+        $<HTMLElement>('input[name="rs-font"]:checked')?.focus();
+        return;
+      }
+      opener = from ?? (document.activeElement as HTMLElement | null);
+      prefs = loadPrefs();
+      syncUI();
+      resetSheetStyles();
+      if (isSheet()) panel!.showModal();
+      else panel!.show();
+      body.scrollTop = 0;
+      setExpanded(true);
+      $<HTMLElement>('input[name="rs-font"]:checked')?.focus({ preventScroll: true });
+    }
+
+    function resetSheetStyles() {
+      closing = false;
+      panel!.removeAttribute('data-closing');
+      panel!.removeAttribute('data-dragging');
+      panel!.style.removeProperty('transform');
+      panel!.style.removeProperty('transition');
+    }
+
+    let closing = false;
+    function close() {
+      if (!panel!.open || closing) return;
+      const done = () => {
+        resetSheetStyles();
+        panel!.close();
+      };
+      if (reduce()) return done();
+      closing = true;
+      panel!.setAttribute('data-closing', '');
+      const timer = setTimeout(done, 320); // fallback if animationend never fires
+      panel!.addEventListener(
+        'animationend',
+        () => {
+          clearTimeout(timer);
+          done();
+        },
+        { once: true },
+      );
+    }
+
+    panel.addEventListener('close', () => {
+      setExpanded(false);
+      // Non-modal dialogs don't reliably restore focus; do it ourselves when focus was left inside / dropped.
+      const active = document.activeElement;
+      if (opener?.isConnected && (!active || active === document.body || panel.contains(active))) {
+        opener.focus({ preventScroll: true });
+      }
+    });
+    panel.addEventListener('cancel', (e) => {
+      e.preventDefault(); // animate out instead of vanishing
+      close();
+    });
+    $<HTMLElement>('[data-rs-close]').addEventListener('click', close);
+    panel.addEventListener('click', (e) => {
+      if (e.target === panel) close(); // backdrop (sheet)
+    });
+
+    document.addEventListener('click', (e) => {
+      const t = (e.target as Element).closest<HTMLElement>('[data-open-settings]');
+      if (!t) return;
+      if (panel.open && !panel.matches(':modal')) close();
+      else open(t);
+    });
+    document.addEventListener('ns:open-settings', () => open());
+
+    // Desktop panel: light-dismiss on a press outside.
+    document.addEventListener('pointerdown', (e) => {
+      if (!panel.open || panel.matches(':modal')) return;
+      const t = e.target as Element;
+      if (panel.contains(t) || t.closest('[data-open-settings]')) return;
+      close();
+    });
+
+    // Esc: close the floating panel first, then leave focus mode.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (panel.open && !panel.matches(':modal')) {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (inFocus() && !document.querySelector('dialog[open]')) {
+        e.preventDefault();
+        setFocusMode(false);
+      }
+    });
+
+    // ---------- swipe down to close (sheet) ----------
+    let startY = 0;
+    let startT = 0;
+    let dy = 0;
+    let tracking = false;
+    let dragging = false;
+    panel.addEventListener(
+      'touchstart',
+      (e) => {
+        if (!isSheet() || e.touches.length !== 1) return;
+        if (body.contains(e.target as Node) && body.scrollTop > 0) return; // let the list scroll
+        tracking = true;
+        dragging = false;
+        startY = e.touches[0].clientY;
+        startT = performance.now();
+        dy = 0;
+      },
+      { passive: true },
+    );
+    panel.addEventListener(
+      'touchmove',
+      (e) => {
+        if (!tracking) return;
+        dy = e.touches[0].clientY - startY;
+        if (!dragging && dy > 8) {
+          dragging = true;
+          panel.setAttribute('data-dragging', '');
+          panel.style.transition = 'none';
+        }
+        if (dragging) panel.style.transform = `translateY(${Math.max(0, dy)}px)`;
+      },
+      { passive: true },
+    );
+    const endDrag = () => {
+      if (!tracking) return;
+      tracking = false;
+      if (!dragging) return;
+      dragging = false;
+      const v = dy / Math.max(1, performance.now() - startT);
+      const ms = reduce() ? 0 : 220;
+      panel.style.transition = ms ? `transform ${ms}ms var(--ease-out)` : 'none';
+      if (dy > 110 || (dy > 40 && v > 0.6)) {
+        panel.style.transform = 'translateY(100%)';
+        setTimeout(() => {
+          resetSheetStyles();
+          panel.close();
+        }, ms);
+      } else {
+        panel.style.transform = '';
+        setTimeout(resetSheetStyles, ms + 20);
+      }
+    };
+    panel.addEventListener('touchend', endDrag, { passive: true });
+    panel.addEventListener('touchcancel', endDrag, { passive: true });
+
+    syncUI();
+  }
+</script>

@@ -1,12 +1,14 @@
 # Reader tools — progress log (branch feat/reader)
 
 ## Done
-- (nothing yet) — read DESIGN.md, layouts, ActionBar, Toc, Shortcuts, theme/share/storage, reference TTS.
+- src/scripts/text-fragment.ts + tests/unit/text-fragment.test.ts (13 tests)
+- src/scripts/reader-settings.ts prefs model + tests/unit/reader-settings.test.ts (7 tests)
+- src/components/post/ReaderSettings.astro: bottom sheet (<768, swipe-down/drag handle) / non-modal floating
+  panel (desktop, Esc + outside click), font/size(7 steps + bars)/leading/width/theme, focus mode
+  (html[data-focus-mode], exit pill, Esc, `ns:toggle-focus`), reset, cross-tab sync, keeps reading position on reflow.
+  `astro build` OK; NOT yet browser-verified.
 
 ## Next
-1. src/scripts/text-fragment.ts + tests/unit/text-fragment.test.ts
-2. src/scripts/reader-settings.ts (pure: normalize/steps/apply) + tests/unit/reader-settings.test.ts
-3. src/components/post/ReaderSettings.astro (dialog sheet/panel, focus mode)
 4. src/scripts/tts.ts (chunking, voices, Reader state machine) + tests/unit/tts.test.ts
 5. src/components/post/ListenPlayer.astro (mini player, no-voice sheet)
 6. src/scripts/selection-share.ts + src/components/post/SelectionShare.astro
@@ -14,4 +16,5 @@
 
 ## Notes
 - Test page: /bai-viet/xin-chao/ ; preview port 4413 ; playwright-cli session "reader".
-- Icons missing from Icon.astro (skip-back/forward, minus/plus, rotate-ccw, focus) → inline from lucide-static.
+- Icons missing from Icon.astro (minus/plus/rotate-ccw/focus/minimize-2/skip-*) → inlined from lucide-static.
+- Don't use `python -` in bash here (Windows store stub hangs). Use Write tool for file edits.
