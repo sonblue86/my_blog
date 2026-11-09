@@ -23,8 +23,19 @@
   Phát hiện: pubDate chỉ có ngày = 00:00 UTC = 07:00 VN → sau lần build hằng ngày 06:00 → bài hẹn giờ lên trễ 1 ngày.
   Đã ghi rõ trong WRITING.md (khuyên ghi T00:00:00+07:00). README/new-post template không thuộc quyền sửa → báo orchestrator.
 
+- Verify cuối (main tích hợp): `npm run build` OK (10 OG PNG, Pagefind 9 trang) · `npx astro check` 0 lỗi/0 cảnh báo
+  (103 file) · `npx vitest run` 13 file / 200 test pass · og:image của mọi bài trỏ tới file có thật trong dist.
+  Trình duyệt (dev 4421): passkey (cover riêng) 390 sáng + 1440 tối, digital-detox (cover riêng, .md) 390 tối + 1440 sáng,
+  llm 390 tối — không tràn ngang, ảnh đều có alt, theme đúng. Đã đóng trình duyệt, tắt dev server.
+
 ## Next
-5. Verify: build, astro check, vitest, browser 390/1440 light/dark
+- (hết việc trong phạm vi content) — xem "Báo orchestrator" bên dưới.
+
+## Báo orchestrator (file không thuộc quyền content)
+- scripts/test-api.mjs: TEST_SLUG mặc định 'xin-chao' → bài đã xoá; đổi thành 'llm-hoat-dong-the-nao'.
+- public/admin/config.yml dòng ~80: comment ví dụ "xin-chao" (chỉ là chú thích, vô hại).
+- pubDate chỉ có ngày = 07:00 giờ VN; cron hằng ngày 06:00 → bài hẹn giờ lên trễ 1 ngày. README ("Bài hẹn giờ") và
+  template new-post (ví dụ T08:00+07:00) nên ghi rõ, hoặc đổi cron sang '5 0 * * *' (07:05 VN).
 
 ## Notes
 - Đếm chữ: node <scratchpad>/check-posts.mjs (dùng countWords của src/lib/text.ts; mục tiêu 900–1600, desc 120–160).
