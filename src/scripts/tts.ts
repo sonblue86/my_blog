@@ -236,7 +236,7 @@ export class Reader {
   private synth?: SynthLike;
 
   constructor(
-    private chunks: Chunk[],
+    readonly chunks: Chunk[],
     public voices: SpeechSynthesisVoice[],
     private opts: ReaderOptions = {},
   ) {
