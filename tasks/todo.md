@@ -14,14 +14,14 @@ viết bài bằng Markdown/MDX trên GitHub, deploy miễn phí trên Cloudflar
 - [x] 1. Research + smoke test stack (Astro 7, Cloudflare, CMS, Pagefind, fonts)
 - [x] 2. Foundation: config, design tokens, layout, header/footer, content schema, utils, PostCard, home, post page
 - [x] 3. git init + commit foundation
-- [ ] 4. Feature fan-out (worktrees) — đang chạy (workflow wf_1d85d811-f4e):
-  - [ ] Search palette (⌘K) + trang tìm kiếm + phím tắt
-  - [ ] Trải nghiệm đọc: TOC, progress, action bar mobile, lightbox, anchors, back-to-top
+- [ ] 4. Features (fan-out bị dừng do hết quota; main loop đã tự làm phần đầu, phần còn lại giao subagent theo worktree, commit liên tục):
+  - [x] Search palette (⌘K) + trang tìm kiếm + phím tắt
+  - [x] Trải nghiệm đọc: TOC, progress, action bar mobile, lightbox, anchors, back-to-top
   - [ ] Reader settings + nghe bài (TTS) + chia sẻ trích dẫn khi bôi đen
-  - [ ] Thư viện cá nhân: đã lưu, đang đọc dở, PWA/offline
+  - [~] Thư viện cá nhân: core xong (lưu bài, lịch sử, đọc tiếp); còn trang /thu-vien/, PWA/offline
   - [ ] Worker API + D1: views, reactions, newsletter
   - [ ] Nội dung mẫu + MDX components + cover/OG generator
-  - [ ] Trang phụ: category/tag/archive/series/about/404, RSS/sitemap/JSON-LD, CMS, script tạo bài, README, CI
+  - [~] Trang phụ: category/tag/archive/series/about/404/RSS/robots xong; còn CMS, script tạo bài, README, CI
 - [ ] 5. Merge + build + test (unit, e2e, visual mobile/desktop, light/dark)
 - [ ] 6. Review workflow (UX/a11y, perf/SEO, bugs) → fix
 - [ ] 7. Báo cáo + hướng dẫn deploy
