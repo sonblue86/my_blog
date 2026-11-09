@@ -11,8 +11,9 @@
 - `public/sw.js` reviewed + rewritten (v2, commit 47a9383): bỏ placeholder `__BUILD_ID__` (không ai stamp) → VERSION thủ công + shell (/offline/, /) re-precache mỗi lần install và ≤6h khi online; cờ update lưu trong cache (`/__ns-sw-updated`) → postMessage `updated` chỉ khi thay SW cũ; navigation preload; 5xx → bản cache; key trang bỏ query; header HTML cache bỏ content-length/encoding; ảnh: chọn srcset lớn nhất + fallback "ảnh anh em" cùng hash khi offline; cache fonts riêng; GC cho STATIC & SAVED. Unit tests `tests/unit/library-sw.test.ts` (6 xanh, chạy sw.js trong vm).
 - LibraryCore: gửi cache-post/uncache-post qua `postToSW` (registration.active — chạy cả khi trang chưa bị SW control); toast "phiên bản mới" chỉ khi trang đã mở >20s.
 
+- `/offline/` (commit bfef420): `src/pages/offline/index.astro` + `src/scripts/library-offline-page.ts` (+7 tests `tests/unit/library-offline-page.test.ts`). Liệt kê bài trong SAVED + PAGES (+ trang chủ precache), meta từ localStorage hoặc HTML cache (chỉ parse thẻ nút bookmark/<title> qua <template> inert). "Thử lại" = reload (khi là fallback) / về referrer hoặc / (khi mở trực tiếp); tự reload khi `online`. Build + astro check 0 lỗi.
+
 ## Next
-6. `/offline/` (src/pages/offline/index.astro, noindex) — danh sách bài đọc offline (SAVED + PAGES), tiêu đề từ localStorage hoặc <title> trong HTML cache, nút "Thử lại".
 7. Verify: npm run build + astro preview --port 4424; SW install/activate; bookmark → saved cache; offline → bài đã xem/lưu mở được, trang lạ → /offline/; /thu-vien/ badge; manifest/icons; 390x844 + 1440x900 light/dark cho /offline/ & /thu-vien/. astro check + vitest.
 
 ## Notes
