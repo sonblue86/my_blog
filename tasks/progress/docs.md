@@ -9,8 +9,12 @@ Phạm vi: Sveltia CMS (`public/admin/**`), `scripts/new-post.mjs` + `scripts/li
   khớp mọi trường zod của posts/authors trừ `slug` (cố ý). Build thử xác nhận `cover: sample.jpg` (không có `./`,
   đúng dạng CMS ghi ra) và avatar JSON đều được Astro `image()` nhận và tối ưu.
 
+- [x] `npm run new`: `scripts/new-post.mjs` + `scripts/lib/new-post-core.mjs` + `tests/unit/newpost.test.ts` (43 test,
+  round-trip qua `parseFrontmatter` của Astro; mutation test: bỏ quoting → 9 test fail). Đã chạy thật: tạo .md + .mdx,
+  build thành công (tiêu đề có `"`, `:` giữ nguyên; comment MDX không lộ ra), từ chối ghi đè (exit 1), hỏi đáp mô phỏng
+  TTY (nhập sai chuyên mục → hỏi lại; Ctrl+D → huỷ exit 130). Có thêm `--dry-run`.
+
 ## Next
-2. `scripts/new-post.mjs` + `scripts/lib/new-post-core.mjs` + `tests/unit/newpost.test.ts`
 3. `tests/unit/posts.test.ts`, `tests/unit/date.test.ts`
 4. `README.md` + `LICENSE`
 5. `.github/workflows/ci.yml` + `scheduled-deploy.yml`
