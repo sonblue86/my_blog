@@ -1,0 +1,245 @@
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+#
+# Cấu hình Sveltia CMS cho blog Nhịp Số — trình soạn bài trên web.
+#   • Trên site đã deploy: https://<domain>/admin/
+#   • Khi chạy `npm run dev`: http://localhost:4321/admin/index.html
+#     (dev server của Astro không tự mở index.html khi vào /admin/).
+# Tài liệu: https://sveltiacms.app/en/docs
+#
+# QUAN TRỌNG: các trường bên dưới phải khớp với schema trong src/content.config.ts.
+# Thêm/đổi trường ở đó thì sửa ở đây cho giống, nếu không build sẽ báo lỗi
+# "data does not match collection schema".
+
+backend:
+  name: github
+  # TODO: đổi thành "tên-tài-khoản/tên-repo" của bạn trên GitHub, ví dụ: nguyenvana/nhip-so
+  repo: OWNER/REPO
+  branch: main
+  # Đăng nhập — chọn MỘT trong hai cách:
+  #   1. Đơn giản nhất: ở màn hình đăng nhập bấm "Sign In with Token" và dán một
+  #      fine-grained personal access token CHỈ cấp cho repo này, quyền
+  #      Contents: Read and write. Không cần sửa gì thêm trong file này.
+  #   2. Đăng nhập bằng nút "Sign In with GitHub": deploy Worker xác thực
+  #      https://github.com/sveltia/sveltia-cms-auth lên Cloudflare (miễn phí),
+  #      rồi bỏ dấu # ở dòng dưới và thay bằng URL Worker của bạn.
+  # base_url: https://sveltia-cms-auth.<tên-tài-khoản>.workers.dev
+  commit_messages:
+    create: 'Thêm {{collection}} "{{slug}}"'
+    update: 'Cập nhật {{collection}} "{{slug}}"'
+    delete: 'Xoá {{collection}} "{{slug}}"'
+    uploadMedia: 'Tải lên tệp "{{path}}"'
+    deleteMedia: 'Xoá tệp "{{path}}"'
+    openAuthoring: '{{message}}'
+
+app_title: Nhịp Số · Quản trị
+# Lấy từ SITE.url trong src/config.ts — đổi cả hai khi bạn có domain riêng.
+site_url: https://nhipso.pages.dev
+display_url: https://nhipso.pages.dev
+
+# Ảnh dùng chung (ít dùng). Ảnh trong bài viết được lưu cạnh bài — xem collection "posts".
+media_folder: public/images
+public_folder: /images
+
+# Đường dẫn (slug) chỉ gồm a–z, 0–9 và "-": "Trí tuệ nhân tạo" -> "tri-tue-nhan-tao".
+slug:
+  encoding: ascii
+  clean_accents: true
+  sanitize_replacement: '-'
+  trim: true
+  lowercase: true
+  maxlength: 80
+
+output:
+  # BẮT BUỘC với Astro: bỏ hẳn các trường tuỳ chọn để trống (thay vì ghi "" hoặc [])
+  # để khớp với .optional() của zod trong src/content.config.ts.
+  omit_empty_optional_fields: true
+
+collections:
+  # ───────────────────────────── Bài viết ─────────────────────────────
+  - name: posts
+    label: Bài viết
+    label_singular: bài viết
+    description: >-
+      Mỗi bài là một thư mục src/content/posts/<slug>/ chứa index.md và ảnh của bài.
+      Bài .mdx (có component tương tác) không hiện ở đây — hãy sửa trực tiếp trong mã nguồn.
+    icon: article
+    folder: src/content/posts
+    path: '{{slug}}/index'
+    extension: md
+    format: frontmatter
+    # Ảnh tải lên được lưu ngay trong thư mục của bài -> Astro tự tối ưu (WebP/AVIF, nhiều kích thước).
+    media_folder: ''
+    public_folder: ''
+    create: true
+    identifier_field: title
+    slug:
+      template: '{{slug}}'
+      editable: [create]
+      hint: Đường dẫn của bài là /bai-viet/<slug>/. Chỉ sửa được khi tạo bài — đổi sau sẽ làm hỏng link đã chia sẻ.
+      pattern: ['^[a-z0-9]+(?:-[a-z0-9]+)*$', 'Chỉ dùng chữ thường không dấu, số và dấu gạch ngang (-).']
+    # {{dirname}} = tên thư mục của bài (ví dụ "xin-chao"), đúng với URL Astro sinh ra.
+    preview_path: '/bai-viet/{{dirname}}/'
+    preview_path_date_field: pubDate
+    summary: "{{draft | ternary('[Nháp] ', '')}}{{title}} · {{pubDate | date('DD/MM/YYYY')}}"
+    thumbnail: cover
+    sortable_fields:
+      - { field: pubDate, label: Ngày đăng, default_sort: desc }
+      - { field: title, label: Tiêu đề }
+      - { field: category, label: Chuyên mục }
+      - { field: updatedDate, label: Ngày cập nhật }
+    view_filters:
+      - { label: Bản nháp, field: draft, pattern: true }
+      - { label: Đang ghim nổi bật, field: featured, pattern: true }
+      - { label: 'Chuyên mục: AI', field: category, pattern: '^ai$' }
+      - { label: 'Chuyên mục: Công nghệ', field: category, pattern: '^cong-nghe$' }
+      - { label: 'Chuyên mục: Đời sống', field: category, pattern: '^doi-song$' }
+    view_groups:
+      - { label: Chuyên mục, field: category }
+      - { label: Năm, field: pubDate, pattern: '\d{4}' }
+      - { label: Series, field: series }
+    fields:
+      - name: title
+        label: Tiêu đề
+        widget: string
+        hint: Ngắn gọn, rõ ý — nên dưới 70 ký tự để hiển thị trọn trên Google và mạng xã hội.
+      - name: description
+        label: Mô tả ngắn (SEO)
+        widget: text
+        maxlength: 300
+        hint: Nên dài 120–160 ký tự. Hiện dưới tiêu đề trên Google, Facebook, Zalo và trong thẻ bài viết.
+      - name: pubDate
+        label: Ngày đăng
+        widget: datetime
+        default: '{{now}}'
+        input_timezone: Asia/Ho_Chi_Minh
+        hint: >-
+          Giờ Việt Nam. Hẹn giờ: chọn một thời điểm trong tương lai — bài tự lên trang ở lần
+          build đầu tiên sau thời điểm đó (xem workflow scheduled-deploy trong README).
+      - name: updatedDate
+        label: Ngày cập nhật
+        widget: datetime
+        required: false
+        input_timezone: Asia/Ho_Chi_Minh
+        hint: Chỉ điền khi bạn sửa nội dung đáng kể sau khi đăng.
+      - name: category
+        label: Chuyên mục
+        widget: select
+        options:
+          - { label: AI, value: ai }
+          - { label: Công nghệ, value: cong-nghe }
+          - { label: Đời sống, value: doi-song }
+      - name: tags
+        label: Thẻ
+        widget: list
+        required: false
+        hint: Mỗi dòng một thẻ, ví dụ "ChatGPT", "Năng suất". Thẻ chỉ khác chữ hoa/thường hoặc dấu sẽ được gộp làm một.
+      - name: cover
+        label: Ảnh bìa
+        widget: image
+        required: false
+        accept: image/jpeg,image/png,image/webp,image/avif,image/gif
+        hint: Ảnh ngang (khoảng 16:9), rộng tối thiểu 1200px. Bỏ trống để dùng ảnh bìa tự sinh theo chuyên mục.
+      - name: coverAlt
+        label: Mô tả ảnh bìa
+        widget: string
+        required: false
+        hint: Một câu mô tả nội dung ảnh cho người dùng trình đọc màn hình (alt text).
+      - name: author
+        label: Tác giả
+        widget: relation
+        collection: authors
+        value_field: '{{slug}}'
+        search_fields: [name]
+        display_fields: [name]
+        required: false
+        hint: Bỏ trống để dùng tác giả mặc định (SITE.defaultAuthor trong src/config.ts).
+      - name: summary
+        label: Tóm tắt nhanh (TL;DR)
+        widget: text
+        required: false
+        hint: 1–3 câu hiện ở đầu bài cho người đọc vội.
+      - name: takeaways
+        label: Ý chính rút ra
+        widget: list
+        required: false
+        hint: 3–5 ý ngắn gọn, mỗi dòng một ý.
+      - name: series
+        label: Series
+        widget: string
+        required: false
+        hint: Tên series, gõ giống hệt nhau ở mọi bài cùng series, ví dụ "Nhập môn AI".
+      - name: seriesOrder
+        label: Thứ tự trong series
+        widget: number
+        value_type: int
+        min: 1
+        required: false
+        hint: 1, 2, 3… Bỏ trống thì sắp theo ngày đăng.
+      - name: featured
+        label: Ghim nổi bật
+        widget: boolean
+        default: false
+        required: false
+        hint: Hiện ở vị trí nổi bật trên trang chủ.
+      - name: draft
+        label: Bản nháp
+        widget: boolean
+        default: true
+        required: false
+        hint: Bài nháp không xuất hiện trên site. Tắt mục này khi bài đã sẵn sàng để xuất bản.
+      - name: comments
+        label: Cho phép bình luận
+        widget: boolean
+        default: true
+        required: false
+      - name: body
+        label: Nội dung
+        widget: markdown
+        hint: Dùng tiêu đề cấp 2 (##) và 3 (###) để tạo mục lục tự động.
+
+  # ───────────────────────────── Tác giả ─────────────────────────────
+  - name: authors
+    label: Tác giả
+    label_singular: tác giả
+    description: Thông tin tác giả hiển thị cuối bài viết. Tên file (slug) là mã tác giả, ví dụ "nhip-so".
+    icon: person
+    folder: src/content/authors
+    extension: json
+    format: json
+    create: true
+    identifier_field: name
+    slug:
+      template: '{{slug}}'
+      editable: [create]
+    # Ảnh đại diện lưu cạnh file JSON để Astro tối ưu.
+    media_folder: ''
+    public_folder: ''
+    summary: '{{name}}'
+    fields:
+      - { name: name, label: Tên hiển thị, widget: string }
+      - name: role
+        label: Vai trò
+        widget: string
+        required: false
+        hint: Ví dụ "Người viết & biên tập".
+      - name: bio
+        label: Giới thiệu ngắn
+        widget: text
+        hint: 1–3 câu về bạn và những gì bạn viết.
+      - name: avatar
+        label: Ảnh đại diện
+        widget: image
+        required: false
+        accept: image/jpeg,image/png,image/webp,image/avif
+        hint: Ảnh vuông, tối thiểu 256×256px.
+      - name: links
+        label: Liên kết
+        widget: object
+        required: false
+        collapsed: true
+        fields:
+          - { name: website, label: Website, widget: string, type: url, required: false }
+          - { name: github, label: GitHub, widget: string, type: url, required: false }
+          - { name: facebook, label: Facebook, widget: string, type: url, required: false }
+          - { name: x, label: X (Twitter), widget: string, type: url, required: false }
+          - { name: linkedin, label: LinkedIn, widget: string, type: url, required: false }
