@@ -6,8 +6,9 @@
 
 - Trang `/thu-vien/` v1: `src/pages/thu-vien/index.astro` + `src/scripts/library-page.ts` + `src/scripts/library-offline.ts` + `src/components/library/{LIcon,LibraryEmpty}.astro`. Build xanh. DOM tests `tests/unit/library-page.test.ts` (10 xanh). Đã xem trên browser (390 + 1440, light/dark): fix thumb tràn cột desktop, fix undo row làm tràn ngang (grid minmax(0,1fr)). Remove→undo, clear-all dialog→banner hoàn tác, empty state OK.
 
+- Icons: `scripts/gen-icons.mjs` (sharp, ICO tự viết 16/32/48 PNG) → public/favicon.svg|ico, apple-touch-icon.png (180, opaque), icon-192/512.png, icon-maskable-512.png (opaque, mark 78%). Đã xem preview (mask tròn OK).
+
 ## Next
-3. `scripts/gen-icons.mjs` + chạy, commit icons
 4. `public/manifest.webmanifest`
 5. `public/sw.js`
 6. `/offline/`
