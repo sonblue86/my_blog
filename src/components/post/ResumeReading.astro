@@ -1,4 +1,72 @@
 ---
-/** STUB — Offer to resume where the reader left off. */
-
+/** "Bạn đã đọc 45% bài này" — offers to jump back to where the reader stopped. Never auto-jumps. */
+import Icon from '../ui/Icon.astro';
 ---
+
+<div class="resume" data-resume hidden role="status">
+  <Icon name="history" size={18} />
+  <p class="flex-1 text-sm"><span data-resume-text></span></p>
+  <button type="button" class="resume-go" data-resume-go>Đọc tiếp</button>
+  <button type="button" class="resume-x" data-resume-x aria-label="Ẩn gợi ý"><Icon name="x" size={16} /></button>
+</div>
+
+<style>
+  .resume {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding: 8px 8px 8px 14px;
+    border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--border));
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--fg);
+  }
+  .resume:not([hidden]) {
+    display: flex;
+  }
+  .resume :global(svg) {
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+  .resume-go {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .resume-x {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    color: var(--fg-subtle);
+  }
+</style>
+
+<script>
+  import { getHistory, FINISHED } from '../../scripts/library-store';
+  import { timeAgo } from '../../lib/date';
+
+  const box = document.querySelector<HTMLElement>('[data-resume]');
+  const id = document.querySelector<HTMLElement>('article.post')?.dataset.postId;
+  const entry = id ? getHistory().find((h) => h.id === id) : undefined;
+  if (box && entry && entry.progress > 0.08 && entry.progress < FINISHED && Date.now() - entry.lastReadAt > 120_000 && scrollY < 200) {
+    box.querySelector('[data-resume-text]')!.textContent =
+      `Bạn đã đọc ${Math.round(entry.progress * 100)}% bài này · ${timeAgo(new Date(entry.lastReadAt))}`;
+    box.hidden = false;
+    box.querySelector('[data-resume-go]')!.addEventListener('click', () => {
+      const body = document.getElementById('post-body')!;
+      const rect = body.getBoundingClientRect();
+      const y = scrollY + rect.top + (rect.height - innerHeight * 0.6) * entry.progress - innerHeight * 0.4;
+      box.hidden = true;
+      scrollTo({ top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+    box.querySelector('[data-resume-x]')!.addEventListener('click', () => (box.hidden = true));
+  }
+</script>

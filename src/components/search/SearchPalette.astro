@@ -1,4 +1,493 @@
 ---
-/** STUB — Command palette (Ctrl/⌘K, '/'): Pagefind search + quick actions. Listens for ns:open-search. */
-
+/**
+ * Command palette (Ctrl/⌘K, "/", [data-open-search], `ns:open-search`).
+ * Instant accent-insensitive matches from /search-index.json + full-text Pagefind results (after build).
+ */
+import { CATEGORIES } from '../../config';
+import Icon from '../ui/Icon.astro';
+const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }));
 ---
+
+<dialog class="palette" id="search-palette" aria-label="Tìm kiếm" data-cats={JSON.stringify(cats)}>
+  <div class="pal-panel">
+    <div class="pal-top">
+      <Icon name="search" size={20} class="pal-search-icon" />
+      <input
+        class="pal-input"
+        type="search"
+        placeholder="Tìm bài viết, chủ đề, thẻ…"
+        autocomplete="off"
+        spellcheck="false"
+        enterkeyhint="search"
+        role="combobox"
+        aria-expanded="true"
+        aria-controls="pal-results"
+        aria-autocomplete="list"
+        aria-label="Từ khoá tìm kiếm"
+      />
+      <button type="button" class="pal-close" data-pal-close aria-label="Đóng tìm kiếm">
+        <span class="max-sm:hidden"><kbd class="kbd">Esc</kbd></span>
+        <span class="sm:hidden">Huỷ</span>
+      </button>
+    </div>
+    <div class="pal-chips no-scrollbar" role="group" aria-label="Lọc chuyên mục">
+      <button type="button" class="pal-chip" data-cat="all" aria-pressed="true">Tất cả</button>
+      {
+        cats.map((c) => (
+          <button type="button" class="pal-chip" data-cat={c.id} aria-pressed="false" style={`--c:${c.color}`}>
+            <span class="pal-dot" />
+            {c.name}
+          </button>
+        ))
+      }
+    </div>
+    <div class="pal-body" id="pal-results" role="listbox" aria-label="Kết quả"></div>
+    <div class="pal-foot max-sm:hidden" aria-hidden="true">
+      <span><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> di chuyển</span>
+      <span><kbd class="kbd">Enter</kbd> mở</span>
+      <span><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">Enter</kbd> tab mới</span>
+      <a href="/tim-kiem/" class="ml-auto link pointer-events-auto" data-pal-full>Trang tìm kiếm đầy đủ →</a>
+    </div>
+    <p class="sr-only" aria-live="polite" data-pal-status></p>
+  </div>
+</dialog>
+
+<style>
+  .palette {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+  }
+  .palette::backdrop {
+    background: rgb(10 10 16 / 0.42);
+    backdrop-filter: blur(6px);
+  }
+  .palette[open] {
+    display: flex;
+    justify-content: center;
+  }
+  .pal-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-elevated);
+    padding-top: env(safe-area-inset-top);
+  }
+  @media (min-width: 640px) {
+    .pal-panel {
+      width: min(680px, calc(100vw - 32px));
+      height: auto;
+      max-height: min(640px, calc(100dvh - 120px));
+      margin-top: 12vh;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      padding-top: 0;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .palette[open] .pal-panel {
+      animation: pal-in 220ms var(--ease-out);
+    }
+  }
+  @keyframes pal-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.985);
+    }
+  }
+  .pal-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pal-top :global(.pal-search-icon) {
+    flex-shrink: 0;
+    color: var(--fg-subtle);
+  }
+  .pal-input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--fg);
+    font-size: 1.0625rem;
+  }
+  .pal-input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .pal-close {
+    height: 40px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .pal-chips {
+    display: flex;
+    gap: 6px;
+    padding: 10px 14px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .pal-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+  }
+  .pal-chip[aria-pressed='true'] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+  .pal-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--c);
+  }
+  .pal-body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px;
+  }
+  .pal-foot {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--fg-subtle);
+  }
+  .pal-foot .kbd {
+    margin-right: 3px;
+  }
+  .pal-body :global(.pal-group) {
+    padding: 10px 10px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+  .pal-body :global(.pal-item) {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 11px 12px;
+    border-radius: 12px;
+    color: var(--fg);
+    scroll-margin: 8px;
+  }
+  .pal-body :global(.pal-item[aria-selected='true']) {
+    background: var(--bg-muted);
+  }
+  .pal-body :global(.pal-item-icon) {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--bg-subtle);
+    color: var(--fg-muted);
+    font-size: 0.9rem;
+  }
+  .pal-body :global(.pal-item-title) {
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .pal-body :global(.pal-item-excerpt) {
+    margin-top: 3px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--fg-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pal-body :global(.pal-item-meta) {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: var(--fg-subtle);
+  }
+  .pal-body :global(mark) {
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+  .pal-body :global(.pal-sub) {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+  .pal-body :global(.pal-empty) {
+    padding: 36px 16px;
+    text-align: center;
+    color: var(--fg-muted);
+  }
+  .pal-body :global(.pal-recent-x) {
+    margin-left: auto;
+    align-self: center;
+    padding: 4px 8px;
+    border-radius: 8px;
+    color: var(--fg-subtle);
+    font-size: 0.8rem;
+  }
+</style>
+
+<script>
+  import { instantSearch, mergeHits, terms, escapeHtml, type IndexItem, type Hit } from '../../scripts/search-core';
+  import { toggleTheme } from '../../scripts/theme';
+  import { read, write } from '../../lib/storage';
+
+  const dlg = document.getElementById('search-palette') as HTMLDialogElement;
+  const input = dlg.querySelector<HTMLInputElement>('.pal-input')!;
+  const body = dlg.querySelector<HTMLElement>('.pal-body')!;
+  const status = dlg.querySelector<HTMLElement>('[data-pal-status]')!;
+  const full = dlg.querySelector<HTMLAnchorElement>('[data-pal-full]');
+  const cats: { id: string; name: string; color: string }[] = JSON.parse(dlg.dataset.cats!);
+  const catOf = (id: string) => cats.find((c) => c.id === id);
+  let category = 'all';
+  let index: IndexItem[] | null = null;
+  let active = 0;
+  let seq = 0;
+
+  type PF = {
+    options: (o: object) => Promise<void>;
+    init: () => void;
+    debouncedSearch: (q: string, o: object, ms: number) => Promise<null | { results: { data: () => Promise<any> }[] }>;
+  };
+  let pagefind: PF | null | undefined;
+
+  async function loadIndex() {
+    if (index) return index;
+    try {
+      index = await (await fetch('/search-index.json')).json();
+    } catch {
+      index = [];
+    }
+    return index!;
+  }
+  async function loadPagefind() {
+    if (pagefind !== undefined) return pagefind;
+    try {
+      const url = '/pagefind/pagefind.js';
+      pagefind = (await import(/* @vite-ignore */ url)) as PF;
+      await pagefind.options({ excerptLength: 22, ranking: { metaWeights: { title: 5, ascii: 3 } } });
+      pagefind.init();
+    } catch {
+      pagefind = null; // not built yet (astro dev) — instant search still works
+    }
+    return pagefind;
+  }
+
+  const fmtDate = (iso: string) =>
+    iso ? new Date(iso).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+  function itemHtml(h: Hit, i: number) {
+    const cat = catOf(h.category);
+    const icon = cat ? `<span class="pal-item-icon" style="color:${cat.color}">●</span>` : '<span class="pal-item-icon">↗</span>';
+    const sub = (h.sub ?? [])
+      .slice(0, 2)
+      .map((s) => `<span class="pal-sub"># ${escapeHtml(s.title)}</span>`)
+      .join('');
+    const meta = [cat?.name, h.minutes ? `${h.minutes} phút đọc` : '', fmtDate(h.date)].filter(Boolean).join(' · ');
+    return `<a class="pal-item" role="option" id="pal-opt-${i}" href="${escapeHtml(h.url)}" aria-selected="false">${icon}<span class="min-w-0 flex-1"><span class="pal-item-title">${escapeHtml(h.title)}</span>${h.excerpt ? `<span class="pal-item-excerpt">${h.excerpt}</span>` : ''}<span class="pal-item-meta">${meta}</span>${sub}</span></a>`;
+  }
+
+  function setActive(i: number) {
+    const opts = [...body.querySelectorAll<HTMLElement>('[role=option]')];
+    if (!opts.length) return input.removeAttribute('aria-activedescendant');
+    active = (i + opts.length) % opts.length;
+    opts.forEach((o, k) => o.setAttribute('aria-selected', String(k === active)));
+    input.setAttribute('aria-activedescendant', opts[active].id);
+    opts[active].scrollIntoView({ block: 'nearest' });
+  }
+
+  function renderEmpty() {
+    const recents = read<string[]>('recent-searches', []);
+    const latest = [...(index ?? [])].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+    let html = '';
+    let i = 0;
+    if (recents.length) {
+      html += '<p class="pal-group">Tìm gần đây</p>';
+      html += recents
+        .map(
+          (r) =>
+            `<a class="pal-item" role="option" id="pal-opt-${i++}" href="#" data-recent="${escapeHtml(r)}" aria-selected="false"><span class="pal-item-icon">↺</span><span class="pal-item-title flex-1">${escapeHtml(r)}</span><button type="button" class="pal-recent-x" data-recent-x="${escapeHtml(r)}" aria-label="Xoá">✕</button></a>`,
+        )
+        .join('');
+    }
+    const actions: [string, string, string][] = [
+      ['◐', 'Đổi giao diện sáng / tối', 'action:theme'],
+      ['🎲', 'Đọc một bài ngẫu nhiên', '/ngau-nhien/'],
+      ['🔖', 'Thư viện của bạn', '/thu-vien/'],
+      ...cats.map((c) => ['#', `Chuyên mục: ${c.name}`, `/chuyen-muc/${c.id}/`] as [string, string, string]),
+    ];
+    html += '<p class="pal-group">Lối tắt</p>';
+    html += actions
+      .map(
+        ([ic, label, href]) =>
+          `<a class="pal-item" role="option" id="pal-opt-${i++}" href="${href.startsWith('action:') ? '#' : href}" ${href.startsWith('action:') ? `data-action="${href.slice(7)}"` : ''} aria-selected="false"><span class="pal-item-icon">${ic}</span><span class="pal-item-title flex-1">${label}</span></a>`,
+      )
+      .join('');
+    if (latest.length) {
+      html += '<p class="pal-group">Bài mới</p>';
+      html += latest
+        .map((p) => itemHtml({ url: p.url, title: p.title, excerpt: '', category: p.category, minutes: p.minutes, date: p.date, score: 0 }, i++))
+        .join('');
+    }
+    body.innerHTML = html;
+    setActive(0);
+  }
+
+  async function search() {
+    const q = input.value.trim();
+    const my = ++seq;
+    if (full) full.href = `/tim-kiem/${q ? `?q=${encodeURIComponent(q)}` : ''}`;
+    await loadIndex();
+    if (my !== seq) return;
+    if (!q) return renderEmpty();
+    const instant = instantSearch(index!, q, category);
+    render(instant, q);
+    const pf = await loadPagefind();
+    if (!pf || my !== seq) return;
+    const catName = catOf(category)?.name;
+    const res = await pf.debouncedSearch(q, catName ? { filters: { category: catName } } : {}, 160);
+    if (!res || my !== seq) return;
+    const data = await Promise.all(res.results.slice(0, 8).map((r) => r.data()));
+    if (my !== seq) return;
+    const fullHits: Hit[] = data.map((d, k) => ({
+      url: d.url,
+      title: d.meta?.title ?? d.url,
+      excerpt: d.excerpt ?? '',
+      category: d.meta?.category ?? '',
+      minutes: Number(d.meta?.minutes) || 0,
+      date: d.meta?.date ?? '',
+      score: 9 - k * 0.6,
+      sub: (d.sub_results ?? []).filter((s: { url: string }) => s.url.includes('#')).map((s: { title: string; url: string }) => ({ title: s.title, url: s.url })),
+    }));
+    render(mergeHits(instant, fullHits), q);
+  }
+
+  function render(hits: Hit[], q: string) {
+    if (!hits.length) {
+      body.innerHTML = `<div class="pal-empty"><p class="text-lg font-semibold text-fg">Chưa tìm thấy “${escapeHtml(q)}”</p><p class="mt-2 text-sm">Thử từ khoá ngắn hơn, bỏ dấu, hoặc chọn “Tất cả” chuyên mục.</p></div>`;
+      status.textContent = 'Không có kết quả';
+      return;
+    }
+    body.innerHTML = `<p class="pal-group">${hits.length} kết quả</p>` + hits.map((h, i) => itemHtml(h, i)).join('');
+    status.textContent = `${hits.length} kết quả`;
+    setActive(0);
+  }
+
+  function remember(q: string) {
+    if (terms(q).length === 0) return;
+    const list = [q, ...read<string[]>('recent-searches', []).filter((r) => r !== q)].slice(0, 6);
+    write('recent-searches', list);
+  }
+
+  function open() {
+    if (dlg.open) return;
+    dlg.showModal();
+    input.select();
+    loadIndex().then(() => !input.value && renderEmpty());
+    loadPagefind();
+  }
+
+  document.addEventListener('ns:open-search', open);
+  addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      dlg.open ? dlg.close() : open();
+    }
+  });
+  dlg.querySelector('[data-pal-close]')!.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => {
+    if (e.target === dlg) dlg.close();
+  });
+
+  input.addEventListener('input', search);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive(active + (e.key === 'ArrowDown' ? 1 : -1));
+    } else if (e.key === 'Enter') {
+      const opt = body.querySelector<HTMLAnchorElement>('[aria-selected=true]');
+      if (!opt) return;
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) window.open(opt.href, '_blank');
+      else opt.click();
+    }
+  });
+
+  body.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const x = t.closest<HTMLElement>('[data-recent-x]');
+    if (x) {
+      e.preventDefault();
+      e.stopPropagation();
+      write(
+        'recent-searches',
+        read<string[]>('recent-searches', []).filter((r) => r !== x.dataset.recentX),
+      );
+      return renderEmpty();
+    }
+    const a = t.closest<HTMLAnchorElement>('a.pal-item');
+    if (!a) return;
+    if (a.dataset.recent) {
+      e.preventDefault();
+      input.value = a.dataset.recent;
+      return search();
+    }
+    if (a.dataset.action === 'theme') {
+      e.preventDefault();
+      dlg.close();
+      return toggleTheme();
+    }
+    if (input.value.trim()) remember(input.value.trim());
+    dlg.close();
+  });
+  body.addEventListener('mousemove', (e) => {
+    const opt = (e.target as HTMLElement).closest<HTMLElement>('[role=option]');
+    if (!opt) return;
+    const i = [...body.querySelectorAll('[role=option]')].indexOf(opt);
+    if (i !== active) setActive(i);
+  });
+
+  dlg.querySelectorAll<HTMLButtonElement>('.pal-chip').forEach((chip) =>
+    chip.addEventListener('click', () => {
+      category = chip.dataset.cat!;
+      dlg.querySelectorAll('.pal-chip').forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+      search();
+      input.focus();
+    }),
+  );
+</script>

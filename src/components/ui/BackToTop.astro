@@ -1,3 +1,95 @@
 ---
-/** STUB — Back-to-top button with scroll progress ring (all pages; on article pages the action bar may take over on mobile). */
+/** Back-to-top button with a scroll-progress ring. Hidden on article pages below lg (the action bar covers it). */
+import Icon from './Icon.astro';
 ---
+
+<button type="button" class="to-top" data-to-top aria-label="Lên đầu trang" hidden>
+  <svg class="to-top-ring" viewBox="0 0 48 48" aria-hidden="true">
+    <circle cx="24" cy="24" r="22" pathLength="100"></circle>
+  </svg>
+  <Icon name="arrow-up" size={18} />
+</button>
+
+<style>
+  .to-top {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 45;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: color-mix(in oklab, var(--bg-elevated) 88%, transparent);
+    backdrop-filter: blur(12px);
+    color: var(--fg-muted);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(12px) scale(0.9);
+    transition:
+      opacity 200ms var(--ease-out),
+      transform 200ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .to-top[data-show] {
+    opacity: 1;
+    transform: none;
+  }
+  .to-top:hover {
+    color: var(--fg);
+  }
+  .to-top > :global(svg.icon) {
+    grid-area: 1 / 1;
+  }
+  .to-top-ring {
+    grid-area: 1 / 1;
+    width: 48px;
+    height: 48px;
+    transform: rotate(-90deg);
+  }
+  .to-top-ring circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: calc(100 - var(--page-progress, 0) * 100);
+  }
+  @media (max-width: 1023px) {
+    :global(html[data-page-type='article']) .to-top {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-to-top]');
+  if (btn) {
+    btn.hidden = false;
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const max = document.documentElement.scrollHeight - innerHeight;
+      document.documentElement.style.setProperty('--page-progress', String(max > 0 ? scrollY / max : 0));
+      btn.toggleAttribute('data-show', scrollY > innerHeight * 1.5);
+    };
+    addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      },
+      { passive: true },
+    );
+    btn.addEventListener('click', () => {
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      document.getElementById('main')?.focus({ preventScroll: true });
+    });
+    update();
+  }
+</script>

@@ -1,0 +1,171 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/ui/Icon.astro';
+import { CATEGORIES } from '../../config';
+---
+
+<BaseLayout title="Tìm kiếm" description="Tìm bài viết trên Nhịp Số" noindex>
+  <section class="container-page max-w-3xl! pt-10 sm:pt-16">
+    <h1 class="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Tìm kiếm</h1>
+    <form class="search-field mt-6" role="search" action="/tim-kiem/" method="get">
+      <Icon name="search" size={20} />
+      <input name="q" type="search" placeholder="Nhập từ khoá — gõ có dấu hay không dấu đều được" autocomplete="off" aria-label="Từ khoá" />
+    </form>
+    <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Lọc chuyên mục">
+      <button type="button" class="pal-chip" data-cat="all" aria-pressed="true">Tất cả</button>
+      {CATEGORIES.map((c) => <button type="button" class="pal-chip" data-cat={c.id} aria-pressed="false">{c.name}</button>)}
+    </div>
+    <p class="mt-6 text-sm text-fg-subtle" data-count aria-live="polite"></p>
+    <ol class="mt-2 grid" data-results></ol>
+    <noscript><p class="mt-6 text-fg-muted">Tìm kiếm cần bật JavaScript. Bạn có thể xem <a class="link" href="/luu-tru/">toàn bộ bài viết</a>.</p></noscript>
+  </section>
+</BaseLayout>
+
+<style>
+  .search-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 60px;
+    padding: 0 20px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    color: var(--fg-subtle);
+    box-shadow: var(--shadow-sm);
+  }
+  .search-field:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 16%, transparent);
+  }
+  .search-field input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--fg);
+    font-size: 1.0625rem;
+  }
+  .pal-chip {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+  }
+  .pal-chip[aria-pressed='true'] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+  [data-results] :global(li a) {
+    display: block;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  [data-results] :global(.r-title) {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  [data-results] :global(.r-ex) {
+    margin-top: 6px;
+    color: var(--fg-muted);
+    line-height: 1.6;
+  }
+  [data-results] :global(.r-meta) {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--fg-subtle);
+  }
+  [data-results] :global(mark) {
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    color: inherit;
+    border-radius: 3px;
+  }
+</style>
+
+<script>
+  import { instantSearch, mergeHits, escapeHtml, type IndexItem, type Hit } from '../../scripts/search-core';
+
+  const input = document.querySelector<HTMLInputElement>('input[name=q]')!;
+  const list = document.querySelector<HTMLElement>('[data-results]')!;
+  const count = document.querySelector<HTMLElement>('[data-count]')!;
+  const names: Record<string, string> = { ai: 'AI', 'cong-nghe': 'Công nghệ', 'doi-song': 'Đời sống' };
+  let category = 'all';
+  let index: IndexItem[] = [];
+  let pf: any = null;
+  let seq = 0;
+
+  input.value = new URLSearchParams(location.search).get('q') ?? '';
+
+  async function run() {
+    const q = input.value.trim();
+    const my = ++seq;
+    history.replaceState(null, '', q ? `?q=${encodeURIComponent(q)}` : location.pathname);
+    if (!q) {
+      list.innerHTML = '';
+      count.textContent = 'Nhập từ khoá để bắt đầu tìm.';
+      return;
+    }
+    let hits: Hit[] = instantSearch(index, q, category, 30);
+    if (pf) {
+      const res = await pf.debouncedSearch(q, category !== 'all' ? { filters: { category: names[category] } } : {}, 150);
+      if (my !== seq) return;
+      if (res) {
+        const data = await Promise.all(res.results.slice(0, 30).map((r: any) => r.data()));
+        hits = mergeHits(
+          hits,
+          data.map((d: any, k: number) => ({
+            url: d.url,
+            title: d.meta?.title ?? d.url,
+            excerpt: d.excerpt ?? '',
+            category: d.meta?.category ?? '',
+            minutes: Number(d.meta?.minutes) || 0,
+            date: d.meta?.date ?? '',
+            score: 9 - k * 0.3,
+          })),
+          30,
+        );
+      }
+    }
+    if (my !== seq) return;
+    count.textContent = hits.length ? `${hits.length} kết quả cho “${q}”` : `Không có kết quả cho “${q}”. Thử bỏ bớt từ hoặc gõ không dấu.`;
+    list.innerHTML = hits
+      .map(
+        (h) =>
+          `<li><a href="${escapeHtml(h.url)}"><p class="r-title">${escapeHtml(h.title)}</p><p class="r-ex">${h.excerpt}</p><p class="r-meta">${[names[h.category], h.minutes ? `${h.minutes} phút đọc` : ''].filter(Boolean).join(' · ')}</p></a></li>`,
+      )
+      .join('');
+  }
+
+  (async () => {
+    try {
+      index = await (await fetch('/search-index.json')).json();
+    } catch {}
+    try {
+      const url = '/pagefind/pagefind.js';
+      pf = await import(/* @vite-ignore */ url);
+      await pf.options({ excerptLength: 30 });
+    } catch {
+      pf = null;
+    }
+    run();
+  })();
+  input.addEventListener('input', run);
+  input.form!.addEventListener('submit', (e) => {
+    e.preventDefault();
+    run();
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((b) =>
+    b.addEventListener('click', () => {
+      category = b.dataset.cat!;
+      document.querySelectorAll('[data-cat]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      run();
+    }),
+  );
+</script>

@@ -1,4 +1,135 @@
 ---
-/** STUB — Global keyboard shortcuts + '?' help dialog. */
-
+/** Global keyboard shortcuts + "?" help dialog. Ignored while typing or with modifier keys. */
+const general: [string[], string][] = [
+  [['/'], 'Tìm kiếm'],
+  [['Ctrl', 'K'], 'Mở bảng lệnh'],
+  [['T'], 'Đổi giao diện sáng/tối'],
+  [['G', 'H'], 'Về trang chủ'],
+  [['R'], 'Đọc bài ngẫu nhiên'],
+  [['?'], 'Xem phím tắt'],
+];
+const article: [string[], string][] = [
+  [['J'], 'Mục tiếp theo'],
+  [['K'], 'Mục trước'],
+  [['B'], 'Lưu / bỏ lưu bài'],
+  [['L'], 'Nghe bài viết'],
+  [['S'], 'Tuỳ chỉnh đọc'],
+  [['C'], 'Tới bình luận'],
+];
 ---
+
+<dialog class="kbd-help" id="kbd-help" aria-labelledby="kbd-title">
+  <div class="flex items-center justify-between">
+    <h2 id="kbd-title" class="font-display text-xl font-bold">Phím tắt</h2>
+    <button type="button" class="btn-icon -mr-2" data-kbd-close aria-label="Đóng">✕</button>
+  </div>
+  <div class="mt-4 grid gap-6 sm:grid-cols-2">
+    <section>
+      <p class="eyebrow mb-2">Chung</p>
+      <dl class="kbd-list">
+        {general.map(([keys, label]) => <div><dt>{keys.map((k) => <kbd class="kbd">{k}</kbd>)}</dt><dd>{label}</dd></div>)}
+      </dl>
+    </section>
+    <section data-article-only>
+      <p class="eyebrow mb-2">Khi đọc bài</p>
+      <dl class="kbd-list">
+        {article.map(([keys, label]) => <div><dt>{keys.map((k) => <kbd class="kbd">{k}</kbd>)}</dt><dd>{label}</dd></div>)}
+      </dl>
+    </section>
+  </div>
+</dialog>
+
+<style>
+  .kbd-help {
+    width: min(620px, calc(100vw - 32px));
+    margin: auto;
+    padding: 22px 24px 26px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-lg);
+  }
+  .kbd-help::backdrop {
+    background: rgb(10 10 16 / 0.4);
+    backdrop-filter: blur(4px);
+  }
+  .kbd-list {
+    display: grid;
+    gap: 8px;
+  }
+  .kbd-list div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .kbd-list dt {
+    display: flex;
+    gap: 4px;
+    min-width: 76px;
+  }
+  .kbd-list dd {
+    color: var(--fg-muted);
+    font-size: 0.925rem;
+  }
+</style>
+
+<script>
+  import { toggleTheme } from '../../scripts/theme';
+
+  const help = document.getElementById('kbd-help') as HTMLDialogElement;
+  const isArticle = document.documentElement.dataset.pageType === 'article';
+  help.querySelector<HTMLElement>('[data-article-only]')!.hidden = !isArticle;
+  help.querySelector('[data-kbd-close]')!.addEventListener('click', () => help.close());
+  help.addEventListener('click', (e) => e.target === help && help.close());
+
+  const emit = (name: string) => document.dispatchEvent(new CustomEvent(name));
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let pendingG = 0;
+
+  function jump(dir: 1 | -1) {
+    const hs = [...document.querySelectorAll<HTMLElement>('#post-body :is(h2,h3)[id]')];
+    const line = 90;
+    const idx = hs.findIndex((h) => h.getBoundingClientRect().top > line + 2);
+    const cur = idx === -1 ? hs.length : idx;
+    const target = dir === 1 ? hs[cur] : hs[Math.max(0, cur - 2)];
+    target?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+    const t = e.target as HTMLElement;
+    if (t.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return;
+    if (document.querySelector('dialog[open]') && e.key !== '?') return;
+    const k = e.key.toLowerCase();
+
+    if (pendingG && Date.now() - pendingG < 800 && k === 'h') {
+      pendingG = 0;
+      location.href = '/';
+      return;
+    }
+    pendingG = k === 'g' ? Date.now() : 0;
+
+    const act: Record<string, () => void> = {
+      '/': () => emit('ns:open-search'),
+      '?': () => (help.open ? help.close() : help.showModal()),
+      t: () => toggleTheme(),
+      r: () => (location.href = '/ngau-nhien/'),
+    };
+    if (isArticle) {
+      Object.assign(act, {
+        j: () => jump(1),
+        k: () => jump(-1),
+        b: () => emit('ns:toggle-bookmark-current'),
+        l: () => emit('ns:toggle-listen'),
+        s: () => emit('ns:open-settings'),
+        c: () => document.getElementById('binh-luan')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }),
+      });
+    }
+    const fn = act[e.key === '?' ? '?' : k];
+    if (fn) {
+      e.preventDefault();
+      fn();
+    }
+  });
+</script>

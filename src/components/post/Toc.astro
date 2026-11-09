@@ -1,3 +1,297 @@
 ---
-/** STUB — Table of contents with scroll-spy (desktop sticky; mobile via ns:open-toc sheet). */
+/**
+ * Table of contents: sticky panel on desktop (lg+) and a bottom sheet on mobile
+ * (opened by [data-open-toc] / `ns:open-toc`). Scroll-spy highlights the current section.
+ */
+import type { MarkdownHeading } from 'astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+const { headings } = Astro.props;
+const show = headings.length >= 2;
 ---
+
+{
+  show && (
+    <>
+      <nav class="toc" aria-labelledby="toc-title">
+        <p id="toc-title" class="toc-head">
+          <span class="flex items-center gap-2">
+            <Icon name="list-tree" size={16} />
+            Mục lục
+          </span>
+          <span class="toc-left" data-toc-left />
+        </p>
+        <ol class="toc-list">
+          {headings.map((h) => (
+            <li class:list={['toc-item', h.depth === 3 && 'toc-sub']}>
+              <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <dialog class="toc-sheet" id="toc-sheet" aria-labelledby="toc-sheet-title">
+        <div class="sheet-handle" aria-hidden="true" />
+        <div class="flex items-center justify-between px-5 pb-2">
+          <p id="toc-sheet-title" class="font-display text-lg font-bold">
+            Mục lục
+          </p>
+          <span class="flex items-center gap-2 text-sm text-fg-subtle">
+            <span data-toc-left />
+            <button type="button" class="btn-icon -mr-2" data-toc-close aria-label="Đóng mục lục">
+              <Icon name="x" />
+            </button>
+          </span>
+        </div>
+        <div class="sheet-progress" aria-hidden="true">
+          <span />
+        </div>
+        <ol class="toc-list sheet-list">
+          {headings.map((h) => (
+            <li class:list={['toc-item', h.depth === 3 && 'toc-sub']}>
+              <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </dialog>
+    </>
+  )
+}
+
+<style>
+  .toc {
+    max-height: calc(100dvh - var(--header-h) - 48px);
+    display: flex;
+    flex-direction: column;
+  }
+  .toc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+  .toc-left {
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .toc-list {
+    position: relative;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    border-left: 1px solid var(--border);
+    mask-image: linear-gradient(transparent, #000 12px, #000 calc(100% - 16px), transparent);
+    padding-block: 8px;
+  }
+  .toc-item a {
+    position: relative;
+    display: block;
+    padding: 6px 0 6px 16px;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--fg-subtle);
+    transition:
+      color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out);
+  }
+  .toc-sub a {
+    padding-left: 30px;
+    font-size: 0.8125rem;
+  }
+  .toc-item a:hover {
+    color: var(--fg);
+  }
+  .toc-item a[aria-current='true'] {
+    color: var(--accent);
+    font-weight: 600;
+    border-left-color: var(--accent);
+  }
+  .toc-item a.is-read:not([aria-current='true']) {
+    color: var(--fg-muted);
+  }
+
+  /* Mobile bottom sheet */
+  .toc-sheet {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    max-width: 560px;
+    max-height: 78dvh;
+    margin: 0 auto;
+    padding: 8px 0 calc(12px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 24px 24px 0 0;
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-lg);
+  }
+  .toc-sheet[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .toc-sheet::backdrop {
+    background: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(2px);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .toc-sheet[open] {
+      animation: sheet-up 280ms var(--ease-out);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(40%);
+      opacity: 0;
+    }
+  }
+  .sheet-handle {
+    width: 40px;
+    height: 5px;
+    margin: 4px auto 10px;
+    border-radius: 99px;
+    background: var(--border-strong);
+  }
+  .sheet-progress {
+    height: 3px;
+    margin: 0 20px 8px;
+    border-radius: 99px;
+    background: var(--bg-muted);
+    overflow: hidden;
+  }
+  .sheet-progress span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(var(--read-progress, 0));
+    transform-origin: 0 50%;
+  }
+  .sheet-list {
+    margin: 0 20px;
+    mask-image: none;
+  }
+  .sheet-list .toc-item a {
+    padding-block: 11px;
+    font-size: 1rem;
+  }
+  .sheet-list .toc-sub a {
+    font-size: 0.9375rem;
+  }
+</style>
+
+<script>
+  import { copyText, toast } from '../../scripts/share';
+
+  const headings = [...document.querySelectorAll<HTMLElement>('#post-body :is(h2, h3)[id]:not(#footnote-label)')];
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+  const sheet = document.getElementById('toc-sheet') as HTMLDialogElement | null;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Scroll-spy: the current section is the last heading above ~30% of the viewport.
+  let current = '';
+  let ticking = false;
+  function spy() {
+    ticking = false;
+    const line = innerHeight * 0.3;
+    let id = '';
+    for (const h of headings) {
+      if (h.getBoundingClientRect().top < line) id = h.id;
+      else break;
+    }
+    if (id === current) return;
+    current = id;
+    const idx = headings.findIndex((h) => h.id === id);
+    for (const a of links) {
+      const i = headings.findIndex((h) => h.id === a.dataset.tocLink);
+      a.setAttribute('aria-current', String(a.dataset.tocLink === id));
+      a.classList.toggle('is-read', i >= 0 && i < idx);
+    }
+    // Keep the active desktop item visible inside a long TOC.
+    const active = document.querySelector<HTMLElement>('.toc [aria-current="true"]');
+    const list = active?.closest('.toc-list') as HTMLElement | null;
+    if (active && list && list.scrollHeight > list.clientHeight) {
+      const top = active.offsetTop - list.clientHeight / 2;
+      list.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+    }
+  }
+  if (headings.length) {
+    addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(spy);
+        }
+      },
+      { passive: true },
+    );
+    spy();
+  }
+
+  // Remaining time label.
+  document.addEventListener('ns:progress', (e) => {
+    const { remaining, progress } = (e as CustomEvent<{ remaining: number; progress: number }>).detail;
+    const text = progress >= 0.98 ? 'Đã đọc xong' : `Còn ~${Math.max(1, remaining)} phút`;
+    document.querySelectorAll('[data-toc-left]').forEach((el) => (el.textContent = text));
+  });
+
+  // Click: smooth-scroll and update the hash without a jump.
+  for (const a of links) {
+    a.addEventListener('click', (e) => {
+      const target = document.getElementById(a.dataset.tocLink!);
+      if (!target) return;
+      e.preventDefault();
+      sheet?.open && sheet.close();
+      target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', `#${target.id}`);
+    });
+  }
+
+  // Mobile sheet.
+  const openSheet = () => sheet && !sheet.open && sheet.showModal();
+  document.addEventListener('ns:open-toc', openSheet);
+  document.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('[data-open-toc]')) openSheet();
+  });
+  sheet?.querySelector('[data-toc-close]')?.addEventListener('click', () => sheet.close());
+  sheet?.addEventListener('click', (e) => {
+    if (e.target === sheet) sheet.close(); // backdrop
+  });
+  // Swipe down to close.
+  let startY = 0;
+  sheet?.addEventListener('touchstart', (e) => (startY = e.touches[0].clientY), { passive: true });
+  sheet?.addEventListener(
+    'touchend',
+    (e) => {
+      const list = sheet.querySelector('.sheet-list') as HTMLElement;
+      if (e.changedTouches[0].clientY - startY > 80 && list.scrollTop <= 0) sheet.close();
+    },
+    { passive: true },
+  );
+
+  // Heading anchors copy a link to that section.
+  document.querySelectorAll<HTMLAnchorElement>('#post-body .heading-anchor').forEach((a) =>
+    a.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const url = `${location.origin}${location.pathname}${a.getAttribute('href')}`;
+      history.replaceState(null, '', a.getAttribute('href'));
+      a.closest('h2, h3, h4')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+      if (await copyText(url)) toast('Đã sao chép liên kết tới mục này');
+    }),
+  );
+</script>

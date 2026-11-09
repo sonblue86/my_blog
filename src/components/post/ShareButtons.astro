@@ -1,4 +1,94 @@
 ---
-/** STUB — Share row (native share, Facebook, X, copy link). */
+/** End-of-article share row. Links are real hrefs (work without JS); copy/native share are enhanced. */
+import Icon from '../ui/Icon.astro';
 
+interface Props {
+  title: string;
+  url: string;
+}
+const { title, url } = Astro.props;
+const full = new URL(url, Astro.site).toString();
+const enc = encodeURIComponent;
+const links = [
+  { name: 'Facebook', icon: 'brand-facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${enc(full)}` },
+  { name: 'X', icon: 'brand-x', href: `https://x.com/intent/post?text=${enc(title)}&url=${enc(full)}` },
+  { name: 'LinkedIn', icon: null, href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc(full)}` },
+  { name: 'Email', icon: 'mail', href: `mailto:?subject=${enc(title)}&body=${enc(full)}` },
+] as const;
 ---
+
+<section class="share" aria-label="Chia sẻ bài viết">
+  <p class="share-title">Thấy hay? Chia sẻ cho bạn bè nhé</p>
+  <div class="share-row">
+    {
+      links.map((l) => (
+        <a class="share-btn" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`Chia sẻ qua ${l.name}`}>
+          {l.icon ? <Icon name={l.icon} size={17} /> : <span class="text-[13px] font-bold">in</span>}
+          <span class="max-sm:sr-only">{l.name}</span>
+        </a>
+      ))
+    }
+    <button type="button" class="share-btn share-copy" data-copy-link={full}>
+      <Icon name="link" size={17} />
+      <span data-copy-label>Sao chép liên kết</span>
+    </button>
+  </div>
+</section>
+
+<style>
+  .share-title {
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .share-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 44px;
+    height: 44px;
+    justify-content: center;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition:
+      border-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .share-btn:hover {
+    border-color: var(--border-strong);
+    color: var(--fg);
+  }
+  .share-btn:active {
+    transform: scale(0.96);
+  }
+  .share-copy[data-copied] {
+    color: var(--success);
+    border-color: color-mix(in oklab, var(--success) 40%, transparent);
+  }
+</style>
+
+<script>
+  import { copyText, toast } from '../../scripts/share';
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach((btn) =>
+    btn.addEventListener('click', async () => {
+      if (!(await copyText(btn.dataset.copyLink!))) return toast('Không sao chép được', { tone: 'error' });
+      const label = btn.querySelector('[data-copy-label]')!;
+      btn.setAttribute('data-copied', '');
+      label.textContent = 'Đã sao chép!';
+      setTimeout(() => {
+        btn.removeAttribute('data-copied');
+        label.textContent = 'Sao chép liên kết';
+      }, 2000);
+    }),
+  );
+</script>

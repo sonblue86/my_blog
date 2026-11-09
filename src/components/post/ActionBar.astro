@@ -1,4 +1,263 @@
 ---
-/** STUB — Mobile bottom action bar + desktop side rail. */
+/**
+ * Article tools.
+ *  - variant "bar":  floating bottom bar on phones/tablets (< lg) — thumb-reachable.
+ *  - variant "rail": vertical sticky column on wide screens (xl+), with a progress ring.
+ * Buttons only carry data attributes; each feature (TOC, settings, listen, bookmark) wires itself.
+ */
+import type { Post } from '../../lib/posts';
+import { postUrl } from '../../lib/posts';
+import BookmarkButton from '../library/BookmarkButton.astro';
+import Icon from '../ui/Icon.astro';
 
+interface Props {
+  variant: 'bar' | 'rail';
+  post: Post;
+  minutes: number;
+}
+const { variant, post } = Astro.props;
+const url = postUrl(post);
 ---
+
+{
+  variant === 'bar' ? (
+    <div class="action-bar" data-action-bar role="toolbar" aria-label="Công cụ đọc">
+      <button type="button" class="ab-btn" data-open-toc aria-label="Mục lục">
+        <Icon name="list-tree" />
+        <span class="ab-label" data-ab-left>
+          Mục lục
+        </span>
+      </button>
+      <button type="button" class="ab-btn" data-open-settings aria-label="Tuỳ chỉnh đọc">
+        <Icon name="text-size" />
+      </button>
+      <button type="button" class="ab-btn" data-listen-toggle aria-pressed="false" aria-label="Nghe bài viết">
+        <Icon name="headphones" />
+      </button>
+      <BookmarkButton post={post} class="ab-bookmark" />
+      <button type="button" class="ab-btn" data-share={url} data-share-title={post.data.title} aria-label="Chia sẻ">
+        <Icon name="share" />
+      </button>
+    </div>
+  ) : (
+    <div class="rail" role="toolbar" aria-label="Công cụ đọc" aria-orientation="vertical">
+      <div class="rail-ring" aria-hidden="true" title="Tiến độ đọc">
+        <svg viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="16" class="ring-bg" />
+          <circle cx="18" cy="18" r="16" class="ring-fg" pathLength="100" />
+        </svg>
+      </div>
+      <BookmarkButton post={post} />
+      <button type="button" class="rail-btn" data-listen-toggle aria-pressed="false" aria-label="Nghe bài viết" data-tip="Nghe (L)">
+        <Icon name="headphones" size={19} />
+      </button>
+      <button type="button" class="rail-btn" data-open-settings aria-label="Tuỳ chỉnh đọc" data-tip="Tuỳ chỉnh (S)">
+        <Icon name="text-size" size={19} />
+      </button>
+      <button type="button" class="rail-btn" data-share={url} data-share-title={post.data.title} aria-label="Sao chép liên kết" data-tip="Sao chép liên kết">
+        <Icon name="link" size={19} />
+      </button>
+      <a href="#binh-luan" class="rail-btn" aria-label="Tới phần bình luận" data-tip="Bình luận (C)">
+        <Icon name="message" size={19} />
+      </a>
+    </div>
+  )
+}
+
+<style>
+  /* ---------- bottom bar ---------- */
+  .action-bar {
+    position: fixed;
+    left: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 5px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--bg-elevated) 86%, transparent);
+    backdrop-filter: saturate(1.6) blur(16px);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    box-shadow: var(--shadow-lg);
+    transform: translate(-50%, calc(100% + 40px));
+    transition: transform 320ms var(--ease-out);
+  }
+  .action-bar[data-visible] {
+    transform: translate(-50%, 0);
+  }
+  @media (min-width: 1024px) {
+    .action-bar {
+      display: none;
+    }
+  }
+  .ab-btn,
+  .action-bar :global(.ab-bookmark) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 46px;
+    height: 46px;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .action-bar :global(.ab-bookmark) {
+    width: 46px;
+    padding: 0;
+  }
+  .ab-btn:active {
+    transform: scale(0.92);
+  }
+  .ab-btn:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .ab-btn[aria-pressed='true'] {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .ab-label {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  :global(html[data-page-type='article'] body) {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 1024px) {
+    :global(html[data-page-type='article'] body) {
+      padding-bottom: 0;
+    }
+  }
+
+  /* ---------- side rail ---------- */
+  .rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .rail-ring {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 6px;
+  }
+  .rail-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .rail-ring circle {
+    fill: none;
+    stroke-width: 3;
+  }
+  .ring-bg {
+    stroke: var(--border);
+  }
+  .ring-fg {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-dasharray: 100;
+    stroke-dashoffset: calc(100 - var(--read-progress, 0) * 100);
+  }
+  .rail-btn {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    color: var(--fg-subtle);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .rail-btn:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .rail-btn[aria-pressed='true'] {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .rail-btn::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    padding: 5px 9px;
+    border-radius: 8px;
+    background: var(--fg);
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-4px, -50%);
+    transition:
+      opacity 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .rail-btn:is(:hover, :focus-visible)::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+</style>
+
+<script>
+  import { sharePost } from '../../scripts/share';
+
+  // Share buttons (bar + rail + anywhere else using data-share).
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as Element).closest<HTMLElement>('[data-share]');
+    if (btn) sharePost(btn.dataset.shareTitle || document.title, btn.dataset.share!);
+  });
+
+  // Bottom bar: appear after the hero, hide while scrolling down quickly, show on scroll up.
+  const bar = document.querySelector<HTMLElement>('[data-action-bar]');
+  if (bar) {
+    const hero = document.querySelector('.post-cover') ?? document.querySelector('.post-hero');
+    let lastY = scrollY;
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const y = scrollY;
+      const pastHero = hero ? hero.getBoundingClientRect().bottom < 0 : y > 400;
+      const nearEnd = innerHeight + y > document.documentElement.scrollHeight - 40;
+      const goingDown = y - lastY > 14; // only a fast fling hides it; slow reading keeps it
+      const goingUp = lastY - y > 4;
+      if (!pastHero) bar.removeAttribute('data-visible');
+      else if (goingDown && !nearEnd) bar.removeAttribute('data-visible');
+      else if (goingUp || nearEnd || !bar.hasAttribute('data-seen')) {
+        bar.setAttribute('data-visible', '');
+        bar.setAttribute('data-seen', '');
+      }
+      lastY = y;
+    };
+    addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      },
+      { passive: true },
+    );
+    // Show "Còn ~N phút" next to the TOC icon.
+    const left = bar.querySelector<HTMLElement>('[data-ab-left]');
+    document.addEventListener('ns:progress', (e) => {
+      const { remaining, progress } = (e as CustomEvent<{ remaining: number; progress: number }>).detail;
+      if (left) left.textContent = progress > 0.02 && progress < 0.98 ? `~${Math.max(1, remaining)}′` : 'Mục lục';
+    });
+  }
+</script>

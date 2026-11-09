@@ -1,4 +1,187 @@
 ---
-/** STUB — Bookmarks + reading history store, [data-bookmark] wiring, header badge, service worker registration. */
-
+/**
+ * Global library wiring (every page): [data-bookmark] buttons, header badge, reading-progress
+ * tracking on articles, the home "Đọc tiếp nhé" row, and service-worker registration.
+ */
+const prod = import.meta.env.PROD;
 ---
+
+<div hidden data-sw={prod ? '1' : '0'}></div>
+
+<style is:global>
+  .continue-card {
+    position: relative;
+    flex: 0 0 min(300px, 80vw);
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    scroll-snap-align: start;
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
+  }
+  .continue-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow);
+  }
+  .continue-card img {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: var(--bg-muted);
+  }
+  .continue-card .cc-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .continue-card .cc-meta {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--fg-subtle);
+  }
+  .continue-card .cc-bar {
+    height: 4px;
+    margin-top: 8px;
+    border-radius: 99px;
+    background: var(--bg-muted);
+    overflow: hidden;
+  }
+  .continue-card .cc-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--hot));
+  }
+</style>
+
+<script>
+  import {
+    getBookmarks,
+    getHistory,
+    toggleBookmark,
+    fromDataset,
+    upsertHistory,
+    inProgress,
+  } from '../../scripts/library-store';
+  import { toast } from '../../scripts/share';
+
+  // ---------- Bookmark buttons ----------
+  function syncButtons() {
+    const ids = new Set(getBookmarks().map((b) => b.id));
+    document.querySelectorAll<HTMLElement>('[data-bookmark]').forEach((btn) => {
+      const saved = ids.has(btn.dataset.id!);
+      btn.setAttribute('aria-pressed', String(saved));
+      const label = btn.querySelector('[data-bookmark-label]');
+      if (label) label.textContent = saved ? 'Đã lưu' : 'Lưu';
+    });
+    const badge = document.querySelector<HTMLElement>('[data-library-count]');
+    if (badge) {
+      badge.textContent = ids.size > 99 ? '99+' : String(ids.size);
+      badge.hidden = ids.size === 0;
+    }
+  }
+
+  function toggleFrom(btn: HTMLElement) {
+    const saved = toggleBookmark(fromDataset(btn));
+    navigator.vibrate?.(8);
+    toast(saved ? 'Đã lưu vào thư viện' : 'Đã bỏ khỏi thư viện', {
+      tone: saved ? 'ok' : 'info',
+      action: saved ? { label: 'Xem', href: '/thu-vien/' } : undefined,
+    });
+    // Ask the service worker to keep (or drop) an offline copy.
+    navigator.serviceWorker?.controller?.postMessage({ type: saved ? 'cache-post' : 'uncache-post', url: btn.dataset.url, cover: btn.dataset.cover });
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as Element).closest<HTMLElement>('[data-bookmark]');
+    if (!btn) return;
+    e.preventDefault();
+    toggleFrom(btn);
+  });
+  document.addEventListener('ns:toggle-bookmark-current', () => {
+    const btn = document.querySelector<HTMLElement>('.post-hero [data-bookmark], [data-action-bar] [data-bookmark]');
+    if (btn) toggleFrom(btn);
+  });
+  document.addEventListener('ns:bookmarks-changed', syncButtons);
+  addEventListener('storage', (e) => {
+    if (e.key === 'ns:bookmarks') syncButtons();
+  });
+  syncButtons();
+
+  // ---------- Reading history (articles) ----------
+  const article = document.querySelector<HTMLElement>('article.post[data-post-id]');
+  const body = document.getElementById('post-body');
+  const meta = document.querySelector<HTMLElement>('.post-hero [data-bookmark]');
+  if (article && body && meta) {
+    let progress = 0;
+    let engaged = false;
+    const start = Date.now();
+    const save = () => {
+      if (!engaged && (Date.now() - start > 10_000 || progress > 0.05)) engaged = true;
+      if (!engaged) return;
+      const b = fromDataset(meta);
+      upsertHistory({ id: b.id, title: b.title, url: b.url, cover: b.cover, category: b.category, minutes: b.minutes, progress, scrollY });
+    };
+    document.addEventListener('ns:progress', (e) => {
+      progress = (e as CustomEvent<{ progress: number }>).detail.progress;
+    });
+    setInterval(() => document.visibilityState === 'visible' && save(), 2000);
+    addEventListener('pagehide', save);
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && save());
+  }
+
+  // ---------- Home: "Đọc tiếp nhé" ----------
+  const section = document.querySelector<HTMLElement>('[data-continue-reading]');
+  const list = section?.querySelector<HTMLElement>('[data-continue-list]');
+  if (section && list) {
+    const items = getHistory().filter(inProgress).slice(0, 8);
+    for (const h of items) {
+      const a = document.createElement('a');
+      a.className = 'continue-card';
+      a.href = h.url;
+      const img = document.createElement('img');
+      img.src = h.cover;
+      img.alt = '';
+      img.loading = 'lazy';
+      const box = document.createElement('div');
+      box.className = 'min-w-0 flex-1';
+      const title = document.createElement('p');
+      title.className = 'cc-title';
+      title.textContent = h.title;
+      const metaEl = document.createElement('p');
+      metaEl.className = 'cc-meta';
+      metaEl.textContent = `Đã đọc ${Math.round(h.progress * 100)}% · còn ~${Math.max(1, Math.round(h.minutes * (1 - h.progress)))} phút`;
+      const bar = document.createElement('div');
+      bar.className = 'cc-bar';
+      const fill = document.createElement('span');
+      fill.style.width = `${Math.round(h.progress * 100)}%`;
+      bar.append(fill);
+      box.append(title, metaEl, bar);
+      a.append(img, box);
+      list.append(a);
+    }
+    section.hidden = items.length === 0;
+  }
+
+  // ---------- Service worker (production only) ----------
+  const swFlag = document.querySelector<HTMLElement>('[data-sw]');
+  if (swFlag?.dataset.sw === '1' && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data?.type === 'updated') toast('Đã có phiên bản mới — tải lại trang để xem', { tone: 'info', duration: 6000 });
+    });
+  }
+</script>
