@@ -14,8 +14,14 @@ Phạm vi: Sveltia CMS (`public/admin/**`), `scripts/new-post.mjs` + `scripts/li
   build thành công (tiêu đề có `"`, `:` giữ nguyên; comment MDX không lộ ra), từ chối ghi đè (exit 1), hỏi đáp mô phỏng
   TTY (nhập sai chuyên mục → hỏi lại; Ctrl+D → huỷ exit 130). Có thêm `--dry-run`.
 
+- [x] `tests/unit/posts.test.ts` (13: relatedPosts điểm/tie-break/limit/thẻ bỏ dấu, seriesPosts thứ tự, isPublished
+  draft + hẹn giờ qua vi.stubEnv('DEV'), getTags/getSeries qua getCollection mock) và `tests/unit/date.test.ts`
+  (timeAgo với now inject, formatDate qua nửa đêm UTC+7, giao thừa). Toàn bộ: 74 pass + 1 expected fail.
+  BUG phát hiện: `timeAgo` trả "Hôm qua"/"Hôm kia" viết hoa (CLDR) → "· cập nhật Hôm qua" giữa câu; và
+  `Math.round` cho "60 phút trước"/"24 giờ trước". Fix đã thử ở scratchpad (trunc + hạ chữ đầu) → ghi vào integrationNotes.
+  Test casing để `it.fails` — khi integrator sửa src/lib/date.ts thì đổi thành `it`.
+
 ## Next
-3. `tests/unit/posts.test.ts`, `tests/unit/date.test.ts`
 4. `README.md` + `LICENSE`
 5. `.github/workflows/ci.yml` + `scheduled-deploy.yml`
 6. Kiểm tra: astro build, astro check, vitest, xem /admin trong trình duyệt (390 & 1440)
