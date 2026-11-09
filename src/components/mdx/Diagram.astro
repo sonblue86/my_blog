@@ -1,0 +1,153 @@
+---
+/**
+ * Khung cho sơ đồ SVG viết thẳng trong bài (inline) — tự đổi màu theo sáng/tối nhờ các class dg-*.
+ *
+ *   <Diagram label="Mô tả sơ đồ cho trình đọc màn hình" caption="Chú thích dưới sơ đồ">
+ *     <svg viewBox="0 0 560 220">
+ *       <rect class="dg-box" x="10" y="10" width="160" height="56" rx="12" />
+ *       <text class="dg-text" x="90" y="44" text-anchor="middle">Hộp</text>
+ *     </svg>
+ *   </Diagram>
+ *
+ * Class màu: dg-box, dg-soft, dg-accent, dg-hot, dg-ok (hình) · dg-line, dg-line-accent, dg-line-dash (đường)
+ * · dg-text, dg-muted, dg-small, dg-strong, dg-text-accent, dg-text-on (chữ) · dg-fill-accent, dg-fill-hot,
+ * dg-fill-ok, dg-fill-line (tô đặc, ví dụ đầu mũi tên).
+ * Không để dòng trống bên trong <svg> (MDX sẽ hiểu sai).
+ */
+interface Props {
+  /** Mô tả đầy đủ nội dung sơ đồ (đọc bởi trình đọc màn hình). */
+  label: string;
+  caption?: string;
+  wide?: boolean;
+  /** Bề rộng tối thiểu (px) trước khi cho cuộn ngang trên màn hình hẹp. Mặc định 0 = luôn co giãn. */
+  minWidth?: number;
+}
+
+const { label, caption, wide = false, minWidth = 0 } = Astro.props;
+---
+
+<figure class:list={['dg', { wide }]}>
+  <div class="dg-canvas" role="img" aria-label={label} data-tts-skip data-pagefind-ignore style={minWidth ? `--dg-min: ${minWidth}px` : undefined}>
+    <slot />
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style is:global>
+  .dg {
+    margin-block: 2em;
+  }
+  .dg-canvas {
+    padding: clamp(0.75rem, 3vw, 1.5rem);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--fg) 9%, transparent) 1px, transparent 0) 0 0 / 18px 18px,
+      var(--bg-subtle);
+    overflow-x: auto;
+  }
+  .dg-canvas > svg {
+    display: block;
+    width: 100%;
+    min-width: var(--dg-min, 0);
+    height: auto;
+    margin-inline: auto;
+    font-family: var(--font-sans);
+    overflow: visible;
+  }
+  .dg figcaption {
+    margin-top: 0.75em;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.85em;
+    line-height: 1.55;
+    color: var(--fg-subtle);
+    text-wrap: balance;
+  }
+
+  /* shapes */
+  .dg .dg-box {
+    fill: var(--bg-elevated);
+    stroke: var(--border-strong);
+    stroke-width: 1.5;
+  }
+  .dg .dg-soft {
+    fill: var(--bg-muted);
+    stroke: var(--border);
+    stroke-width: 1.5;
+  }
+  .dg .dg-accent {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .dg .dg-hot {
+    fill: color-mix(in oklab, var(--hot) 13%, var(--bg-elevated));
+    stroke: var(--hot);
+    stroke-width: 1.5;
+  }
+  .dg .dg-ok {
+    fill: color-mix(in oklab, var(--success) 12%, var(--bg-elevated));
+    stroke: var(--success);
+    stroke-width: 1.5;
+  }
+
+  /* lines */
+  .dg .dg-line {
+    fill: none;
+    stroke: var(--fg-subtle);
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .dg .dg-line-accent {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .dg .dg-line-dash {
+    stroke-dasharray: 5 6;
+  }
+
+  /* solid fills (arrow heads, dots, bars) */
+  .dg .dg-fill-accent {
+    fill: var(--accent);
+  }
+  .dg .dg-fill-hot {
+    fill: var(--hot);
+  }
+  .dg .dg-fill-ok {
+    fill: var(--success);
+  }
+  .dg .dg-fill-line {
+    fill: var(--fg-subtle);
+  }
+
+  /* text */
+  .dg .dg-text {
+    fill: var(--fg);
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .dg .dg-muted {
+    fill: var(--fg-muted);
+    font-size: 14px;
+  }
+  .dg .dg-small {
+    font-size: 12.5px;
+  }
+  .dg .dg-strong {
+    font-weight: 700;
+  }
+  .dg .dg-text-accent {
+    fill: var(--accent);
+  }
+  .dg .dg-text-on {
+    fill: var(--accent-fg);
+  }
+  .dg .dg-mono {
+    font-family: var(--font-mono);
+  }
+</style>

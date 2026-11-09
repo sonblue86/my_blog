@@ -1,0 +1,73 @@
+---
+/**
+ * Một ý quan trọng cần người đọc nhớ — nổi bật hơn đoạn văn thường.
+ *   <KeyPoint>LLM không "tra cứu" sự thật; nó dự đoán chữ tiếp theo.</KeyPoint>
+ *   <KeyPoint title="Nhớ nhé">…</KeyPoint>
+ */
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Điểm mấu chốt' } = Astro.props;
+---
+
+<div class="kp" role="note" aria-label={title}>
+  <p class="kp-label">
+    <span class="kp-icon" aria-hidden="true" data-tts-skip><Icon name="sparkles" size={16} /></span>
+    {title}
+  </p>
+  <div class="kp-body"><slot /></div>
+</div>
+
+<style>
+  .kp {
+    position: relative;
+    margin-block: 2em;
+    padding: 1.15em 1.3em 1.25em;
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(120% 140% at 0% 0%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%),
+      var(--accent-soft);
+    border: 1px solid color-mix(in oklab, var(--accent) 22%, transparent);
+    overflow: hidden;
+  }
+  .kp::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(to bottom, var(--accent), var(--hot));
+  }
+  .kp-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    margin: 0 0 0.45em;
+    font-family: var(--font-sans);
+    font-size: 0.78em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .kp-icon {
+    display: inline-flex;
+  }
+  .kp-body {
+    font-family: var(--font-display);
+    font-size: 1.12em;
+    font-weight: 600;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    text-wrap: pretty;
+  }
+  .kp-body > :global(*) {
+    margin: 0;
+  }
+  .kp-body > :global(* + *) {
+    margin-top: 0.6em;
+  }
+</style>
