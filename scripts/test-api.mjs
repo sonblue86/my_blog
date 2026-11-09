@@ -3,18 +3,18 @@
  * End-to-end check of the Worker API (views, reactions, newsletter) against a running server.
  *
  *   npm run build && npx wrangler d1 migrations apply blog-db --local
- *   npx wrangler dev --port 8790          # in another terminal
- *   node scripts/test-api.mjs http://localhost:8790 [--burst]
+ *   npx wrangler dev --port 8787          # in another terminal (or: npm run preview)
+ *   node scripts/test-api.mjs http://localhost:8787 [--burst]
  *
  * --burst  also fires 25 quick writes to check the RL_WRITE rate limiter (uses up the 60 s budget,
- *          so run it last). Requires the article /bai-viet/xin-chao/ to exist in ./dist.
+ *          so run it last). Uses the article /bai-viet/llm-hoat-dong-the-nao/ (override: TEST_SLUG=<slug>).
  * Only uses Node 22+ built-ins (fetch). Exit code 1 if any check fails.
  */
 
 const args = process.argv.slice(2);
-const base = (args.find((a) => !a.startsWith('--')) || 'http://localhost:8790').replace(/\/+$/, '');
+const base = (args.find((a) => !a.startsWith('--')) || 'http://localhost:8787').replace(/\/+$/, '');
 const burst = args.includes('--burst');
-const SLUG = process.env.TEST_SLUG || 'xin-chao';
+const SLUG = process.env.TEST_SLUG || 'llm-hoat-dong-the-nao';
 const run = Date.now().toString(36);
 const KINDS = ['like', 'love', 'fire', 'mindblown', 'clap'];
 
@@ -162,6 +162,6 @@ async function main() {
 
 main().catch((err) => {
   console.error(red(`\nCannot reach ${base}: ${err.message}`));
-  console.error('Start it first: npm run build && npx wrangler d1 migrations apply blog-db --local && npx wrangler dev --port 8790');
+  console.error('Start it first: npm run build && npx wrangler d1 migrations apply blog-db --local && npx wrangler dev --port 8787');
   process.exitCode = 1;
 });

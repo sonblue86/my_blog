@@ -335,7 +335,8 @@ const siteKey = TURNSTILE.siteKey.trim();
     if (sitekey) form.addEventListener('focusin', () => ensureWidget(), { once: true });
 
     input.addEventListener('input', () => {
-      if (field.dataset.invalid) {
+      // data-invalid is a boolean attribute (value ''), so test presence, not truthiness.
+      if (field.hasAttribute('data-invalid')) {
         invalid(false);
         say('');
       }
