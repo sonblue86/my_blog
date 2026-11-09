@@ -9,9 +9,9 @@
   `astro build` OK; NOT yet browser-verified.
 - src/scripts/tts.ts (chunking, voice ranking/labels, platform detect, Reader state machine) + tests/unit/tts.test.ts (20 tests)
 - src/components/post/ListenPlayer.astro: mini player (play/pause, prev/next, rate, voice select, câu i/n + bar, close), no-voice sheet per platform, highlight, follow-scroll, wake lock, pagehide stop. Builds; NOT browser-verified.
+- src/scripts/selection-share.ts + tests/unit/text-fragment-selection.test.ts (7 tests); SelectionShare.astro toolbar. Build OK, astro check 0 errors, vitest 53/53.
 
 ## Next
-6. src/scripts/selection-share.ts + src/components/post/SelectionShare.astro
 7. Verify: astro build, astro check, vitest, browser 390x844 + 1440x900 light/dark
 
 ## Notes
