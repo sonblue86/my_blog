@@ -1,0 +1,118 @@
+---
+title: 'Dựng blog miễn phí với Astro, GitHub và Cloudflare'
+description: 'Cách chính blog Nhịp Số được dựng: Astro tạo trang tĩnh, GitHub lưu bài, Cloudflare phân phối toàn cầu, Worker nhỏ cùng D1 lo lượt xem — gần như miễn phí.'
+pubDate: 2026-11-03
+category: cong-nghe
+tags: ['Astro', 'Cloudflare', 'GitHub', 'Web tĩnh']
+featured: true
+summary: 'Blog bạn đang đọc là một trang tĩnh do Astro tạo ra, mã nguồn và bài viết nằm trên GitHub, được Cloudflare build và phân phối mỗi lần có commit mới. Bài này giải thích kiến trúc, từng bước dựng lại và những đánh đổi cần biết.'
+takeaways:
+  - 'Trang tĩnh nhanh, rẻ và an toàn: không có máy chủ hay cơ sở dữ liệu nội dung nào phải vá lỗi.'
+  - 'Bài viết là file Markdown/MDX trong Git — bạn sở hữu hoàn toàn và có lịch sử chỉnh sửa miễn phí.'
+  - 'Phần động (lượt xem, reaction, đăng ký nhận tin) tách ra một Worker nhỏ dùng D1, site vẫn chạy nếu phần này tắt.'
+  - 'Đánh đổi chính: cần làm quen Git và mỗi thay đổi phải build lại.'
+---
+
+Có rất nhiều cách để bắt đầu viết blog: nền tảng có sẵn, WordPress trên hosting thuê, hay một trang tĩnh tự dựng. Với Nhịp Số, chúng mình chọn cách cuối cùng — và bài này kể lại chính xác cách blog bạn đang đọc được xây dựng, để bạn có thể làm một trang tương tự cho riêng mình.
+
+## Kiến trúc trong một đoạn văn
+
+Bài viết là các file Markdown/MDX nằm trong một repo GitHub. Mỗi khi có commit mới, Cloudflare tải mã nguồn về, chạy **Astro** để tạo ra toàn bộ trang HTML tĩnh, chạy **Pagefind** để dựng chỉ mục tìm kiếm, rồi đưa tất cả lên mạng lưới máy chủ toàn cầu qua **Workers Static Assets**. Những tính năng cần ghi dữ liệu — đếm lượt xem, thả reaction, đăng ký nhận tin — đi qua một **Worker** nhỏ xử lý đường dẫn `/api/*` và lưu vào **D1**, cơ sở dữ liệu SQLite của Cloudflare.
+
+| Thành phần | Vai trò | Chi phí |
+| --- | --- | --- |
+| Astro 7 | Biến Markdown/MDX thành trang HTML tĩnh | Miễn phí, mã nguồn mở |
+| GitHub | Lưu mã nguồn và bài viết, lịch sử chỉnh sửa | Gói miễn phí |
+| Cloudflare Workers Static Assets | Build tự động và phân phối trang tĩnh toàn cầu | Gói miễn phí |
+| Worker + D1 | API nhỏ cho lượt xem, reaction, newsletter | Gói miễn phí, có hạn mức |
+| Pagefind | Tìm kiếm toàn văn chạy ngay trong trình duyệt | Miễn phí |
+| Giscus | Bình luận qua GitHub Discussions | Miễn phí |
+| Sveltia CMS | Trình soạn bài trên web tại `/admin/` | Miễn phí |
+
+Khoản bạn có thể phải trả duy nhất là tên miền riêng. Nếu chưa cần, địa chỉ con do Cloudflare cấp hoàn toàn dùng được.
+
+## Vì sao lại là trang tĩnh?
+
+Một trang tĩnh là tập hợp các file HTML, CSS, ảnh đã được tạo sẵn từ trước. Khi người đọc mở bài, máy chủ chỉ việc gửi file có sẵn — không truy vấn cơ sở dữ liệu, không chạy mã phía máy chủ.
+
+<ProsCons
+  pros={[
+    'Rất nhanh: file được phục vụ từ máy chủ gần người đọc nhất.',
+    'Gần như không tốn tiền vận hành với lượng truy cập của blog cá nhân.',
+    'Ít bề mặt tấn công: không có trang quản trị hay cơ sở dữ liệu nội dung để bị dò mật khẩu.',
+    'Bài viết là file văn bản — dễ sao lưu, dễ chuyển nhà, có lịch sử qua Git.',
+  ]}
+  cons={[
+    'Cần làm quen với Git và dòng lệnh ở mức cơ bản.',
+    'Mỗi thay đổi phải build lại, thường mất từ vài chục giây đến vài phút.',
+    'Tính năng động (bình luận, lượt xem) phải ghép thêm dịch vụ bên ngoài.',
+  ]}
+/>
+
+Astro đặc biệt hợp với blog vì mặc định không gửi JavaScript xuống trình duyệt. Những tương tác nhỏ như thanh tiến độ đọc, mục lục, lưu bài hay chế độ tối ở Nhịp Số đều viết bằng TypeScript thuần, không cần framework giao diện nào.
+
+## Dựng lại từng bước
+
+Phần dưới giả định bạn đã cài **Node.js** (bản LTS mới) và **Git**, và có tài khoản GitHub, Cloudflare.
+
+<Steps>
+
+1. **Lấy mã nguồn và chạy thử.** Clone repo về máy, cài thư viện rồi bật máy chủ phát triển:
+
+   ```bash
+   git clone https://github.com/<tai-khoan>/<ten-repo>.git blog
+   cd blog
+   npm install
+   npm run dev
+   ```
+
+   Mở `http://localhost:4321` để xem. Muốn dừng, nhấn <Kbd keys="Ctrl+C" /> trong terminal.
+
+2. **Đặt tên cho blog.** Mở `src/config.ts`, sửa tên, khẩu hiệu, mô tả, địa chỉ trang và các liên kết mạng xã hội. Mọi chỗ trong giao diện đều đọc từ file này.
+
+3. **Viết bài đầu tiên.** Mỗi bài là một thư mục trong `src/content/posts/`, chứa `index.md` (hoặc `index.mdx`) và ảnh đi kèm. Lệnh `npm run new -- "Tiêu đề bài" --category ai` tạo sẵn khung cho bạn.
+
+4. **Đẩy lên GitHub.** Tạo repo mới (có thể để riêng tư), rồi `git push` mã nguồn lên.
+
+5. **Kết nối Cloudflare.** Trong dashboard Cloudflare, tạo một Worker mới bằng cách nhập repo GitHub. Lệnh build là `npm run build`, lệnh deploy là `npx wrangler deploy`. Từ giờ, mỗi lần push lên nhánh chính là trang tự cập nhật.
+
+6. **Đổi địa chỉ trang.** Cập nhật `SITE.url` trong `src/config.ts` thành tên miền thật (hoặc địa chỉ Cloudflare cấp) để RSS, sitemap và ảnh chia sẻ có đường dẫn đúng.
+
+</Steps>
+
+<Callout type="info" title="Hướng dẫn chi tiết">
+Repo kèm sẵn tài liệu tiếng Việt cho từng phần: cấu hình Cloudflare, tạo cơ sở dữ liệu D1, bật bình luận và CMS. Bài này chỉ đi qua bức tranh tổng thể.
+</Callout>
+
+## Phần động: Worker nhỏ và D1
+
+Trang tĩnh không tự đếm được lượt xem. Ở Nhịp Số, phần này do một Worker xử lý: Cloudflare phục vụ file tĩnh trước, chỉ những yêu cầu tới `/api/*` mới chạy mã Worker. Worker ghi dữ liệu vào D1 — một cơ sở dữ liệu SQLite được Cloudflare quản lý.
+
+Điểm thiết kế quan trọng: **site vẫn chạy bình thường nếu API chưa bật hoặc gặp sự cố.** Lượt xem và reaction chỉ là lớp trang trí thêm; bài viết, tìm kiếm, mục lục, lưu bài đều hoạt động độc lập. Trong `src/config.ts` có các công tắc `features` để tắt từng tính năng nếu bạn chưa muốn dựng phần backend.
+
+Để bật D1, bạn tạo cơ sở dữ liệu một lần bằng Wrangler rồi chạy migration:
+
+```bash
+npx wrangler d1 create blog-db
+npm run db:migrate:remote
+```
+
+Theo chính sách hiện tại của Cloudflare, yêu cầu tới file tĩnh không bị tính phí, còn yêu cầu chạy qua Worker và thao tác D1 có hạn mức miễn phí theo ngày — dư sức cho một blog cá nhân. Hãy xem trang giá của Cloudflare để biết con số mới nhất.
+
+## Tìm kiếm, bình luận và soạn bài trên web
+
+**Tìm kiếm** dùng Pagefind: sau khi Astro build xong, Pagefind quét các trang HTML và tạo chỉ mục chia nhỏ. Khi bạn nhấn <Kbd keys="mod+K" /> và gõ từ khoá, trình duyệt chỉ tải những mảnh chỉ mục cần thiết. Không có máy chủ tìm kiếm nào phải duy trì.
+
+**Bình luận** dùng Giscus, lưu mỗi luồng thảo luận thành một Discussion trên GitHub. Bạn bật Discussions cho repo, lấy mã cấu hình tại trang của Giscus rồi điền vào mục `GISCUS` trong `src/config.ts`. Để trống thì phần bình luận tự ẩn.
+
+**Soạn bài trên web** dùng Sveltia CMS tại `/admin/`. CMS đọc và ghi thẳng vào repo GitHub, nên mỗi lần bấm lưu là một commit — Cloudflare lại tự build như bình thường. CMS soạn tốt nhất với bài `.md`; bài dùng nhiều thành phần MDX vẫn nên viết trong trình soạn thảo mã.
+
+## Những đánh đổi nên biết trước
+
+- **Thời gian build tăng theo số bài và số ảnh.** Với vài trăm bài vẫn rất ổn; ảnh nên đặt kích thước hợp lý trước khi đưa vào repo.
+- **Bài hẹn giờ cần một lần build.** Bài có ngày đăng trong tương lai được ẩn khi build; nó chỉ xuất hiện ở lần build kế tiếp sau ngày đó.
+- **Bạn là người bảo trì.** Không có đội kỹ thuật nào cập nhật thư viện giúp bạn. Bù lại, trang tĩnh để vài tháng không đụng tới vẫn chạy y nguyên.
+
+## Lời kết
+
+Dựng blog theo cách này tốn công hơn đăng ký một nền tảng có sẵn, nhưng đổi lại bạn có một trang nhanh, gần như miễn phí và thuộc về chính mình — từ nội dung, giao diện đến dữ liệu. Nếu bạn thích mày mò và muốn kiểm soát trải nghiệm đọc của người xem, đây là một khoản đầu tư rất đáng.

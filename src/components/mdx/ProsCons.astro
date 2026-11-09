@@ -1,0 +1,163 @@
+---
+/**
+ * Hai cột Ưu điểm / Nhược điểm (xếp chồng trên điện thoại).
+ *   <ProsCons
+ *     pros={['Miễn phí', 'Nhanh']}
+ *     cons={['Cần học Git']}
+ *   />
+ * Muốn định dạng Markdown phong phú hơn, dùng slot:
+ *   <ProsCons>
+ *     <Fragment slot="pros">- **Nhanh** …</Fragment>
+ *     <Fragment slot="cons">- …</Fragment>
+ *   </ProsCons>
+ */
+import { ThumbsDown } from 'lucide-static';
+import Icon from '../ui/Icon.astro';
+import { lucideSvg } from './lucide';
+
+interface Props {
+  pros?: string[];
+  cons?: string[];
+  prosTitle?: string;
+  consTitle?: string;
+}
+
+const { pros = [], cons = [], prosTitle = 'Ưu điểm', consTitle = 'Nhược điểm' } = Astro.props;
+const hasProsSlot = Astro.slots.has('pros');
+const hasConsSlot = Astro.slots.has('cons');
+---
+
+<div class="pc">
+  <section class="pc-col" data-kind="pros" aria-label={prosTitle}>
+    <p class="pc-title">
+      <span class="pc-badge" aria-hidden="true" data-tts-skip><Icon name="thumbs-up" size={16} /></span>
+      {prosTitle}
+    </p>
+    {
+      hasProsSlot ? (
+        <div class="pc-slot">
+          <slot name="pros" />
+        </div>
+      ) : (
+        <ul class="pc-list">
+          {pros.map((item) => (
+            <li>
+              <span class="pc-mark" aria-hidden="true" data-tts-skip>
+                <Icon name="check" size={16} strokeWidth={2.5} />
+              </span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+  <section class="pc-col" data-kind="cons" aria-label={consTitle}>
+    <p class="pc-title">
+      <span class="pc-badge" aria-hidden="true" data-tts-skip><Fragment set:html={lucideSvg(ThumbsDown, 16)} /></span>
+      {consTitle}
+    </p>
+    {
+      hasConsSlot ? (
+        <div class="pc-slot">
+          <slot name="cons" />
+        </div>
+      ) : (
+        <ul class="pc-list">
+          {cons.map((item) => (
+            <li>
+              <span class="pc-mark" aria-hidden="true" data-tts-skip>
+                <Icon name="x" size={16} strokeWidth={2.5} />
+              </span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</div>
+
+<style>
+  .pc {
+    display: grid;
+    gap: 0.875rem;
+    margin-block: 1.75em;
+    font-size: 0.94em;
+    line-height: 1.6;
+  }
+  @media (min-width: 640px) {
+    .pc {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .pc-col {
+    --c: var(--success);
+    padding: 1em 1.1em 1.1em;
+    border: 1px solid color-mix(in oklab, var(--c) 24%, var(--border));
+    border-top: 3px solid var(--c);
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--c) 5%, var(--bg-elevated));
+  }
+  .pc-col[data-kind='cons'] {
+    --c: var(--danger);
+  }
+  .pc-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin: 0 0 0.6em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .pc-badge {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    color: var(--c);
+    background: color-mix(in oklab, var(--c) 14%, transparent);
+  }
+  .pc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .pc-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.55em;
+    margin: 0;
+    padding: 0;
+  }
+  .pc-list li + li {
+    margin-top: 0.5em;
+  }
+  .pc-list li::before {
+    display: none;
+  }
+  .pc-mark {
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    height: 1.6em;
+    color: var(--c);
+  }
+  .pc-mark :global(svg) {
+    flex: none;
+  }
+  .pc-slot > :global(*) {
+    margin: 0;
+  }
+  .pc-slot > :global(* + *) {
+    margin-top: 0.6em;
+  }
+  .pc-slot :global(ul) {
+    padding-left: 1.2em;
+  }
+  .pc-slot :global(ul > li::before) {
+    background: var(--c);
+  }
+</style>

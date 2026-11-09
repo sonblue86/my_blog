@@ -1,0 +1,157 @@
+---
+title: 'RAG là gì? Cách cho AI trả lời dựa trên tài liệu của riêng bạn'
+description: 'RAG giúp AI trả lời dựa trên tài liệu của bạn thay vì trí nhớ. Tìm hiểu từng bước: chia đoạn, embedding, tìm kiếm vector, ghép prompt — kèm mã TypeScript.'
+pubDate: 2026-10-20
+category: ai
+tags: ['RAG', 'LLM', 'TypeScript']
+series: 'AI cho người mới'
+seriesOrder: 3
+featured: true
+summary: 'RAG (Retrieval-Augmented Generation) là kỹ thuật "tìm trước, viết sau": hệ thống tìm những đoạn tài liệu liên quan nhất tới câu hỏi rồi đưa cho mô hình đọc trước khi trả lời. Cách này giúp AI dùng được dữ liệu riêng, cập nhật và giảm bịa đặt.'
+takeaways:
+  - 'RAG = tìm đúng đoạn tài liệu, đưa vào prompt, rồi mới để mô hình viết câu trả lời.'
+  - 'Embedding biến văn bản thành vector để so sánh theo nghĩa, không chỉ theo từ khoá.'
+  - 'Chất lượng RAG phụ thuộc nhiều nhất vào bước tìm kiếm: tìm sai thì mô hình giỏi đến mấy cũng trả lời sai.'
+  - 'Hãy đánh giá bằng một bộ câu hỏi mẫu có đáp án, kiểm tra riêng bước tìm và bước trả lời.'
+---
+
+import ragPipeline from './rag-pipeline.svg';
+
+Hãy tưởng tượng bạn muốn có một trợ lý trả lời câu hỏi về chính sách nội bộ công ty, tài liệu hướng dẫn sản phẩm hoặc kho ghi chú cá nhân. Hỏi thẳng một mô hình ngôn ngữ thì không được: nó chưa từng đọc những tài liệu đó, và như [bài đầu tiên của series](/bai-viet/llm-hoat-dong-the-nao/) đã nói, khi thiếu thông tin nó có thể tự tin bịa ra câu trả lời "nghe hợp lý".
+
+Dán toàn bộ tài liệu vào prompt cũng có giới hạn. Kho tài liệu thường lớn hơn cửa sổ ngữ cảnh, mỗi câu hỏi lại tốn rất nhiều token, và chi tiết quan trọng dễ bị chìm giữa văn bản dài. **RAG** ra đời để giải quyết đúng bài toán này.
+
+## RAG là gì?
+
+RAG là viết tắt của *Retrieval-Augmented Generation* — tạm dịch là "sinh văn bản có tăng cường bằng truy xuất". Tên nghe phức tạp, nhưng ý tưởng rất đời thường: **tìm trước, viết sau.**
+
+Giống như một kỳ thi được mang tài liệu vào phòng: điểm cao hay thấp không chỉ phụ thuộc bạn viết giỏi, mà còn ở việc bạn có lật đúng trang hay không. Trong RAG, "lật đúng trang" là việc của hệ thống tìm kiếm; "viết bài" là việc của mô hình ngôn ngữ.
+
+<Figure
+  src={ragPipeline}
+  alt="Sơ đồ quy trình RAG gồm hai cột. Cột chuẩn bị (làm một lần): Tài liệu, chia đoạn, tạo embedding, lưu vào kho vector. Cột mỗi khi có câu hỏi: câu hỏi, tìm đoạn liên quan trong kho vector, ghép prompt gồm câu hỏi và các đoạn tìm được, LLM trả lời kèm trích dẫn nguồn."
+  caption="Hai giai đoạn của RAG: chuẩn bị kho tài liệu một lần, sau đó mỗi câu hỏi đều đi qua bước tìm kiếm trước khi tới mô hình. Bấm vào ảnh để phóng to."
+/>
+
+Quy trình gồm hai giai đoạn. Giai đoạn chuẩn bị chạy một lần (và chạy lại khi tài liệu thay đổi). Giai đoạn trả lời chạy mỗi khi người dùng đặt câu hỏi. Chúng ta đi qua từng bước.
+
+## Bước 1: Chia tài liệu thành đoạn
+
+Tài liệu dài được cắt thành các đoạn nhỏ (*chunk*), mỗi đoạn thường vài trăm chữ. Lý do: khi trả lời, ta chỉ muốn đưa cho mô hình đúng vài đoạn liên quan, không phải cả cuốn sổ tay 80 trang.
+
+Chia đoạn nghe đơn giản nhưng ảnh hưởng lớn tới chất lượng:
+
+- **Đoạn quá ngắn** mất ngữ cảnh: câu "Thời hạn là 30 ngày" vô nghĩa nếu tách khỏi tiêu đề "Chính sách đổi trả".
+- **Đoạn quá dài** chứa nhiều chủ đề lẫn lộn, làm loãng kết quả tìm kiếm và tốn token.
+- **Nên cắt theo cấu trúc tự nhiên** — tiêu đề, mục, đoạn văn — thay vì cắt cứng theo số ký tự.
+- **Cho các đoạn chồng lên nhau một chút** (overlap) để ý nằm ở ranh giới không bị cắt đôi.
+
+<Callout type="tip" title="Mẹo nhỏ đáng giá">
+Gắn kèm tiêu đề tài liệu và tiêu đề mục vào đầu mỗi đoạn trước khi lưu. Một đoạn bắt đầu bằng "Sổ tay nhân viên › Nghỉ phép ›" dễ được tìm thấy và dễ hiểu hơn nhiều so với một đoạn trơ trọi.
+</Callout>
+
+## Bước 2: Embedding — biến chữ thành toạ độ
+
+Để tìm đoạn "liên quan" theo *nghĩa* chứ không chỉ theo từ khoá, ta dùng **embedding**: một mô hình chuyên biệt biến mỗi đoạn văn thành một vector — một dãy số dài, có thể hình dung như toạ độ trong một không gian nhiều chiều.
+
+Điều kỳ diệu nằm ở chỗ: những đoạn văn có nghĩa gần nhau sẽ có toạ độ gần nhau. Câu "Tôi muốn trả lại món hàng đã mua" và đoạn "Chính sách hoàn tiền trong 30 ngày" gần như không chung từ nào, nhưng vector của chúng lại nằm gần nhau. Tìm kiếm từ khoá thông thường sẽ bỏ lỡ cặp này; tìm kiếm bằng embedding thì không.
+
+Mỗi vector được lưu cùng văn bản gốc và thông tin nguồn (tên tài liệu, mục, đường dẫn) vào một **kho vector**. Kho này có thể là một cơ sở dữ liệu chuyên dụng, hoặc đơn giản là một bảng trong cơ sở dữ liệu quen thuộc có hỗ trợ tìm kiếm vector.
+
+## Bước 3: Tìm các đoạn liên quan
+
+Khi người dùng hỏi, câu hỏi cũng được biến thành vector bằng **cùng mô hình embedding**. Hệ thống so sánh vector câu hỏi với các vector trong kho — thường bằng độ tương đồng cosine — và lấy ra *k* đoạn gần nhất (top-k), ví dụ 4 đến 8 đoạn.
+
+Trong thực tế, nhiều hệ thống kết hợp thêm tìm kiếm từ khoá truyền thống (gọi là *hybrid search*). Lý do: embedding giỏi bắt ý nghĩa nhưng đôi khi kém với mã sản phẩm, tên riêng, số hiệu văn bản — những thứ cần khớp chính xác từng ký tự.
+
+## Bước 4: Ghép prompt và sinh câu trả lời
+
+Các đoạn tìm được được ghép vào prompt cùng câu hỏi, kèm chỉ dẫn rõ ràng — đúng những nguyên tắc trong [bài viết prompt](/bai-viet/viet-prompt-hieu-qua/): tách bạch dữ liệu, cho phép nói "không biết", yêu cầu trích dẫn.
+
+## Minh hoạ bằng TypeScript
+
+Đoạn mã dưới đây phác hoạ toàn bộ luồng trong vài chục dòng. Hai hàm `embed` và `generate` đại diện cho lời gọi tới dịch vụ embedding và mô hình ngôn ngữ mà bạn chọn; phần còn lại là logic thuần.
+
+```ts title="rag.ts" {19-24,35-38}
+type Chunk = { id: string; source: string; text: string; vector: number[] };
+
+// Đại diện cho dịch vụ bạn dùng (API đám mây hoặc mô hình chạy cục bộ).
+declare function embed(text: string): Promise<number[]>;
+declare function generate(prompt: string): Promise<string>;
+
+/** Độ tương đồng cosine: 1 = cùng hướng, 0 = không liên quan. */
+function cosine(a: number[], b: number[]): number {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
+}
+
+/** Lấy k đoạn gần nghĩa nhất với câu hỏi. */
+async function retrieve(question: string, store: Chunk[], k = 4): Promise<Chunk[]> {
+  const q = await embed(question);
+  return store
+    .map((chunk) => ({ chunk, score: cosine(q, chunk.vector) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, k)
+    .map(({ chunk }) => chunk);
+}
+
+export async function answer(question: string, store: Chunk[]): Promise<string> {
+  const chunks = await retrieve(question, store);
+  const context = chunks
+    .map((c, i) => `<doan so="${i + 1}" nguon="${c.source}">\n${c.text}\n</doan>`)
+    .join('\n');
+
+  const prompt = `Trả lời câu hỏi CHỈ dựa trên các đoạn tài liệu bên dưới.
+Nếu tài liệu không có thông tin, hãy nói "Mình không tìm thấy trong tài liệu".
+Ghi số đoạn đã dùng trong ngoặc vuông, ví dụ [2].
+
+${context}
+
+Câu hỏi: ${question}`;
+
+  return generate(prompt);
+}
+```
+
+Với vài nghìn đoạn, duyệt tuần tự như trên vẫn chạy ổn. Khi dữ liệu lớn hơn nhiều, bạn sẽ cần chỉ mục vector chuyên dụng để tìm nhanh mà không phải so sánh với từng đoạn.
+
+## RAG, dán cả tài liệu hay tinh chỉnh mô hình?
+
+RAG không phải lời giải cho mọi bài toán. Bảng sau tóm tắt khi nào nên chọn cách nào:
+
+| Cách làm | Hợp khi | Hạn chế |
+| --- | --- | --- |
+| Dán cả tài liệu vào prompt | Tài liệu ngắn, hỏi một lần | Tốn token, không mở rộng được |
+| RAG | Kho tài liệu lớn, cập nhật thường xuyên, cần trích nguồn | Phải xây và bảo trì bước tìm kiếm |
+| Tinh chỉnh (fine-tuning) | Dạy giọng văn, định dạng, cách làm việc lặp lại | Không hợp để nạp kiến thức hay thay đổi |
+
+Một cách nhớ nhanh: **tinh chỉnh dạy mô hình *cách* làm, RAG cho mô hình *biết* thêm.**
+
+## Những lỗi thường gặp
+
+<Callout type="warning" title="Tìm sai thì trả lời sai">
+Phần lớn câu trả lời tệ trong hệ thống RAG đến từ bước tìm kiếm, không phải từ mô hình. Trước khi đổi sang mô hình "xịn hơn", hãy in ra các đoạn được tìm thấy và xem chúng có thực sự chứa câu trả lời không.
+</Callout>
+
+- **Tài liệu cũ nằm lẫn tài liệu mới.** Hai phiên bản chính sách cùng tồn tại khiến mô hình trả lời mâu thuẫn. Hãy gắn ngày hiệu lực và loại bỏ bản cũ khi cập nhật.
+- **Câu hỏi mang tính tổng hợp.** "Tài liệu này có bao nhiêu điều khoản về bảo hành?" đòi hỏi đọc toàn bộ, trong khi RAG chỉ đưa vài đoạn. Loại câu hỏi này cần cách tiếp cận khác.
+- **Bảng biểu, hình ảnh bị mất khi trích xuất văn bản.** Hãy kiểm tra kỹ bước chuyển PDF thành chữ — đây là nơi dữ liệu hay hỏng âm thầm nhất.
+- **Không có bộ câu hỏi để đánh giá.** Không đo thì không biết thay đổi nào làm hệ thống tốt lên hay tệ đi.
+
+## Đánh giá: bắt đầu nhỏ nhưng đều đặn
+
+Bạn không cần hệ thống đánh giá phức tạp. Hãy viết ra vài chục câu hỏi thật mà người dùng hay hỏi, kèm đáp án đúng và đoạn tài liệu chứa đáp án. Mỗi khi thay đổi cách chia đoạn, mô hình embedding hay prompt, chạy lại bộ câu hỏi và kiểm tra hai điều riêng biệt:
+
+1. **Bước tìm:** đoạn chứa đáp án có nằm trong top-k không?
+2. **Bước trả lời:** khi đã có đúng đoạn, câu trả lời có chính xác và trích đúng nguồn không?
+
+Tách hai câu hỏi này giúp bạn biết chính xác cần sửa ở đâu.
+
+## Khép lại series
+
+Qua ba bài của **AI cho người mới**, chúng ta đã đi từ cơ chế bên trong của mô hình ngôn ngữ, đến cách giao việc cho nó qua prompt, và cuối cùng là cách cho nó đọc tài liệu của riêng bạn. Ba mảnh ghép này đủ để bạn hiểu phần lớn sản phẩm AI đang xuất hiện quanh mình — và quan trọng hơn, đủ để bạn dùng chúng một cách tỉnh táo.

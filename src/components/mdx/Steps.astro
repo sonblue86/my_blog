@@ -1,0 +1,75 @@
+---
+/**
+ * Biến một danh sách đánh số Markdown thành các bước có số tròn và đường nối dọc.
+ * Nhớ để một dòng trống sau <Steps> và trước </Steps>:
+ *
+ *   <Steps>
+ *
+ *   1. **Cài đặt.** Chạy lệnh…
+ *   2. **Cấu hình.** Mở file…
+ *
+ *   </Steps>
+ */
+---
+
+<div class="steps"><slot /></div>
+
+<style>
+  .steps {
+    margin-block: 1.75em;
+  }
+  .steps > :global(ol) {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    counter-reset: ns-step;
+  }
+  .steps > :global(ol > li) {
+    position: relative;
+    counter-increment: ns-step;
+    padding-left: 3rem;
+    padding-bottom: 1.4em;
+    margin: 0;
+    min-height: 2.25rem;
+  }
+  .steps > :global(ol > li:last-child) {
+    padding-bottom: 0;
+  }
+  .steps > :global(ol > li::marker) {
+    content: none;
+  }
+  /* number bubble */
+  .steps > :global(ol > li::before) {
+    content: counter(ns-step);
+    position: absolute;
+    left: 0;
+    top: calc(var(--reader-leading) * 0.5em - 1.05rem);
+    width: 2.1rem;
+    height: 2.1rem;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+    color: var(--accent);
+    font: 700 0.9rem/1 var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+  /* connector line */
+  .steps > :global(ol > li:not(:last-child)::after) {
+    content: '';
+    position: absolute;
+    left: calc(1.05rem - 1px);
+    top: calc(var(--reader-leading) * 0.5em + 1.35rem);
+    bottom: 0.3rem;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--accent) 40%, var(--border)), var(--border));
+  }
+  .steps > :global(ol > li > * + *) {
+    margin-top: 0.6em;
+  }
+  .steps > :global(ol > li > p:first-child) {
+    margin: 0;
+  }
+</style>

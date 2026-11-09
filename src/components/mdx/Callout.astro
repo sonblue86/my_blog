@@ -1,0 +1,104 @@
+---
+/**
+ * Hộp chú thích trong bài viết.
+ * <Callout type="tip" title="Mẹo nhỏ">Nội dung **Markdown** ở đây.</Callout>
+ * type: note (mặc định) | tip | info | warning | danger
+ */
+import { OctagonAlert } from 'lucide-static';
+import Icon, { type IconName } from '../ui/Icon.astro';
+import { lucideSvg } from './lucide';
+
+type CalloutType = 'note' | 'tip' | 'info' | 'warning' | 'danger';
+
+interface Props {
+  type?: CalloutType;
+  /** Tiêu đề hiển thị. Bỏ trống để dùng tiêu đề mặc định theo loại; đặt "" để ẩn. */
+  title?: string;
+  /** Ghi đè biểu tượng (tên trong ui/Icon.astro). */
+  icon?: IconName;
+}
+
+const DEFAULTS: Record<CalloutType, { title: string; icon: IconName | null }> = {
+  note: { title: 'Ghi chú', icon: 'pen' },
+  tip: { title: 'Mẹo', icon: 'lightbulb' },
+  info: { title: 'Thông tin', icon: 'info' },
+  warning: { title: 'Lưu ý', icon: 'warning' },
+  danger: { title: 'Cẩn thận', icon: null },
+};
+
+const { type: rawType = 'note', title, icon } = Astro.props;
+const type: CalloutType = rawType in DEFAULTS ? rawType : 'note';
+const preset = DEFAULTS[type];
+const heading = title ?? preset.title;
+const iconName = icon ?? preset.icon;
+---
+
+<div class="callout" data-type={type} role="note" aria-label={heading || preset.title}>
+  <span class="callout-icon" aria-hidden="true" data-tts-skip>
+    {iconName ? <Icon name={iconName} size={20} /> : <Fragment set:html={lucideSvg(OctagonAlert, 20)} />}
+  </span>
+  <div class="callout-content">
+    {heading && <p class="callout-title">{heading}</p>}
+    <div class="callout-body"><slot /></div>
+  </div>
+</div>
+
+<style>
+  .callout {
+    --c: var(--accent);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75em;
+    margin-block: 1.75em;
+    padding: 1em 1.15em 1em 1em;
+    border: 1px solid color-mix(in oklab, var(--c) 26%, var(--border));
+    border-left: 4px solid var(--c);
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--c) 7%, var(--bg-elevated));
+    font-size: 0.94em;
+    line-height: 1.7;
+  }
+  .callout[data-type='tip'] {
+    --c: var(--success);
+  }
+  .callout[data-type='info'] {
+    --c: var(--cat-tech);
+  }
+  .callout[data-type='warning'] {
+    --c: var(--warning);
+  }
+  .callout[data-type='danger'] {
+    --c: var(--danger);
+  }
+
+  .callout-icon {
+    /* one text line tall, so the icon centres on the title / first line */
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    height: 1.7em;
+    color: var(--c);
+  }
+  .callout-icon :global(svg) {
+    flex: none;
+  }
+
+  .callout-title {
+    margin: 0 0 0.25em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1em;
+    letter-spacing: -0.01em;
+    color: var(--c);
+  }
+
+  .callout-body > :global(*) {
+    margin: 0;
+  }
+  .callout-body > :global(* + *) {
+    margin-top: 0.7em;
+  }
+  .callout-body :global(a) {
+    color: var(--accent);
+  }
+</style>

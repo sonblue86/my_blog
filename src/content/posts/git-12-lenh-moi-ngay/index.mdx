@@ -1,0 +1,202 @@
+---
+title: 'Git cho người mới: 12 lệnh dùng mỗi ngày'
+description: 'Mười hai lệnh Git đủ cho phần lớn công việc hằng ngày: từ clone, add, commit đến branch, pull, push và stash — giải thích dễ hiểu, kèm sơ đồ và ví dụ dùng ngay.'
+pubDate: 2026-09-15
+category: cong-nghe
+tags: ['Git', 'Lập trình', 'Công cụ']
+summary: 'Git có hàng trăm lệnh, nhưng công việc hằng ngày chỉ xoay quanh khoảng một chục. Hiểu bốn "khu vực" mà thay đổi của bạn đi qua, bạn sẽ thấy 12 lệnh trong bài này hợp lý và dễ nhớ hơn nhiều.'
+takeaways:
+  - 'Thay đổi đi qua bốn khu vực: thư mục làm việc → vùng chuẩn bị → kho cục bộ → kho từ xa.'
+  - 'git status là lệnh nên gõ nhiều nhất: nó luôn cho bạn biết mình đang ở đâu và nên làm gì tiếp.'
+  - 'Mỗi tính năng hay bản sửa lỗi nên nằm trên một nhánh riêng.'
+  - 'Cẩn trọng với lệnh có thể xoá thay đổi chưa commit, như restore hay reset --hard.'
+---
+
+Lần đầu dùng Git, nhiều người có cảm giác như đang học một ngôn ngữ bí ẩn: commit, push, rebase, HEAD, origin… Tin vui là bạn không cần biết hết. Phần lớn công việc hằng ngày — dù là viết mã, viết tài liệu hay quản lý bài blog như Nhịp Số — chỉ cần khoảng một chục lệnh.
+
+Bài này giới thiệu 12 lệnh như vậy. Nhưng trước khi vào từng lệnh, hãy dành hai phút cho bức tranh tổng thể, vì đó là thứ khiến mọi lệnh trở nên dễ hiểu.
+
+## Bức tranh tổng thể: bốn khu vực
+
+Một thay đổi trong Git đi qua bốn khu vực, và mỗi lệnh cơ bản chỉ đơn giản là di chuyển thay đổi giữa các khu vực đó.
+
+<Diagram
+  label="Sơ đồ bốn khu vực của Git từ trên xuống: thư mục làm việc, vùng chuẩn bị, kho cục bộ, kho từ xa. Lệnh git add chuyển thay đổi từ thư mục làm việc sang vùng chuẩn bị, git commit chuyển vào kho cục bộ, git push đẩy lên kho từ xa. Lệnh git pull kéo thay đổi từ kho từ xa về máy."
+  caption="Bốn khu vực của Git. add → commit → push đưa thay đổi đi lên; pull kéo thay đổi của người khác về."
+  maxWidth={460}
+>
+  <svg viewBox="0 0 440 418">
+    <rect class="dg-box" x="90" y="8" width="330" height="66" rx="14" />
+    <text class="dg-text dg-strong" x="112" y="38">Thư mục làm việc</text>
+    <text class="dg-muted" x="112" y="61">file bạn đang sửa</text>
+    <rect class="dg-box" x="90" y="120" width="330" height="66" rx="14" />
+    <text class="dg-text dg-strong" x="112" y="150">Vùng chuẩn bị</text>
+    <text class="dg-muted" x="112" y="173">staging area</text>
+    <rect class="dg-box" x="90" y="232" width="330" height="66" rx="14" />
+    <text class="dg-text dg-strong" x="112" y="262">Kho cục bộ</text>
+    <text class="dg-muted" x="112" y="285">lịch sử commit trên máy bạn</text>
+    <rect class="dg-accent" x="90" y="344" width="330" height="66" rx="14" />
+    <text class="dg-text dg-strong dg-text-accent" x="112" y="374">Kho từ xa</text>
+    <text class="dg-muted" x="112" y="397">GitHub, GitLab…</text>
+    <path class="dg-line-accent" d="M255 74 V110" />
+    <polygon class="dg-fill-accent" points="248,108 255,119 262,108" />
+    <text class="dg-text dg-mono dg-strong dg-text-accent" x="270" y="103">git add</text>
+    <path class="dg-line-accent" d="M255 186 V222" />
+    <polygon class="dg-fill-accent" points="248,220 255,231 262,220" />
+    <text class="dg-text dg-mono dg-strong dg-text-accent" x="270" y="215">git commit</text>
+    <path class="dg-line-accent" d="M255 298 V334" />
+    <polygon class="dg-fill-accent" points="248,332 255,343 262,332" />
+    <text class="dg-text dg-mono dg-strong dg-text-accent" x="270" y="327">git push</text>
+    <path class="dg-line dg-line-dash" d="M90 377 H44 V41 H78" />
+    <polygon class="dg-fill-line" points="76,34 88,41 76,48" />
+    <text class="dg-text dg-mono dg-strong" x="30" y="209" text-anchor="middle" transform="rotate(-90 30 209)">git pull</text>
+  </svg>
+</Diagram>
+
+- **Thư mục làm việc:** các file bạn đang mở và chỉnh sửa.
+- **Vùng chuẩn bị (staging area):** nơi bạn gom những thay đổi muốn đưa vào lần lưu tiếp theo.
+- **Kho cục bộ:** lịch sử các lần lưu (commit) nằm ngay trên máy bạn.
+- **Kho từ xa:** bản sao trên GitHub, GitLab hay máy chủ của nhóm, nơi mọi người cùng đồng bộ.
+
+Trước khi bắt đầu, hãy khai báo tên và email một lần duy nhất — chúng sẽ được ghi vào mỗi commit:
+
+```bash
+git config --global user.name "Tên của bạn"
+git config --global user.email "ban@example.com"
+```
+
+## Bắt đầu và theo dõi
+
+### 1. `git clone` — lấy dự án về máy
+
+```bash
+git clone https://github.com/ten-nhom/du-an.git
+```
+
+Lệnh này tải toàn bộ dự án *và lịch sử của nó* về máy, đồng thời ghi nhớ kho từ xa dưới tên mặc định `origin`. Nếu bắt đầu dự án mới từ con số không, bạn dùng `git init` trong thư mục dự án thay vì clone.
+
+### 2. `git status` — mình đang ở đâu?
+
+```bash
+git status
+```
+
+Nếu chỉ nhớ được một lệnh, hãy nhớ lệnh này. Nó cho biết bạn đang ở nhánh nào, file nào đã sửa, file nào đã vào vùng chuẩn bị, và thường gợi ý luôn lệnh tiếp theo nên dùng. Gõ `git status` trước và sau mỗi thao tác là một thói quen rất tốt.
+
+### 3. `git diff` — mình đã sửa gì?
+
+```bash
+git diff            # thay đổi chưa đưa vào vùng chuẩn bị
+git diff --staged   # thay đổi đã nằm trong vùng chuẩn bị
+```
+
+Xem lại chính xác từng dòng đã thêm, bớt trước khi lưu. Thói quen đọc diff giúp bạn bắt được những dòng gỡ lỗi quên xoá hay thay đổi ngoài ý muốn.
+
+### 4. `git log` — lịch sử dự án
+
+```bash
+git log --oneline --graph -n 15
+```
+
+Liệt kê các commit gần nhất. Tuỳ chọn `--oneline` gói mỗi commit trong một dòng, `--graph` vẽ các nhánh bằng ký tự. Khi danh sách dài, Git mở trình xem theo trang; nhấn <Kbd>q</Kbd> để thoát.
+
+## Lưu thay đổi
+
+### 5. `git add` — chọn thay đổi để lưu
+
+```bash
+git add src/content/posts/bai-moi/index.md   # một file
+git add .                                    # mọi thay đổi trong thư mục hiện tại
+```
+
+Vùng chuẩn bị tồn tại để bạn **chọn lọc**: sửa năm file nhưng chỉ ba file thuộc cùng một ý thì chỉ add ba file đó. Commit gọn gàng, đúng một mục đích sẽ dễ đọc và dễ hoàn tác hơn nhiều.
+
+### 6. `git commit` — lưu một mốc
+
+```bash
+git commit -m "Thêm bài viết về passkey"
+```
+
+Mỗi commit là một ảnh chụp có tên, có tác giả, có thời gian. Lời nhắn nên trả lời câu hỏi "commit này làm gì?" — viết sao cho vài tháng sau đọc lại bạn vẫn hiểu.
+
+<Callout type="tip" title="Commit nhỏ, commit thường xuyên">
+Một commit cho mỗi thay đổi có ý nghĩa tốt hơn nhiều so với một commit khổng lồ cuối ngày. Khi có lỗi, bạn sẽ biết chính xác thay đổi nào gây ra nó.
+</Callout>
+
+### 7. `git restore` — bỏ thay đổi chưa lưu
+
+```bash
+git restore duong-dan/file.txt            # bỏ sửa đổi trong thư mục làm việc
+git restore --staged duong-dan/file.txt   # đưa file ra khỏi vùng chuẩn bị
+```
+
+Lệnh đầu tiên đưa file về bản đang nằm trong vùng chuẩn bị (thường chính là bản của commit gần nhất) — **những gì bạn sửa mà chưa add sẽ mất hẳn**, nên hãy chạy `git diff` trước khi dùng. Lệnh thứ hai an toàn hơn: chỉ gỡ file khỏi vùng chuẩn bị, nội dung sửa vẫn còn nguyên.
+
+### 8. `git stash` — cất tạm việc đang dở
+
+```bash
+git stash          # cất mọi thay đổi chưa commit
+git stash pop      # lấy lại và áp dụng
+```
+
+Đang sửa dở thì phải chuyển sang việc gấp khác? `git stash` cất các thay đổi vào một ngăn tạm, trả thư mục làm việc về trạng thái sạch. Xong việc gấp, `git stash pop` mang chúng trở lại.
+
+## Làm việc với nhánh
+
+### 9. `git branch` — xem và tạo nhánh
+
+```bash
+git branch                 # liệt kê nhánh, dấu * là nhánh hiện tại
+git branch -d ten-nhanh    # xoá nhánh đã gộp xong
+```
+
+Nhánh cho phép bạn thử nghiệm mà không ảnh hưởng nhánh chính. Mỗi tính năng, mỗi bản sửa lỗi, mỗi bài viết dài nên có nhánh riêng.
+
+### 10. `git switch` — chuyển nhánh
+
+```bash
+git switch main               # sang nhánh có sẵn
+git switch -c sua-loi-menu    # tạo nhánh mới và chuyển sang
+```
+
+`git switch` ra đời để thay một phần việc của lệnh đa năng `git checkout`, với cái tên dễ hiểu hơn. Bạn vẫn sẽ gặp `checkout` trong nhiều hướng dẫn cũ — chúng làm được cùng việc. Khi nhánh đã xong, bạn gộp nó vào nhánh chính bằng `git merge` hoặc, phổ biến hơn trong nhóm, qua một pull request trên GitHub.
+
+## Đồng bộ với kho từ xa
+
+### 11. `git pull` — kéo thay đổi mới về
+
+```bash
+git pull
+```
+
+Tải các commit mới trên kho từ xa và gộp vào nhánh hiện tại. Hãy pull trước khi bắt đầu làm việc mỗi ngày để giảm xung đột.
+
+### 12. `git push` — đẩy thay đổi lên
+
+```bash
+git push                          # nhánh đã liên kết sẵn
+git push -u origin sua-loi-menu   # lần đầu đẩy một nhánh mới
+```
+
+Gửi các commit trên máy bạn lên kho từ xa. Tuỳ chọn `-u` liên kết nhánh cục bộ với nhánh từ xa, để những lần sau chỉ cần gõ `git push`.
+
+<Callout type="danger" title="Hai lệnh cần đặc biệt cẩn thận">
+`git reset --hard` xoá sạch thay đổi chưa commit, còn `git push --force` có thể ghi đè công việc của người khác trên kho từ xa. Đừng dùng chúng khi chưa hiểu rõ hậu quả — và nếu thật sự cần ghi đè, hãy ưu tiên `git push --force-with-lease`, phiên bản an toàn hơn.
+</Callout>
+
+## Một ngày làm việc điển hình
+
+Ghép 12 lệnh lại, một vòng làm việc thường trông như sau:
+
+```bash
+git switch main && git pull          # cập nhật nhánh chính
+git switch -c bai-viet-git           # nhánh mới cho việc hôm nay
+# … sửa file …
+git status && git diff               # xem lại thay đổi
+git add . && git commit -m "Viết nháp bài Git cho người mới"
+git push -u origin bai-viet-git      # đẩy lên, mở pull request
+```
+
+## Lời kết
+
+Đừng cố học thuộc mọi tuỳ chọn. Hãy nhớ bốn khu vực, gõ `git status` thật thường xuyên, và để Git tự gợi ý bước tiếp theo. Sau vài tuần, những lệnh này sẽ trở nên tự nhiên như <Kbd keys="Ctrl+S" /> — và bạn sẽ tự hỏi trước đây mình làm việc thế nào khi chưa có lịch sử để quay lại.

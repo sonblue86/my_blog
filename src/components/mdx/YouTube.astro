@@ -1,0 +1,180 @@
+---
+/**
+ * Video YouTube dạng "lite": chỉ hiện ảnh thumbnail + nút phát. Trình phát (youtube-nocookie.com)
+ * chỉ được tải khi người đọc bấm — trang nhẹ, không cookie theo dõi trước khi xem.
+ *   <YouTube id="VIDEO_ID_11_KÝ_TỰ" title="Tên video" />
+ *   <YouTube id="…" title="…" start={90} />   // bắt đầu ở giây 90
+ * Không có JavaScript: thẻ là một liên kết mở video trên YouTube.
+ */
+interface Props {
+  /** ID 11 ký tự trong URL youtube.com/watch?v=ID */
+  id: string;
+  /** Tên video — dùng cho nhãn nút và iframe (bắt buộc cho trợ năng). */
+  title: string;
+  /** Giây bắt đầu. */
+  start?: number;
+  caption?: string;
+}
+
+const { id, title, start, caption } = Astro.props;
+if (!/^[\w-]{11}$/.test(id)) {
+  throw new Error(`<YouTube id="${id}">: ID không hợp lệ (cần đúng 11 ký tự lấy từ youtube.com/watch?v=…).`);
+}
+const startAt = start && start > 0 ? Math.floor(start) : 0;
+const watchUrl = `https://www.youtube.com/watch?v=${id}${startAt ? `&t=${startAt}s` : ''}`;
+const thumb = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+---
+
+<figure class="yt" data-tts-skip>
+  <div class="yt-frame">
+    <a
+      class="yt-link"
+      href={watchUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-yt={id}
+      data-yt-start={startAt || undefined}
+      data-yt-title={title}
+      aria-label={`Phát video: ${title}`}
+    >
+      <img class="yt-thumb" src={thumb} alt="" width="480" height="360" loading="lazy" decoding="async" />
+      <span class="yt-shade" aria-hidden="true"></span>
+      <span class="yt-play" aria-hidden="true">
+        <svg viewBox="0 0 68 48" width="68" height="48" focusable="false">
+          <path class="yt-play-bg" d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.2.3 34 .3 34 .3S12.8.3 7.5 1.7a8.5 8.5 0 0 0-6 6C.1 13 .1 24 .1 24s0 11 1.4 16.3a8.5 8.5 0 0 0 6 6C12.8 47.7 34 47.7 34 47.7s21.2 0 26.5-1.4a8.5 8.5 0 0 0 6-6C67.9 35 67.9 24 67.9 24s0-11-1.4-16.3z"></path>
+          <path class="yt-play-arrow" d="M27 34l18-10-18-10z"></path>
+        </svg>
+      </span>
+      <span class="yt-title">{title}</span>
+    </a>
+  </div>
+  <figcaption>
+    {caption && <span>{caption} · </span>}
+    <span class="yt-note">Video từ YouTube — chỉ tải khi bạn bấm phát.</span>
+  </figcaption>
+</figure>
+
+<script>
+  function play(link: HTMLAnchorElement) {
+    const id = link.dataset.yt;
+    if (!id) return;
+    const params = new URLSearchParams({ autoplay: '1', rel: '0', playsinline: '1' });
+    if (link.dataset.ytStart) params.set('start', link.dataset.ytStart);
+    const iframe = document.createElement('iframe');
+    iframe.className = 'yt-iframe';
+    iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?${params}`;
+    iframe.title = link.dataset.ytTitle || 'Video YouTube';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    link.replaceWith(iframe);
+    iframe.focus();
+  }
+
+  const root = document.documentElement;
+  if (!root.dataset.ytLite) {
+    root.dataset.ytLite = '1';
+    document.addEventListener('click', (e) => {
+      const ev = e as MouseEvent;
+      // Let modified clicks (new tab, etc.) open YouTube normally.
+      if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+      const link = (ev.target as Element | null)?.closest?.<HTMLAnchorElement>('a[data-yt]');
+      if (!link) return;
+      ev.preventDefault();
+      play(link);
+    });
+  }
+</script>
+
+<style>
+  .yt {
+    margin-block: 2em;
+  }
+  .yt-frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--bg-muted);
+    box-shadow: var(--shadow-sm);
+  }
+  .yt-link,
+  .yt-frame :global(.yt-iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .yt-link {
+    display: block;
+    color: inherit;
+    text-decoration: none !important;
+  }
+  .yt-link:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
+    border-radius: var(--radius);
+  }
+  .yt-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+  /* overlay on a photo: dark scrim is part of the artwork, not UI chrome */
+  .yt-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(0 0 0 / 0.65), rgb(0 0 0 / 0) 55%);
+  }
+  .yt-play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    display: grid;
+    place-items: center;
+    filter: drop-shadow(0 4px 12px rgb(0 0 0 / 0.35));
+  }
+  .yt-play-bg {
+    fill: rgb(20 20 24 / 0.82);
+    transition: fill 160ms var(--ease-out);
+  }
+  .yt-play-arrow {
+    fill: #fff;
+  }
+  .yt-link:hover .yt-play-bg,
+  .yt-link:focus-visible .yt-play-bg {
+    fill: #e62117;
+  }
+  .yt-title {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 0.85rem;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .yt figcaption {
+    margin-top: 0.6em;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.82em;
+    color: var(--fg-subtle);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .yt-play-bg {
+      transition: none;
+    }
+  }
+</style>

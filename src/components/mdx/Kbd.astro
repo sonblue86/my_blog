@@ -1,0 +1,101 @@
+---
+/**
+ * Phím / tổ hợp phím.
+ *   <Kbd>Esc</Kbd>
+ *   <Kbd keys="Ctrl+Shift+P" />      → Ctrl + Shift + P
+ *   <Kbd keys="mod+K" />             → "Ctrl/⌘ + K"
+ */
+interface Props {
+  /** Tổ hợp phím, ngăn cách bằng "+". Dùng "mod" cho Ctrl (Windows/Linux) / ⌘ (macOS). */
+  keys?: string;
+}
+
+const LABELS: Record<string, string> = {
+  mod: 'Ctrl/⌘',
+  cmd: '⌘',
+  command: '⌘',
+  ctrl: 'Ctrl',
+  control: 'Ctrl',
+  alt: 'Alt',
+  option: '⌥',
+  opt: '⌥',
+  shift: 'Shift',
+  enter: 'Enter',
+  return: 'Enter',
+  esc: 'Esc',
+  escape: 'Esc',
+  tab: 'Tab',
+  space: 'Space',
+  up: '↑',
+  down: '↓',
+  left: '←',
+  right: '→',
+};
+
+const { keys } = Astro.props;
+// "Ctrl++" means Ctrl and the plus key.
+const parts = keys
+  ? keys
+      .split(/\+(?!$)/)
+      .map((k) => k.trim())
+      .filter(Boolean)
+      .map((k) => LABELS[k.toLowerCase()] ?? (k.length === 1 ? k.toUpperCase() : k))
+  : [];
+---
+
+{
+  parts.length > 1 ? (
+    <kbd class="kbd-combo">
+      {parts.map((k, i) => (
+        <Fragment>
+          {i > 0 && (
+            <span class="kbd-plus" aria-hidden="true">
+              +
+            </span>
+          )}
+          <kbd class="kbd">{k}</kbd>
+        </Fragment>
+      ))}
+    </kbd>
+  ) : parts.length === 1 ? (
+    <kbd class="kbd">{parts[0]}</kbd>
+  ) : (
+    <kbd class="kbd">
+      <slot />
+    </kbd>
+  )
+}
+
+<style>
+  .kbd {
+    display: inline-block;
+    min-width: 1.6em;
+    padding: 0.08em 0.45em;
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--fg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    white-space: nowrap;
+    vertical-align: 0.06em;
+  }
+  .kbd-combo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2em;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    white-space: nowrap;
+  }
+  .kbd-plus {
+    font-size: 0.8em;
+    color: var(--fg-subtle);
+  }
+</style>

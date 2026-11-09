@@ -1,0 +1,116 @@
+---
+title: 'Passkey: đăng nhập không cần mật khẩu, an toàn hơn và nhanh hơn'
+description: 'Passkey thay mật khẩu bằng cặp khoá mã hoá lưu trên thiết bị của bạn. Tìm hiểu cách hoạt động, vì sao chống được lừa đảo, cách bật và những điều cần lưu ý.'
+pubDate: 2026-10-06
+category: cong-nghe
+tags: ['Bảo mật', 'Passkey', 'Đăng nhập']
+cover: './cover.webp'
+coverAlt: 'Hình minh hoạ chiếc chìa khoá có phần đầu là những vân tay đồng tâm trên nền xanh lam đậm.'
+summary: 'Passkey là cách đăng nhập dùng cặp khoá mã hoá thay cho mật khẩu: khoá bí mật nằm trên thiết bị của bạn, trang web chỉ giữ khoá công khai. Bạn mở khoá bằng vân tay, khuôn mặt hoặc mã PIN — không có gì để gõ nhầm, để lộ hay để kẻ lừa đảo lấy mất.'
+takeaways:
+  - 'Passkey là một cặp khoá: khoá bí mật không bao giờ rời thiết bị hoặc trình quản lý mật khẩu của bạn.'
+  - 'Passkey gắn chặt với tên miền thật, nên trang giả mạo không thể "xin" được nó.'
+  - 'Vân tay hay khuôn mặt chỉ dùng để mở khoá trên máy, không được gửi lên mạng.'
+  - 'Hãy giữ ít nhất một cách khôi phục tài khoản dự phòng trước khi bỏ hẳn mật khẩu.'
+---
+
+Mật khẩu đã đồng hành với chúng ta mấy chục năm, và gần như ai cũng có chung một nỗi khổ: quá nhiều tài khoản, quá nhiều quy tắc "ít nhất 12 ký tự, có chữ hoa, có ký tự đặc biệt", rồi cuối cùng dùng lại một mật khẩu cho nhiều nơi. Chỉ cần một trang bị lộ dữ liệu, hàng loạt tài khoản khác cũng gặp nguy.
+
+**Passkey** là nỗ lực nghiêm túc nhất từ trước tới nay để thoát khỏi vòng luẩn quẩn đó. Nó được các hãng lớn như Apple, Google, Microsoft cùng hỗ trợ, dựa trên tiêu chuẩn mở của liên minh FIDO và W3C, và đã có mặt ở rất nhiều dịch vụ quen thuộc. Bài này giải thích passkey là gì, vì sao nó an toàn hơn, và cách bắt đầu dùng.
+
+## Passkey là gì?
+
+Passkey là một **thông tin đăng nhập dựa trên mật mã khoá công khai**. Khi bạn tạo passkey cho một trang web, thiết bị của bạn sinh ra một cặp khoá:
+
+- **Khoá bí mật (private key)** được giữ trên thiết bị hoặc trong trình quản lý mật khẩu của bạn, được bảo vệ bằng cơ chế khoá màn hình.
+- **Khoá công khai (public key)** được gửi cho trang web lưu lại.
+
+Hai khoá này có quan hệ toán học đặc biệt: thứ gì được "ký" bằng khoá bí mật thì có thể kiểm tra bằng khoá công khai, nhưng không thể suy ngược từ khoá công khai ra khoá bí mật. Trang web vì vậy chỉ cần giữ thứ không có giá trị gì với kẻ trộm.
+
+## Đăng nhập bằng passkey diễn ra thế nào?
+
+Từ phía người dùng, trải nghiệm rất đơn giản: bấm "Đăng nhập bằng passkey", chạm vân tay hoặc nhìn vào camera, xong. Phía sau là một cuộc trao đổi ngắn:
+
+1. Trang web gửi cho thiết bị của bạn một **thử thách** — một chuỗi ngẫu nhiên dùng một lần.
+2. Thiết bị yêu cầu bạn xác nhận bằng vân tay, khuôn mặt hoặc mã PIN để mở khoá bí mật.
+3. Thiết bị dùng khoá bí mật **ký** lên thử thách và gửi chữ ký về.
+4. Trang web dùng khoá công khai đã lưu để kiểm tra chữ ký. Khớp thì cho bạn vào.
+
+<KeyPoint>
+Vân tay hay khuôn mặt của bạn **không bao giờ được gửi tới trang web**. Chúng chỉ dùng để mở khoá bí mật ngay trên thiết bị — giống như bạn mở khoá điện thoại hằng ngày.
+</KeyPoint>
+
+## Vì sao passkey an toàn hơn mật khẩu?
+
+### Không thể bị lừa nhập vào trang giả
+
+Lừa đảo (phishing) hoạt động vì mật khẩu là thứ bạn *gõ*: một trang giả trông y hệt ngân hàng có thể khiến bạn gõ mật khẩu, và kẻ gian dùng ngay mật khẩu đó. Kể cả mã OTP gửi qua tin nhắn cũng có thể bị lừa lấy theo cách tương tự.
+
+Passkey khác ở chỗ nó **gắn với tên miền thật** của trang web. Ví dụ, trình duyệt và hệ điều hành chỉ cho phép dùng passkey của `nganhang.example` trên đúng `nganhang.example`. Một trang giả ở địa chỉ khác, dù giống đến từng điểm ảnh, cũng không thể kích hoạt passkey đó. Bạn không cần tinh mắt soi đường dẫn — hệ thống làm việc đó giúp bạn.
+
+### Lộ dữ liệu không còn đáng sợ như trước
+
+Khi một trang web bị tấn công và lộ cơ sở dữ liệu, thứ kẻ gian có được chỉ là các khoá công khai. Chúng không dùng được để đăng nhập ở đâu cả, kể cả chính trang đó.
+
+### Không dùng lại, không đoán được
+
+Mỗi passkey là duy nhất cho một tài khoản trên một trang. Không có chuyện "dùng chung một mật khẩu cho mọi nơi", cũng không có mật khẩu yếu để đoán hay dò.
+
+| | Mật khẩu | Mật khẩu + OTP tin nhắn | Passkey |
+| --- | --- | --- | --- |
+| Phải nhớ hoặc gõ | Có | Có | Không |
+| Chống trang lừa đảo | Không | Một phần | Có |
+| Lộ dữ liệu phía trang web | Rủi ro cao | Rủi ro vừa | Gần như vô hại |
+| Tốc độ đăng nhập | Trung bình | Chậm | Nhanh |
+
+## Passkey được lưu ở đâu?
+
+Có hai kiểu chính:
+
+- **Passkey đồng bộ:** lưu trong trình quản lý mật khẩu của hệ điều hành (như iCloud Keychain hay Trình quản lý mật khẩu của Google) hoặc của bên thứ ba có hỗ trợ passkey. Passkey được mã hoá và đồng bộ giữa các thiết bị cùng tài khoản, nên mất điện thoại không có nghĩa là mất passkey.
+- **Passkey gắn với thiết bị:** nằm trên một khoá bảo mật phần cứng (khoá USB/NFC). Không đồng bộ đi đâu cả, phù hợp với người cần mức bảo mật cao nhất.
+
+Bạn cũng có thể đăng nhập trên một máy tính lạ bằng passkey trong điện thoại: trang web hiện mã QR, bạn quét bằng điện thoại và xác nhận. Hai thiết bị kiểm tra rằng chúng ở gần nhau qua Bluetooth, nên kẻ gian ở xa không thể lợi dụng cách này.
+
+## Bắt đầu dùng passkey
+
+Hầu hết dịch vụ hỗ trợ passkey đặt tuỳ chọn trong mục bảo mật tài khoản. Các bước thường giống nhau:
+
+<Steps>
+
+1. **Đăng nhập như bình thường** vào tài khoản bạn muốn bật passkey.
+2. **Vào phần Bảo mật** (Security), tìm mục "Passkey" hoặc "Khoá truy cập".
+3. **Chọn tạo passkey** và xác nhận bằng vân tay, khuôn mặt hoặc mã PIN của thiết bị.
+4. **Thử đăng xuất rồi đăng nhập lại** bằng passkey để chắc chắn mọi thứ hoạt động.
+5. **Kiểm tra cách khôi phục**: số điện thoại, email dự phòng hoặc mã khôi phục vẫn còn đúng.
+
+</Steps>
+
+Nên bắt đầu với những tài khoản quan trọng nhất: email chính (vì nó là chìa khoá để khôi phục mọi tài khoản khác), tài khoản hệ điều hành, và các dịch vụ lưu trữ tài liệu.
+
+<Callout type="warning" title="Đừng vội xoá mọi phương án dự phòng">
+Trước khi tắt mật khẩu hay xoá phương thức khôi phục, hãy chắc rằng bạn có passkey trên ít nhất hai thiết bị, hoặc passkey đồng bộ cùng một cách khôi phục tài khoản đáng tin cậy. Mất quyền truy cập email chính là kịch bản rất khó cứu.
+</Callout>
+
+## Những điểm còn chưa hoàn hảo
+
+Passkey là bước tiến lớn, nhưng chưa phải phép màu:
+
+<ProsCons
+  pros={[
+    'Chống lừa đảo tốt hơn hẳn mật khẩu và mã OTP.',
+    'Đăng nhập nhanh, không phải nhớ hay gõ gì.',
+    'Lộ dữ liệu phía trang web gần như không gây hại.',
+  ]}
+  cons={[
+    'Chuyển passkey giữa các hệ sinh thái khác nhau vẫn chưa thật liền mạch.',
+    'Nhiều trang vẫn giữ mật khẩu làm phương án dự phòng — an toàn chỉ bằng mắt xích yếu nhất.',
+    'Thiết bị dùng chung trong gia đình cần cân nhắc ai có thể mở khoá passkey nào.',
+  ]}
+/>
+
+Điểm thứ hai đáng chú ý: nếu trang web vẫn cho đăng nhập bằng mật khẩu cũ, kẻ gian vẫn có thể thử đường đó. Khi dịch vụ cho phép, hãy cân nhắc tắt đăng nhập bằng mật khẩu sau khi đã thiết lập passkey và phương án khôi phục cẩn thận.
+
+## Lời kết
+
+Bạn không cần chuyển toàn bộ tài khoản sang passkey trong một buổi tối. Hãy bắt đầu với email chính, dùng thử vài tuần, rồi mở rộng dần mỗi khi một dịch vụ quen thuộc gợi ý "Tạo passkey". Mỗi tài khoản chuyển đổi là một mật khẩu ít đi để nhớ — và một cánh cửa ít đi cho kẻ lừa đảo.
