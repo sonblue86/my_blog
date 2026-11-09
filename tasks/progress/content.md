@@ -18,8 +18,12 @@
   src/pages/og/index.png.ts, tests/unit/og.test.ts (17 test). Build sinh 10 PNG 230–390KB, ~0.3–0.5s/ảnh.
   Đã mở xem: index, passkey/digital-detox/zettelkasten (cover riêng), deep-work (dài nhất), llm, git, rag — dấu tiếng Việt đủ.
 
+- docs/WRITING.md xong. Mọi ví dụ MDX/Expressive Code đã dán vào một bài nháp tạm, chạy dev 4421 → render đúng
+  (ProsCons slot, Steps, escape, footnote) → đã xoá bài tạm.
+  Phát hiện: pubDate chỉ có ngày = 00:00 UTC = 07:00 VN → sau lần build hằng ngày 06:00 → bài hẹn giờ lên trễ 1 ngày.
+  Đã ghi rõ trong WRITING.md (khuyên ghi T00:00:00+07:00). README/new-post template không thuộc quyền sửa → báo orchestrator.
+
 ## Next
-4. docs/WRITING.md
 5. Verify: build, astro check, vitest, browser 390/1440 light/dark
 
 ## Notes
