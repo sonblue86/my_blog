@@ -222,27 +222,18 @@ const url = postUrl(post);
     if (btn) sharePost(btn.dataset.shareTitle || document.title, btn.dataset.share!);
   });
 
-  // Bottom bar: appear after the hero, hide while scrolling down quickly, show on scroll up.
+  // Bottom bar: stays put once the reader is past the cover — predictable beats clever
+  // (a "hide on fling" bar is hidden most of the time on phones, where flicking is how people read).
   const bar = document.querySelector<HTMLElement>('[data-action-bar]');
   if (bar) {
     const hero = document.querySelector('.post-cover') ?? document.querySelector('.post-hero');
-    let lastY = scrollY;
     let ticking = false;
     const update = () => {
       ticking = false;
-      const y = scrollY;
-      const pastHero = hero ? hero.getBoundingClientRect().bottom < 0 : y > 400;
-      const nearEnd = innerHeight + y > document.documentElement.scrollHeight - 40;
-      const goingDown = y - lastY > 14; // only a fast fling hides it; slow reading keeps it
-      const goingUp = lastY - y > 4;
-      if (!pastHero) bar.removeAttribute('data-visible');
-      else if (goingDown && !nearEnd) bar.removeAttribute('data-visible');
-      else if (goingUp || nearEnd || !bar.hasAttribute('data-seen')) {
-        bar.setAttribute('data-visible', '');
-        bar.setAttribute('data-seen', '');
-      }
-      lastY = y;
+      const pastHero = hero ? hero.getBoundingClientRect().bottom < 0 : scrollY > 400;
+      bar.toggleAttribute('data-visible', pastHero);
     };
+    update();
     addEventListener(
       'scroll',
       () => {
