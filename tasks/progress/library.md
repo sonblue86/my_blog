@@ -7,13 +7,15 @@
 - Trang `/thu-vien/` v1: `src/pages/thu-vien/index.astro` + `src/scripts/library-page.ts` + `src/scripts/library-offline.ts` + `src/components/library/{LIcon,LibraryEmpty}.astro`. Build xanh. DOM tests `tests/unit/library-page.test.ts` (10 xanh). Đã xem trên browser (390 + 1440, light/dark): fix thumb tràn cột desktop, fix undo row làm tràn ngang (grid minmax(0,1fr)). Remove→undo, clear-all dialog→banner hoàn tác, empty state OK.
 
 - Icons: `scripts/gen-icons.mjs` (sharp, ICO tự viết 16/32/48 PNG) → public/favicon.svg|ico, apple-touch-icon.png (180, opaque), icon-192/512.png, icon-maskable-512.png (opaque, mark 78%). Đã xem preview (mask tròn OK).
+- `public/manifest.webmanifest` (commit 225147f).
+- `public/sw.js` reviewed + rewritten (v2, commit 47a9383): bỏ placeholder `__BUILD_ID__` (không ai stamp) → VERSION thủ công + shell (/offline/, /) re-precache mỗi lần install và ≤6h khi online; cờ update lưu trong cache (`/__ns-sw-updated`) → postMessage `updated` chỉ khi thay SW cũ; navigation preload; 5xx → bản cache; key trang bỏ query; header HTML cache bỏ content-length/encoding; ảnh: chọn srcset lớn nhất + fallback "ảnh anh em" cùng hash khi offline; cache fonts riêng; GC cho STATIC & SAVED. Unit tests `tests/unit/library-sw.test.ts` (6 xanh, chạy sw.js trong vm).
+- LibraryCore: gửi cache-post/uncache-post qua `postToSW` (registration.active — chạy cả khi trang chưa bị SW control); toast "phiên bản mới" chỉ khi trang đã mở >20s.
 
 ## Next
-4. `public/manifest.webmanifest`
-5. `public/sw.js`
-6. `/offline/`
-7. Verify: build, astro check, vitest, browser (390x844, 1440x900, light/dark, offline)
+6. `/offline/` (src/pages/offline/index.astro, noindex) — danh sách bài đọc offline (SAVED + PAGES), tiêu đề từ localStorage hoặc <title> trong HTML cache, nút "Thử lại".
+7. Verify: npm run build + astro preview --port 4424; SW install/activate; bookmark → saved cache; offline → bài đã xem/lưu mở được, trang lạ → /offline/; /thu-vien/ badge; manifest/icons; 390x844 + 1440x900 light/dark cho /offline/ & /thu-vien/. astro check + vitest.
 
 ## Notes
 - Toaster chỉ hỗ trợ action dạng link (href) → undo làm inline ngay trên thẻ đã xoá (không sửa Toaster).
-- LibraryCore gửi `{type:'cache-post'|'uncache-post', url, cover}` tới `navigator.serviceWorker.controller`.
+- Tên cache phải khớp giữa `public/sw.js` và `src/scripts/library-offline.ts` (ns-saved-v1, ns-pages-v1).
+- Static build: query không đổi HTML → SW lưu trang theo pathname.
