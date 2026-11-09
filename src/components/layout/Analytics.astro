@@ -1,3 +1,14 @@
 ---
-/** STUB — Cloudflare Web Analytics beacon (only when a token is configured, production only). */
+/**
+ * Cloudflare Web Analytics beacon (cookie-free). Rendered only in production builds and only when a token
+ * is configured (src/config.ts → ANALYTICS.cloudflareToken, or PUBLIC_CF_ANALYTICS_TOKEN at build time).
+ * No ClientRouter: every navigation is a normal page load, so the default beacon counts page views correctly.
+ */
+import { ANALYTICS } from '../../config';
+
+const token = String(ANALYTICS.cloudflareToken || import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN || '').trim();
+const enabled = import.meta.env.PROD && token.length > 0;
+const beacon = JSON.stringify({ token });
 ---
+
+{enabled && <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={beacon} />}
