@@ -2,9 +2,9 @@
 
 ## Done
 - (bắt đầu) Đọc DESIGN.md, library-store.ts, LibraryCore.astro, BaseLayout, Head, Toaster, global.css.
+- Store helpers trong `src/scripts/library-store.ts` (toEntries, sortEntries, remainingMinutes, restoreBookmark/restoreHistory/removeHistoryWhere/restoreMany, exportLibrary/parseLibraryFile/merge*/importLibrary, safePath) + 19 unit tests xanh (`tests/unit/library-store.test.ts`).
 
 ## Next
-1. Store helpers thuần (sort, phân tab, còn ~N phút, export/import, undo) + unit tests `tests/unit/library-store.test.ts`
 2. Trang `/thu-vien/` (tabs, card list, undo, sort, xoá tất cả + dialog, empty states, privacy, badge offline, xuất/nhập)
 3. `scripts/gen-icons.mjs` + chạy, commit icons
 4. `public/manifest.webmanifest`
