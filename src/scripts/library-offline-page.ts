@@ -194,15 +194,23 @@ export async function initOfflinePage(root: HTMLElement = document.body): Promis
     where.hidden = false;
     q(where, 'path')!.textContent = shown;
   }
-  if (!fallback && navigator.onLine) {
-    root.querySelector<HTMLElement>('[data-off-title]')!.textContent = 'Đọc khi không có mạng';
-    root.querySelector<HTMLElement>('[data-off-lede]')!.textContent =
-      'Những bài dưới đây đã có sẵn trên máy bạn, nên vẫn mở được lúc mất sóng hay đi máy bay.';
+  // Opened on purpose while online: it's a "what can I read offline" page, not an error.
+  const browsing = !fallback && navigator.onLine;
+  const setText = (sel: string, text: string) => {
+    const el = root.querySelector<HTMLElement>(sel);
+    if (el) el.textContent = text;
+  };
+  if (browsing) {
+    setText('[data-off-eyebrow]', 'Đọc offline');
+    setText('[data-off-title]', 'Đọc khi không có mạng');
+    setText('[data-off-retry-label]', 'Về trang chủ');
+    root.querySelectorAll<HTMLElement>('[data-off-icon]').forEach((el) => (el.hidden = el.dataset.offIcon !== 'home'));
   }
 
   // ---------- Retry ----------
   const retry = () => {
     if (fallback) location.reload();
+    else if (browsing) location.href = '/';
     else {
       const ref = document.referrer && new URL(document.referrer, location.href);
       location.href = ref && ref.origin === location.origin && ref.pathname !== OFFLINE_PATH ? ref.href : '/';
@@ -268,4 +276,14 @@ export async function initOfflinePage(root: HTMLElement = document.body): Promis
     pagesWrap.hidden = pages.length === 0;
   }
   if (empty) empty.hidden = articles.length > 0;
+  if (browsing) {
+    setText(
+      '[data-off-lede]',
+      articles.length
+        ? 'Những bài dưới đây đã có sẵn trên máy bạn, nên vẫn mở được lúc mất sóng hay đi máy bay.'
+        : 'Bài bạn lưu sẽ được tải sẵn về máy này, để đọc được cả lúc mất sóng hay đi máy bay.',
+    );
+  } else if (!articles.length) {
+    setText('[data-off-lede]', 'Trang này chưa có sẵn trên máy nên cần mạng mới mở được. Kiểm tra Wi‑Fi hoặc dữ liệu di động rồi thử lại nhé.');
+  }
 }

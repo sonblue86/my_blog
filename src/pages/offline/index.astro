@@ -17,7 +17,7 @@ import LIcon from '../../components/library/LIcon.astro';
           <LIcon name="cloud-off" size={30} />
         </div>
         <div class="min-w-0">
-          <p class="eyebrow">Không có kết nối</p>
+          <p class="eyebrow" data-off-eyebrow>Không có kết nối</p>
           <h1 class="off-h1" data-off-title>Bạn đang offline</h1>
           <p class="off-lede" data-off-lede>
             Trang này chưa có sẵn trên máy nên cần mạng mới mở được. Trong lúc chờ, những bài bên dưới vẫn đọc được ngay.
@@ -28,8 +28,9 @@ import LIcon from '../../components/library/LIcon.astro';
           </p>
           <div class="off-actions">
             <button type="button" class="btn btn-primary" data-off-retry>
-              <LIcon name="refresh" size={18} />
-              Thử lại
+              <span class="off-retry-icon" data-off-icon="retry"><LIcon name="refresh" size={18} /></span>
+              <span class="off-retry-icon" data-off-icon="home" hidden><Icon name="home" size={18} /></span>
+              <span data-off-retry-label>Thử lại</span>
             </button>
             <a class="btn btn-ghost" href="/thu-vien/">
               <Icon name="library" size={18} />
@@ -122,6 +123,10 @@ import LIcon from '../../components/library/LIcon.astro';
       radial-gradient(700px 260px at 0% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
       radial-gradient(520px 220px at 100% 100%, color-mix(in oklab, var(--hot) 8%, transparent), transparent 70%);
   }
+  .off-hero-inner,
+  .off-body {
+    max-width: 880px;
+  }
   .off-hero-inner {
     display: grid;
     gap: 20px;
@@ -204,6 +209,12 @@ import LIcon from '../../components/library/LIcon.astro';
     gap: 10px;
     margin-top: 20px;
   }
+  .off-retry-icon {
+    display: inline-flex;
+  }
+  .off-retry-icon[hidden] {
+    display: none;
+  }
   .off-status {
     min-height: 1.5em;
     margin-top: 10px;
@@ -215,7 +226,6 @@ import LIcon from '../../components/library/LIcon.astro';
   .off-body {
     display: grid;
     gap: 36px;
-    max-width: 880px;
     padding-top: 28px;
     padding-bottom: 64px;
   }
