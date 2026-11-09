@@ -463,7 +463,16 @@ const TABS = [
   /* ---------- List & cards ---------- */
   .lib-list {
     display: grid;
+    /* minmax(0, …) so a long nowrap undo message can never widen the page. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+  .lib-item {
+    min-width: 0;
+  }
+  .lib-title,
+  .lib-desc {
+    overflow-wrap: anywhere;
   }
   .lib-card {
     position: relative;
@@ -525,9 +534,9 @@ const TABS = [
   }
   @media (min-width: 640px) {
     .lib-thumb {
-      aspect-ratio: 16 / 10;
-      align-self: stretch;
-      max-height: 124px;
+      /* Fixed height (not aspect-ratio) so the image never grows wider than its 176px column. */
+      aspect-ratio: auto;
+      height: 110px;
     }
   }
   .lib-thumb img {
