@@ -9,7 +9,7 @@
 - .dev.vars.example
 
 ## Next
-1. src/scripts/api.ts (timeout fetch, health probe cached in sessionStorage, batched getStats) + tests/unit/api.test.ts + api-worker.test.ts
+1. (done) src/scripts/api.ts + tests (31 pass)
 2. ViewCount.astro
 3. Reactions.astro
 4. Comments.astro (giscus)
