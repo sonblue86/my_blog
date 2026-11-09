@@ -1,0 +1,112 @@
+---
+/**
+ * Global toast notifications.
+ * document.dispatchEvent(new CustomEvent('ns:toast', { detail: { message: 'Đã sao chép', tone?: 'ok'|'info'|'error', action?: { label, href } } }))
+ */
+---
+
+<div id="toaster" class="toaster" aria-live="polite" aria-atomic="false"></div>
+
+<style>
+  .toaster {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom) + var(--toast-offset, 0px));
+    z-index: 100;
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  :global(.toast) {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    background: var(--fg);
+    color: var(--bg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+  }
+  :global(.toast a) {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  :global(.toast-dot) {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+  :global(.toast[data-tone='error'] .toast-dot) {
+    background: var(--hot);
+  }
+  :global(.toast[data-tone='info'] .toast-dot) {
+    background: var(--accent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.toast) {
+      animation: toast-in 320ms var(--ease-spring);
+    }
+    :global(.toast[data-leaving]) {
+      animation: toast-out 200ms var(--ease-out) forwards;
+    }
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+  }
+  @keyframes toast-out {
+    to {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+</style>
+
+<script>
+  interface ToastDetail {
+    message: string;
+    tone?: 'ok' | 'info' | 'error';
+    action?: { label: string; href: string };
+    duration?: number;
+  }
+  const root = document.getElementById('toaster')!;
+
+  document.addEventListener('ns:toast', (e) => {
+    const { message, tone = 'ok', action, duration = 2600 } = (e as CustomEvent<ToastDetail>).detail;
+    // Keep at most 3 toasts on screen.
+    while (root.children.length >= 3) root.firstElementChild?.remove();
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.dataset.tone = tone;
+    el.setAttribute('role', tone === 'error' ? 'alert' : 'status');
+    const dot = document.createElement('span');
+    dot.className = 'toast-dot';
+    const text = document.createElement('span');
+    text.textContent = message;
+    el.append(dot, text);
+    if (action) {
+      const a = document.createElement('a');
+      a.href = action.href;
+      a.textContent = action.label;
+      el.append(a);
+    }
+    root.append(el);
+    setTimeout(() => {
+      el.dataset.leaving = '';
+      setTimeout(() => el.remove(), 220);
+    }, duration);
+  });
+</script>

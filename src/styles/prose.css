@@ -1,0 +1,299 @@
+/*
+ * Article typography. Applied with class="prose" on the rendered Markdown/MDX body.
+ * Driven by reader-setting variables (--font-reading, --reader-size, --reader-leading, --reader-width).
+ */
+
+.prose {
+  font-family: var(--font-reading);
+  font-size: calc(var(--reader-size) * var(--reader-scale, 1));
+  line-height: var(--reader-leading);
+  color: var(--fg);
+  max-width: var(--reader-width);
+  overflow-wrap: break-word;
+  font-optical-sizing: auto;
+}
+
+.prose > * + * {
+  margin-top: 1.25em;
+}
+
+.prose :where(p, li) {
+  text-wrap: pretty;
+}
+
+/* Lede: first paragraph a touch larger */
+.prose > p:first-of-type {
+  font-size: 1.08em;
+  color: color-mix(in oklab, var(--fg) 92%, var(--fg-muted));
+}
+
+/* Headings */
+.prose :where(h2, h3, h4) {
+  font-family: var(--font-display);
+  color: var(--fg);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  scroll-margin-top: calc(var(--header-h) + 24px);
+  position: relative;
+}
+.prose h2 {
+  font-size: 1.6em;
+  font-weight: 800;
+  margin-top: 2.2em;
+  margin-bottom: 0.2em;
+}
+.prose h3 {
+  font-size: 1.28em;
+  font-weight: 700;
+  margin-top: 1.9em;
+}
+.prose h4 {
+  font-size: 1.08em;
+  font-weight: 700;
+  margin-top: 1.6em;
+}
+.prose :where(h2, h3, h4) + * {
+  margin-top: 0.75em;
+}
+
+/* Heading anchor (inserted by rehype-autolink-headings as .heading-anchor) */
+.prose .heading-anchor {
+  color: inherit;
+  text-decoration: none;
+}
+.prose .heading-anchor::after {
+  content: '#';
+  margin-left: 0.35em;
+  color: var(--fg-subtle);
+  opacity: 0;
+  font-weight: 500;
+  transition: opacity 150ms var(--ease-out);
+}
+.prose :where(h2, h3, h4):hover .heading-anchor::after,
+.prose .heading-anchor:focus-visible::after {
+  opacity: 1;
+}
+
+/* Links */
+.prose a:not(.heading-anchor) {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 35%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms var(--ease-out);
+}
+.prose a:not(.heading-anchor):hover {
+  text-decoration-color: var(--accent);
+}
+
+.prose strong {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.prose mark {
+  background: color-mix(in oklab, var(--hot) 22%, transparent);
+  color: inherit;
+  padding: 0.05em 0.2em;
+  border-radius: 4px;
+}
+
+/* Lists */
+.prose :where(ul, ol) {
+  padding-left: 1.4em;
+}
+.prose ul {
+  list-style: none;
+}
+.prose ul > li {
+  position: relative;
+}
+.prose ul > li::before {
+  content: '';
+  position: absolute;
+  left: -1em;
+  top: calc(var(--reader-leading) * 0.5em - 3px);
+  width: 6px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose ol > li::marker {
+  color: var(--fg-subtle);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.prose li + li {
+  margin-top: 0.45em;
+}
+.prose li > :where(ul, ol) {
+  margin-top: 0.45em;
+}
+
+/* Task lists (GFM) */
+.prose ul.contains-task-list > li::before {
+  display: none;
+}
+.prose .task-list-item input[type='checkbox'] {
+  margin-right: 0.5em;
+  accent-color: var(--accent);
+  transform: translateY(1px);
+}
+
+/* Blockquote */
+.prose blockquote {
+  position: relative;
+  padding: 0.2em 0 0.2em 1.2em;
+  border-left: 3px solid var(--accent);
+  color: var(--fg-muted);
+  font-style: italic;
+  font-size: 1.05em;
+}
+.prose blockquote p {
+  margin: 0;
+}
+.prose blockquote p + p {
+  margin-top: 0.75em;
+}
+
+/* Horizontal rule as a quiet ornament */
+.prose hr {
+  border: 0;
+  height: auto;
+  margin: 2.5em 0;
+  text-align: center;
+}
+.prose hr::before {
+  content: '· · ·';
+  color: var(--fg-subtle);
+  letter-spacing: 0.6em;
+  font-size: 1.2em;
+}
+
+/* Inline code */
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+  background: var(--bg-muted);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  white-space: break-spaces;
+}
+
+/* Images & figures */
+.prose :where(img, video) {
+  border-radius: var(--radius);
+  margin-inline: auto;
+}
+.prose figure {
+  margin-block: 2em;
+}
+.prose figcaption {
+  margin-top: 0.75em;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+  color: var(--fg-subtle);
+}
+/* Images that break out wider than the text column on large screens */
+@media (min-width: 1024px) {
+  .prose .wide {
+    margin-inline: -8%;
+  }
+}
+
+/* Tables: scroll horizontally on small screens */
+.prose table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 0.9em;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.prose :where(th, td) {
+  padding: 0.65em 1em;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+.prose th {
+  font-weight: 700;
+  background: var(--bg-subtle);
+  white-space: nowrap;
+}
+.prose tr:last-child td {
+  border-bottom: 0;
+}
+.prose tbody tr:hover {
+  background: var(--bg-subtle);
+}
+
+/* Footnotes (GFM) */
+.prose .footnotes {
+  margin-top: 3em;
+  padding-top: 1.5em;
+  border-top: 1px solid var(--border);
+  font-size: 0.88em;
+  color: var(--fg-muted);
+}
+.prose .footnotes h2 {
+  font-size: 1em;
+  margin-top: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.prose sup a {
+  text-decoration: none !important;
+  font-weight: 700;
+  padding: 0 0.15em;
+}
+
+/* Keyboard keys */
+.prose kbd {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  padding: 0.1em 0.45em;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+}
+
+/* Expressive Code blocks sit a bit wider than text on desktop */
+.prose .expressive-code {
+  margin-block: 1.75em;
+}
+@media (min-width: 1024px) {
+  .prose .expressive-code {
+    margin-inline: -1.25rem;
+  }
+}
+
+/* Abbreviations / details */
+.prose details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75em 1em;
+  background: var(--bg-elevated);
+}
+.prose summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+.prose details[open] summary {
+  margin-bottom: 0.5em;
+}

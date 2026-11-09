@@ -1,0 +1,68 @@
+---
+/**
+ * Post cover: the author's image (optimized by astro:assets) or the generated /covers/<slug>.svg art.
+ * `transition` gives it a view-transition-name so the card image morphs into the article hero.
+ */
+import { Image } from 'astro:assets';
+import type { Post } from '../../lib/posts';
+
+interface Props {
+  post: Post;
+  /** CSS sizes attribute for responsive images. */
+  sizes?: string;
+  widths?: number[];
+  loading?: 'lazy' | 'eager';
+  class?: string;
+  transition?: boolean;
+}
+
+const {
+  post,
+  sizes = '(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw',
+  widths = [400, 640, 960, 1280],
+  loading = 'lazy',
+  class: className = '',
+  transition = true,
+} = Astro.props;
+
+const alt = post.data.coverAlt ?? '';
+const vtName = transition ? `cover-${post.id.replace(/[^a-z0-9-]/gi, '-')}` : undefined;
+const style = vtName ? `view-transition-name: ${vtName}` : undefined;
+---
+
+{
+  post.data.cover ? (
+    <Image
+      src={post.data.cover}
+      alt={alt}
+      widths={widths}
+      sizes={sizes}
+      loading={loading}
+      fetchpriority={loading === 'eager' ? 'high' : 'auto'}
+      decoding="async"
+      class:list={['cover-img', className]}
+      style={style}
+    />
+  ) : (
+    <img
+      src={`/covers/${post.id}.svg`}
+      alt={alt}
+      width="1600"
+      height="900"
+      loading={loading}
+      decoding="async"
+      class:list={['cover-img', className]}
+      style={style}
+    />
+  )
+}
+
+<style>
+  .cover-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--bg-muted);
+  }
+</style>

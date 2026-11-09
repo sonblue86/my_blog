@@ -1,0 +1,599 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/post/PostCard.astro';
+import Icon from '../components/ui/Icon.astro';
+import Newsletter from '../components/widgets/Newsletter.astro';
+import { SITE, CATEGORIES } from '../config';
+import { getPosts, getTags, getSeries, categoryUrl, tagUrl, seriesUrl, postUrl } from '../lib/posts';
+
+const posts = await getPosts();
+const featuredPool = posts.filter((p) => p.data.featured);
+const hero = featuredPool[0] ?? posts[0];
+const sidePicks = [...featuredPool.slice(1), ...posts.filter((p) => p !== hero && !p.data.featured)].slice(0, 4);
+const featuredIds = new Set([hero, ...sidePicks].filter(Boolean).map((p) => p.id));
+
+const latest = posts.slice(0, 9);
+const tags = (await getTags()).slice(0, 18);
+const series = (await getSeries()).filter((s) => s.posts.length > 1);
+const countBy = (id: string) => posts.filter((p) => p.data.category === id).length;
+---
+
+<BaseLayout>
+  <!-- Intro -->
+  <section class="container-page pt-8 sm:pt-14">
+    <div class="intro">
+      <p class="eyebrow flex items-center gap-2">
+        <span class="live-dot" aria-hidden="true"></span>
+        Blog tiếng Việt · {posts.length} bài viết
+      </p>
+      <h1 class="intro-title">
+        Hiểu <span class="hl hl-ai">AI</span>, dùng <span class="hl hl-tech">công nghệ</span> khéo hơn, và <span class="hl hl-life">sống</span> chậm lại một chút.
+      </h1>
+      <p class="intro-sub">{SITE.description}</p>
+
+      <div class="intro-actions">
+        <button type="button" class="intro-search" data-open-search>
+          <Icon name="search" size={18} />
+          <span>Bạn muốn đọc về điều gì?</span>
+          <span class="ml-auto hidden items-center gap-1 sm:inline-flex" aria-hidden="true">
+            <kbd class="kbd" data-mod-key>Ctrl</kbd><kbd class="kbd">K</kbd>
+          </span>
+        </button>
+      </div>
+
+      <ul class="topic-pills" aria-label="Chuyên mục">
+        {
+          CATEGORIES.map((c) => (
+            <li>
+              <a href={categoryUrl(c.id)} class="topic-pill" style={`--c:${c.color}`}>
+                <span class="topic-icon" aria-hidden="true">
+                  {c.icon}
+                </span>
+                {c.name}
+                <span class="topic-count">{countBy(c.id)}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Featured -->
+  {
+    hero && (
+      <section class="container-page mt-12 sm:mt-16" aria-labelledby="featured-title">
+        <h2 id="featured-title" class="sr-only">
+          Bài nổi bật
+        </h2>
+        <div class="featured-grid">
+          <PostCard post={hero} variant="featured" headingLevel={3} eager />
+          {sidePicks.length > 0 && (
+            <div class="side-picks">
+              <p class="eyebrow mb-1 flex items-center gap-2">
+                <Icon name="flame" size={14} class="text-hot" />
+                Đáng đọc
+              </p>
+              {sidePicks.map((p, i) => (
+                <PostCard post={p} variant="mini" index={i} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Continue reading (filled client-side from reading history; hidden when empty) -->
+  <section class="container-page mt-16" data-continue-reading hidden aria-labelledby="continue-title">
+    <div class="section-head">
+      <h2 id="continue-title" class="section-title"><Icon name="history" size={22} />Đọc tiếp nhé</h2>
+      <a href="/thu-vien/" class="section-link">Thư viện của bạn <Icon name="arrow-right" size={16} /></a>
+    </div>
+    <div class="continue-list no-scrollbar" data-continue-list></div>
+  </section>
+
+  <!-- Latest with in-place category filter -->
+  <section class="container-page mt-16 sm:mt-24" aria-labelledby="latest-title">
+    <div class="section-head">
+      <h2 id="latest-title" class="section-title">Mới nhất</h2>
+      <a href="/luu-tru/" class="section-link">Xem tất cả <Icon name="arrow-right" size={16} /></a>
+    </div>
+
+    <div class="filter-bar no-scrollbar" role="group" aria-label="Lọc theo chuyên mục">
+      <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">Tất cả</button>
+      {
+        CATEGORIES.map((c) => (
+          <button type="button" class="filter-btn" data-filter={c.id} aria-pressed="false" style={`--c:${c.color}`}>
+            <span class="filter-dot" aria-hidden="true" />
+            {c.name}
+          </button>
+        ))
+      }
+    </div>
+    <p class="sr-only" aria-live="polite" data-filter-status></p>
+
+    <div class="latest-grid" data-latest>
+      {latest.map((p) => <PostCard post={p} vt={!featuredIds.has(p.id)} />)}
+    </div>
+    <div class="mt-10 flex justify-center">
+      <a href="/luu-tru/" class="btn btn-ghost">Xem toàn bộ bài viết <Icon name="arrow-right" size={16} /></a>
+    </div>
+  </section>
+
+  <!-- By topic -->
+  <section class="container-page mt-20 sm:mt-28" aria-labelledby="topics-title">
+    <div class="section-head">
+      <h2 id="topics-title" class="section-title">Theo chủ đề</h2>
+    </div>
+    <div class="topics-grid">
+      {
+        CATEGORIES.map((c) => {
+          const list = posts.filter((p) => p.data.category === c.id).slice(0, 3);
+          return (
+            <div class="topic-col" style={`--c:${c.color}`}>
+              <a href={categoryUrl(c.id)} class="topic-head">
+                <span class="topic-icon topic-icon-lg" aria-hidden="true">
+                  {c.icon}
+                </span>
+                <span class="min-w-0">
+                  <span class="block font-display text-xl font-extrabold tracking-tight">{c.name}</span>
+                  <span class="line-clamp-2 block text-sm text-fg-subtle">{c.description}</span>
+                </span>
+              </a>
+              <div class="grid gap-5">
+                {list.length ? list.map((p) => <PostCard post={p} variant="mini" />) : <p class="text-fg-subtle">Sắp có bài mới.</p>}
+              </div>
+              <a href={categoryUrl(c.id)} class="topic-more">
+                Tất cả bài {c.name} <Icon name="arrow-right" size={16} />
+              </a>
+            </div>
+          );
+        })
+      }
+    </div>
+  </section>
+
+  {
+    series.length > 0 && (
+      <section class="container-page mt-20 sm:mt-28" aria-labelledby="series-title">
+        <div class="section-head">
+          <h2 id="series-title" class="section-title">
+            <Icon name="layers" size={22} />
+            Series
+          </h2>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {series.map((s) => (
+            <a href={seriesUrl(s.name)} class="series-card">
+              <span class="eyebrow">{s.posts.length} phần</span>
+              <span class="mt-2 block font-display text-xl font-bold tracking-tight">{s.name}</span>
+              <ol class="mt-4 grid gap-1.5 text-sm text-fg-muted">
+                {s.posts.slice(0, 3).map((p, i) => (
+                  <li class="line-clamp-1">
+                    <span class="mr-2 font-bold text-fg-subtle">{i + 1}</span>
+                    {p.data.title}
+                  </li>
+                ))}
+              </ol>
+              <span class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
+                Đọc từ đầu <Icon name="arrow-right" size={16} />
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    tags.length > 0 && (
+      <section class="container-page mt-20 sm:mt-28" aria-labelledby="tags-title">
+        <div class="section-head">
+          <h2 id="tags-title" class="section-title">
+            <Icon name="hash" size={22} />
+            Chủ đề phổ biến
+          </h2>
+          <a href="/the/" class="section-link">
+            Tất cả thẻ <Icon name="arrow-right" size={16} />
+          </a>
+        </div>
+        <ul class="flex flex-wrap gap-2">
+          {tags.map((t) => (
+            <li>
+              <a href={tagUrl(t.name)} class="tag-pill">
+                #{t.name}
+                <span class="text-fg-subtle">{t.count}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  <section class="container-page mt-20 sm:mt-28">
+    <Newsletter variant="card" />
+  </section>
+
+  <script type="application/json" id="all-post-urls" set:html={JSON.stringify(posts.map((p) => postUrl(p)))} />
+</BaseLayout>
+
+<style>
+  .intro {
+    max-width: 860px;
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: var(--success);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 60%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .live-dot {
+      animation: live 2.4s infinite;
+    }
+  }
+  @keyframes live {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 55%, transparent);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 10px transparent;
+    }
+  }
+  .intro-title {
+    margin-top: 16px;
+    font-size: clamp(2.1rem, 1.2rem + 4.2vw, 4.25rem);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.04em;
+  }
+  .hl {
+    position: relative;
+    white-space: nowrap;
+    background-image: linear-gradient(transparent 62%, color-mix(in oklab, var(--hl) 26%, transparent) 62%);
+  }
+  .hl-ai {
+    --hl: var(--cat-ai);
+  }
+  .hl-tech {
+    --hl: var(--cat-tech);
+  }
+  .hl-life {
+    --hl: var(--cat-life);
+  }
+  .intro-sub {
+    margin-top: 18px;
+    max-width: 60ch;
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+    line-height: 1.65;
+    color: var(--fg-muted);
+  }
+  .intro-actions {
+    margin-top: 28px;
+    max-width: 560px;
+  }
+  .intro-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 56px;
+    padding: 0 12px 0 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    color: var(--fg-subtle);
+    font-size: 1rem;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
+  }
+  .intro-search:hover {
+    border-color: var(--fg-subtle);
+    box-shadow: var(--shadow);
+  }
+  .topic-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .topic-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 8px 0 6px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition:
+      border-color 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .topic-pill:hover {
+    border-color: var(--c);
+  }
+  .topic-pill:active {
+    transform: scale(0.97);
+  }
+  .topic-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 99px;
+    color: var(--c);
+    background: color-mix(in oklab, var(--c) 14%, transparent);
+  }
+  .topic-icon-lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+  }
+  .topic-count {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: var(--bg-muted);
+    color: var(--fg-subtle);
+    font-size: 0.75rem;
+    line-height: 24px;
+    text-align: center;
+  }
+
+  .featured-grid {
+    display: grid;
+    gap: 40px;
+  }
+  @media (min-width: 1024px) {
+    .featured-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .side-picks {
+    display: grid;
+    gap: 22px;
+    padding: 24px;
+    border-radius: var(--radius-xl);
+    background: var(--bg-subtle);
+  }
+  @media (min-width: 768px) {
+    .side-picks {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .side-picks > .eyebrow {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (min-width: 1100px) {
+    .side-picks {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .section-title :global(svg) {
+    color: var(--accent);
+  }
+  .section-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    white-space: nowrap;
+    transition:
+      color 150ms var(--ease-out),
+      gap 150ms var(--ease-out);
+  }
+  .section-link:hover {
+    color: var(--accent);
+    gap: 9px;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin: -4px -16px 28px;
+    padding: 4px 16px;
+    overflow-x: auto;
+  }
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--fg-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out);
+  }
+  .filter-btn:hover {
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
+  .filter-btn[aria-pressed='true'] {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+  .filter-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background: var(--c);
+  }
+  .latest-grid {
+    display: grid;
+    gap: 48px 32px;
+  }
+  @media (min-width: 640px) {
+    .latest-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .latest-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .latest-grid :global(.post-card[data-filtered-out]) {
+    display: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .latest-grid :global(.post-card[data-filter-in]) {
+      animation: card-in 380ms var(--ease-out) both;
+    }
+  }
+  @keyframes card-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  .continue-list {
+    display: flex;
+    gap: 16px;
+    margin-inline: -16px;
+    padding: 4px 16px 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .topics-grid {
+    display: grid;
+    gap: 20px;
+  }
+  @media (min-width: 900px) {
+    .topics-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .topic-col {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 24px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(420px 160px at 0% 0%, color-mix(in oklab, var(--c) 9%, transparent), transparent 70%),
+      var(--bg-elevated);
+  }
+  .topic-head {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topic-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    min-height: 44px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--c);
+  }
+
+  .series-card {
+    display: block;
+    padding: 24px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    transition:
+      border-color 150ms var(--ease-out),
+      transform 200ms var(--ease-out),
+      box-shadow 200ms var(--ease-out);
+  }
+  .series-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition:
+      border-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .tag-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>
+
+<script>
+  // In-place category filter for the "Mới nhất" grid.
+  const grid = document.querySelector<HTMLElement>('[data-latest]');
+  const status = document.querySelector<HTMLElement>('[data-filter-status]');
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  buttons.forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const f = btn.dataset.filter!;
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      let shown = 0;
+      grid?.querySelectorAll<HTMLElement>('.post-card').forEach((card) => {
+        const match = f === 'all' || card.dataset.category === f;
+        card.toggleAttribute('data-filtered-out', !match);
+        card.removeAttribute('data-filter-in');
+        if (match) {
+          void card.offsetWidth; // restart the entrance animation
+          card.setAttribute('data-filter-in', '');
+          shown++;
+        }
+      });
+      if (status) status.textContent = `Đang hiển thị ${shown} bài`;
+    }),
+  );
+</script>

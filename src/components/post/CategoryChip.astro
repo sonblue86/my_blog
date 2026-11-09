@@ -1,0 +1,21 @@
+---
+import { getCategory } from '../../config';
+import { categoryUrl } from '../../lib/posts';
+
+interface Props {
+  id: string;
+  link?: boolean;
+  class?: string;
+}
+const { id, link = true, class: className = '' } = Astro.props;
+const cat = getCategory(id);
+const Tag = link ? 'a' : 'span';
+---
+
+<Tag
+  href={link ? categoryUrl(cat.id) : undefined}
+  class:list={['chip relative z-[2]', className]}
+  style={`--chip-color: ${cat.color}`}
+>
+  <span aria-hidden="true">{cat.icon}</span>{cat.name}
+</Tag>

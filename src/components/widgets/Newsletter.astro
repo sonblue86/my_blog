@@ -1,0 +1,173 @@
+---
+/**
+ * Newsletter sign-up. Posts to /api/subscribe (Cloudflare Worker + D1, see worker/).
+ * Contract: POST JSON { email, website } -> { ok: true, status: 'subscribed' | 'exists' } | { ok: false, error }
+ * `website` is a honeypot field that humans never see.
+ */
+import { SITE } from '../../config';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  variant?: 'footer' | 'card';
+}
+const { variant = 'card' } = Astro.props;
+const enabled = SITE.features.newsletter;
+---
+
+{
+  enabled && (
+    <div class:list={['newsletter', `newsletter-${variant}`]}>
+      {variant === 'card' && (
+        <div class="mb-4">
+          <p class="eyebrow mb-2 text-accent!">Bản tin</p>
+          <h2 class="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Bài mới, gửi thẳng vào hộp thư.</h2>
+          <p class="mt-2 text-fg-muted">Mỗi tuần tối đa một email. Không spam, huỷ bất cứ lúc nào.</p>
+        </div>
+      )}
+      {variant === 'footer' && <p class="mb-3 font-semibold">Nhận bài mới qua email — tối đa 1 lần/tuần.</p>}
+      <form class="newsletter-form" data-newsletter novalidate>
+        <label class="sr-only" for={`nl-email-${variant}`}>
+          Email của bạn
+        </label>
+        <div class="field">
+          <Icon name="mail" size={18} class="field-icon" />
+          <input
+            id={`nl-email-${variant}`}
+            type="email"
+            name="email"
+            required
+            autocomplete="email"
+            inputmode="email"
+            placeholder="ban@email.com"
+            enterkeyhint="send"
+          />
+          <button type="submit" class="btn btn-primary shrink-0">
+            <span data-label>Đăng ký</span>
+          </button>
+        </div>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true" />
+        <p class="status" role="status" aria-live="polite" />
+      </form>
+    </div>
+  )
+}
+
+<style>
+  .newsletter-card {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(24px, 4vw, 40px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(600px 240px at 100% 0%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 70%),
+      radial-gradient(400px 200px at 0% 100%, color-mix(in oklab, var(--hot) 10%, transparent), transparent 70%),
+      var(--bg-elevated);
+  }
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 5px 5px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
+  }
+  .field:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent);
+  }
+  .field :global(.field-icon) {
+    flex-shrink: 0;
+    color: var(--fg-subtle);
+  }
+  .field input {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--fg);
+    font-size: 1rem; /* >=16px: iOS won't zoom */
+  }
+  .field input::placeholder {
+    color: var(--fg-subtle);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .status {
+    min-height: 1.5em;
+    margin-top: 8px;
+    padding-left: 14px;
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+  .status[data-tone='ok'] {
+    color: var(--success);
+  }
+  .status[data-tone='error'] {
+    color: var(--danger);
+  }
+</style>
+
+<script>
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  document.querySelectorAll<HTMLFormElement>('form[data-newsletter]').forEach((form) => {
+    if (form.dataset.wired) return;
+    form.dataset.wired = '1';
+    const status = form.querySelector<HTMLElement>('.status')!;
+    const button = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const label = button.querySelector<HTMLElement>('[data-label]')!;
+
+    const say = (msg: string, tone: 'ok' | 'error' | '' = '') => {
+      status.textContent = msg;
+      status.dataset.tone = tone;
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const email = String(data.get('email') || '').trim();
+      if (!EMAIL_RE.test(email)) {
+        say('Email chưa đúng định dạng, bạn kiểm tra lại nhé.', 'error');
+        form.querySelector('input')?.focus();
+        return;
+      }
+      button.disabled = true;
+      label.textContent = 'Đang gửi…';
+      say('');
+      try {
+        const res = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email, website: data.get('website') || '' }),
+        });
+        const json = (await res.json().catch(() => ({}))) as { ok?: boolean; status?: string; error?: string };
+        if (res.ok && json.ok) {
+          say(
+            json.status === 'exists' ? 'Email này đã đăng ký rồi — cảm ơn bạn!' : 'Đăng ký thành công. Hẹn gặp bạn trong hộp thư!',
+            'ok',
+          );
+          form.reset();
+        } else {
+          say(json.error || 'Chưa đăng ký được, bạn thử lại sau nhé.', 'error');
+        }
+      } catch {
+        say('Mất kết nối. Bạn thử lại sau nhé.', 'error');
+      } finally {
+        button.disabled = false;
+        label.textContent = 'Đăng ký';
+      }
+    });
+  });
+</script>

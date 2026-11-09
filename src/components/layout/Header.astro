@@ -1,0 +1,437 @@
+---
+import { SITE, NAV, CATEGORIES, SOCIAL } from '../../config';
+import Icon from '../ui/Icon.astro';
+import Logo from './Logo.astro';
+
+interface Props {
+  /** Auto-hide the header while scrolling down (used on article pages). */
+  autoHide?: boolean;
+}
+const { autoHide = false } = Astro.props;
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const catColor = Object.fromEntries(CATEGORIES.map((c) => [`/chuyen-muc/${c.id}/`, c.color]));
+---
+
+<header id="site-header" class="site-header" data-auto-hide={autoHide ? '' : undefined}>
+  <div class="container-page flex h-[var(--header-h)] items-center gap-3">
+    <Logo />
+
+    <nav aria-label="Điều hướng chính" class="ml-6 hidden lg:block">
+      <ul class="flex items-center gap-1">
+        {
+          NAV.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class:list={['nav-link', isActive(item.href) && 'is-active']}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                style={catColor[item.href] ? `--dot:${catColor[item.href]}` : undefined}
+              >
+                {catColor[item.href] && <span class="nav-dot" aria-hidden="true" />}
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-1">
+      <button type="button" class="search-trigger" data-open-search aria-label="Tìm kiếm (Ctrl K)">
+        <Icon name="search" size={18} />
+        <span class="hidden md:inline">Tìm kiếm…</span>
+        <span class="ml-4 hidden items-center gap-1 md:inline-flex" aria-hidden="true">
+          <kbd class="kbd" data-mod-key>Ctrl</kbd><kbd class="kbd">K</kbd>
+        </span>
+      </button>
+
+      <a href="/thu-vien/" class="btn-icon relative" aria-label="Thư viện của bạn: bài đã lưu và đang đọc" title="Thư viện của bạn">
+        <Icon name="library" />
+        <span class="badge" data-library-count hidden></span>
+      </a>
+
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Đổi giao diện sáng/tối" title="Đổi giao diện (T)">
+        <span class="theme-icon theme-icon-sun"><Icon name="sun" /></span>
+        <span class="theme-icon theme-icon-moon"><Icon name="moon" /></span>
+      </button>
+
+      <button type="button" class="btn-icon lg:hidden" data-menu-open aria-label="Mở menu" aria-haspopup="dialog" aria-controls="mobile-menu">
+        <Icon name="menu" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog id="mobile-menu" class="mobile-menu" aria-label="Menu">
+  <div class="flex h-full flex-col">
+    <div class="flex h-[var(--header-h)] shrink-0 items-center justify-between px-4">
+      <Logo />
+      <button type="button" class="btn-icon" data-menu-close aria-label="Đóng menu">
+        <Icon name="x" />
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-4 pb-8">
+      <button type="button" class="menu-search" data-open-search data-menu-close>
+        <Icon name="search" size={18} />
+        <span>Tìm bài viết, chủ đề…</span>
+      </button>
+
+      <nav aria-label="Điều hướng (mobile)" class="mt-6">
+        <p class="eyebrow mb-2 px-1">Chuyên mục</p>
+        <ul class="grid gap-2">
+          {
+            CATEGORIES.map((c) => (
+              <li>
+                <a href={`/chuyen-muc/${c.id}/`} class="menu-cat" style={`--c:${c.color}`}>
+                  <span class="menu-cat-icon" aria-hidden="true">
+                    {c.icon}
+                  </span>
+                  <span>
+                    <span class="block font-semibold text-fg">{c.name}</span>
+                    <span class="line-clamp-1 block text-sm text-fg-subtle">{c.description}</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <ul class="mt-6 grid gap-1 text-lg">
+          <li><a href="/" class="menu-link"><Icon name="home" />Trang chủ</a></li>
+          <li><a href="/thu-vien/" class="menu-link"><Icon name="library" />Thư viện của bạn</a></li>
+          <li><a href="/luu-tru/" class="menu-link"><Icon name="calendar" />Lưu trữ</a></li>
+          <li><a href="/the/" class="menu-link"><Icon name="hash" />Tất cả thẻ</a></li>
+          <li><a href="/gioi-thieu/" class="menu-link"><Icon name="info" />Giới thiệu</a></li>
+        </ul>
+      </nav>
+
+      <div class="mt-8">
+        <p class="eyebrow mb-2 px-1">Giao diện</p>
+        <div class="segmented" role="radiogroup" aria-label="Chọn giao diện">
+          <button type="button" role="radio" data-theme-set="light"><Icon name="sun" size={16} />Sáng</button>
+          <button type="button" role="radio" data-theme-set="dark"><Icon name="moon" size={16} />Tối</button>
+          <button type="button" role="radio" data-theme-set="system"><Icon name="monitor" size={16} />Tự động</button>
+        </div>
+      </div>
+
+      <div class="mt-8 flex items-center gap-1 text-fg-muted">
+        <a class="btn-icon" href="/rss.xml" aria-label="RSS"><Icon name="rss" /></a>
+        {SOCIAL.github && <a class="btn-icon" href={SOCIAL.github} aria-label="GitHub" rel="me noopener" target="_blank"><Icon name="brand-github" /></a>}
+        {SOCIAL.facebook && <a class="btn-icon" href={SOCIAL.facebook} aria-label="Facebook" rel="me noopener" target="_blank"><Icon name="brand-facebook" /></a>}
+        {SOCIAL.youtube && <a class="btn-icon" href={SOCIAL.youtube} aria-label="YouTube" rel="me noopener" target="_blank"><Icon name="brand-youtube" /></a>}
+      </div>
+      <p class="mt-4 px-1 text-sm text-fg-subtle">{SITE.tagline}</p>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--header-bg);
+    backdrop-filter: saturate(1.6) blur(14px);
+    -webkit-backdrop-filter: saturate(1.6) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition:
+      transform 280ms var(--ease-out),
+      border-color 200ms var(--ease-out),
+      box-shadow 200ms var(--ease-out);
+    view-transition-name: site-header;
+    padding-top: env(safe-area-inset-top);
+  }
+  .site-header[data-scrolled] {
+    border-bottom-color: var(--border);
+  }
+  .site-header[data-hidden] {
+    transform: translateY(-100%);
+  }
+  .site-header:focus-within {
+    transform: none;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--fg-muted);
+    transition:
+      color 150ms var(--ease-out),
+      background-color 150ms var(--ease-out);
+  }
+  .nav-link:hover {
+    color: var(--fg);
+    background: var(--bg-muted);
+  }
+  .nav-link.is-active {
+    color: var(--fg);
+    background: var(--bg-muted);
+    font-weight: 600;
+  }
+  .nav-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--dot);
+  }
+
+  .search-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    min-width: 44px;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: var(--fg-muted);
+    font-size: 0.9rem;
+    transition:
+      background-color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out);
+  }
+  .search-trigger:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  @media (min-width: 768px) {
+    .search-trigger {
+      height: 40px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      margin-right: 4px;
+      padding: 0 8px 0 14px;
+    }
+  }
+
+  .badge {
+    position: absolute;
+    top: 6px;
+    right: 4px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 99px;
+    background: var(--hot);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 17px;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+
+  .theme-icon {
+    display: grid;
+    place-items: center;
+    grid-area: 1 / 1;
+    transition:
+      transform 400ms var(--ease-spring),
+      opacity 200ms var(--ease-out);
+  }
+  .theme-toggle {
+    display: inline-grid;
+  }
+  :global([data-theme='dark']) .theme-icon-sun,
+  :global([data-theme='light']) .theme-icon-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+
+  /* Mobile menu (native <dialog>: focus trap + Esc for free) */
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    border: 0;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .mobile-menu::backdrop {
+    background: transparent;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .mobile-menu[open] {
+      animation: menu-in 260ms var(--ease-out);
+    }
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+  }
+  .menu-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 52px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-elevated);
+    color: var(--fg-subtle);
+    text-align: left;
+  }
+  .menu-cat {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--bg-subtle);
+    transition: background-color 150ms var(--ease-out);
+  }
+  .menu-cat:active {
+    background: var(--bg-muted);
+  }
+  .menu-cat-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    color: var(--c);
+    background: color-mix(in oklab, var(--c) 14%, transparent);
+  }
+  .menu-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 52px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .menu-link :global(svg) {
+    color: var(--fg-subtle);
+  }
+  .menu-link:active {
+    background: var(--bg-muted);
+  }
+
+  .segmented {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--bg-muted);
+  }
+  .segmented button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .segmented button[aria-checked='true'] {
+    background: var(--bg-elevated);
+    color: var(--fg);
+    box-shadow: var(--shadow-sm);
+  }
+</style>
+
+<script>
+  import { initTheme, setTheme, toggleTheme, getPref, type ThemePref } from '../../scripts/theme';
+
+  initTheme();
+
+  const header = document.getElementById('site-header')!;
+  const menu = document.getElementById('mobile-menu') as HTMLDialogElement;
+
+  // Show the right modifier key (⌘ on Apple devices).
+  if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {
+    document.querySelectorAll('[data-mod-key]').forEach((el) => (el.textContent = '⌘'));
+  }
+
+  // Scroll state: border when scrolled; auto-hide on scroll down (article pages).
+  let lastY = window.scrollY;
+  let ticking = false;
+  const autoHide = header.hasAttribute('data-auto-hide');
+  function onScroll() {
+    const y = window.scrollY;
+    header.toggleAttribute('data-scrolled', y > 8);
+    if (autoHide) {
+      const goingDown = y > lastY;
+      if (goingDown && y > 320) header.setAttribute('data-hidden', '');
+      else if (!goingDown && lastY - y > 6) header.removeAttribute('data-hidden');
+      if (y < 120) header.removeAttribute('data-hidden');
+    }
+    lastY = y;
+    ticking = false;
+  }
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(onScroll);
+      }
+    },
+    { passive: true },
+  );
+  onScroll();
+
+  // Theme buttons
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) =>
+    btn.addEventListener('click', (e) => {
+      const r = btn.getBoundingClientRect();
+      toggleTheme({ x: e.clientX || r.left + r.width / 2, y: e.clientY || r.top + r.height / 2 });
+    }),
+  );
+  function syncSegmented() {
+    const pref = getPref();
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-set]').forEach((b) => {
+      b.setAttribute('aria-checked', String(b.dataset.themeSet === pref));
+    });
+  }
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-set]').forEach((btn) =>
+    btn.addEventListener('click', (e) => {
+      setTheme(btn.dataset.themeSet as ThemePref, { x: e.clientX, y: e.clientY });
+    }),
+  );
+  document.addEventListener('ns:theme-changed', syncSegmented);
+  syncSegmented();
+
+  // Search triggers -> the command palette listens for `ns:open-search`.
+  document.querySelectorAll('[data-open-search]').forEach((el) =>
+    el.addEventListener('click', () => document.dispatchEvent(new CustomEvent('ns:open-search'))),
+  );
+
+  // Mobile menu
+  document.querySelector('[data-menu-open]')?.addEventListener('click', () => {
+    syncSegmented();
+    menu.showModal();
+  });
+  menu.querySelectorAll('[data-menu-close]').forEach((el) => el.addEventListener('click', () => menu.close()));
+  menu.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('a')) menu.close();
+  });
+  window.matchMedia('(min-width: 1024px)').addEventListener('change', (e) => e.matches && menu.open && menu.close());
+</script>

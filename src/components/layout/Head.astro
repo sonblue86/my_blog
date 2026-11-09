@@ -1,0 +1,122 @@
+---
+/**
+ * <head> contents: SEO, Open Graph, theme bootstrapping (no flash of wrong theme), feeds, PWA.
+ */
+import { SITE } from '../../config';
+import '../../styles/global.css';
+
+export interface SeoProps {
+  title?: string;
+  description?: string;
+  /** Absolute or root-relative URL of the social image (1200×630). */
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article';
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  section?: string;
+  tags?: string[];
+  noindex?: boolean;
+  /** Extra JSON-LD objects for this page. */
+  jsonLd?: Record<string, unknown>[];
+}
+
+const {
+  title,
+  description = SITE.description,
+  image = '/og/index.png',
+  imageAlt = SITE.title,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  section,
+  tags = [],
+  noindex = false,
+  jsonLd = [],
+} = Astro.props as SeoProps;
+
+const fullTitle = title ? `${title} · ${SITE.title}` : `${SITE.title} — ${SITE.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const imageUrl = new URL(image, Astro.site);
+
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.title,
+  description: SITE.description,
+  url: Astro.site?.toString(),
+  inLanguage: 'vi-VN',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${new URL('/tim-kiem/', Astro.site)}?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
+};
+const ld = Astro.url.pathname === '/' ? [websiteLd, ...jsonLd] : jsonLd;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, follow" />}
+<meta name="generator" content={Astro.generator} />
+
+<!-- Theme bootstrap: runs before first paint so there is never a flash of the wrong theme. -->
+<script is:inline>
+  (function () {
+    var d = document.documentElement;
+    function get(k) {
+      try {
+        return JSON.parse(localStorage.getItem('ns:' + k));
+      } catch (e) {
+        return null;
+      }
+    }
+    var pref = get('theme') || 'system';
+    var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+    d.dataset.theme = dark ? 'dark' : 'light';
+    d.dataset.themePref = pref;
+    var r = get('reader');
+    if (r && typeof r === 'object') {
+      if (r.font) d.dataset.readingFont = r.font;
+      if (r.scale) d.style.setProperty('--reader-scale', String(r.scale));
+      if (r.leading) d.style.setProperty('--reader-leading', String(r.leading));
+      if (r.width) d.style.setProperty('--reader-width', r.width + 'ch');
+    }
+  })();
+</script>
+
+<meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0c0d11" media="(prefers-color-scheme: dark)" />
+<meta name="color-scheme" content="light dark" />
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title={`${SITE.title} — RSS`} href="/rss.xml" />
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+<!-- Open Graph / social -->
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE.title} />
+<meta property="og:locale" content={SITE.locale} />
+<meta property="og:title" content={title ?? SITE.title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={imageAlt} />
+{publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime.toISOString()} />}
+{section && <meta property="article:section" content={section} />}
+{tags.map((tag) => <meta property="article:tag" content={tag} />)}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title ?? SITE.title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+{ld.map((obj) => <script type="application/ld+json" set:html={JSON.stringify(obj)} />)}

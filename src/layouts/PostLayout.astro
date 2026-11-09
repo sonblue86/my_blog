@@ -1,0 +1,760 @@
+---
+/**
+ * Article page layout. Static structure lives here; interactive features are separate components
+ * (each owns its markup + script) so they can evolve independently.
+ */
+import type { MarkdownHeading } from 'astro';
+import { getEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import Cover from '../components/post/Cover.astro';
+import CategoryChip from '../components/post/CategoryChip.astro';
+import PostCard from '../components/post/PostCard.astro';
+import BookmarkButton from '../components/library/BookmarkButton.astro';
+import Icon from '../components/ui/Icon.astro';
+import ReadingProgress from '../components/post/ReadingProgress.astro';
+import Toc from '../components/post/Toc.astro';
+import ActionBar from '../components/post/ActionBar.astro';
+import ReaderSettings from '../components/post/ReaderSettings.astro';
+import ListenPlayer from '../components/post/ListenPlayer.astro';
+import SelectionShare from '../components/post/SelectionShare.astro';
+import Lightbox from '../components/post/Lightbox.astro';
+import ShareButtons from '../components/post/ShareButtons.astro';
+import Reactions from '../components/post/Reactions.astro';
+import ViewCount from '../components/post/ViewCount.astro';
+import Comments from '../components/post/Comments.astro';
+import ResumeReading from '../components/post/ResumeReading.astro';
+import Newsletter from '../components/widgets/Newsletter.astro';
+import { SITE, getCategory } from '../config';
+import { formatDate, timeAgo } from '../lib/date';
+import {
+  type Post,
+  getPosts,
+  postUrl,
+  tagUrl,
+  seriesUrl,
+  categoryUrl,
+  getReadingTime,
+  relatedPosts,
+  seriesPosts,
+} from '../lib/posts';
+import '../styles/prose.css';
+
+interface Props {
+  post: Post;
+  headings: MarkdownHeading[];
+}
+
+const { post, headings } = Astro.props;
+const { title, description, pubDate, updatedDate, category, tags, series, summary, takeaways } = post.data;
+const cat = getCategory(category);
+const url = postUrl(post);
+const { minutes, words } = getReadingTime(post);
+
+const all = await getPosts();
+const index = all.findIndex((p) => p.id === post.id);
+// `all` is newest-first: the "next" (newer) post is at index-1, the "previous" (older) one at index+1.
+const newer = index > 0 ? all[index - 1] : undefined;
+const older = index >= 0 && index < all.length - 1 ? all[index + 1] : undefined;
+const related = relatedPosts(post, all, 3);
+const inSeries = series ? seriesPosts(series, all) : [];
+const seriesIndex = inSeries.findIndex((p) => p.id === post.id);
+
+const author = await getEntry(post.data.author ?? { collection: 'authors', id: SITE.defaultAuthor });
+const authorName = author?.data.name ?? SITE.title;
+const initials = authorName
+  .split(/\s+/)
+  .slice(-2)
+  .map((w) => w[0])
+  .join('')
+  .toUpperCase();
+
+const tocHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3 && h.slug !== 'footnote-label');
+const coverSrc = typeof post.data.cover === 'object' ? post.data.cover.src : `/covers/${post.id}.svg`;
+const vtTitle = `title-${post.id.replace(/[^a-z0-9-]/gi, '-')}`;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: title,
+    description,
+    datePublished: pubDate.toISOString(),
+    dateModified: (updatedDate ?? pubDate).toISOString(),
+    inLanguage: 'vi-VN',
+    articleSection: cat.name,
+    keywords: tags.join(', '),
+    wordCount: words,
+    timeRequired: `PT${minutes}M`,
+    image: new URL(`/og/${post.id}.png`, Astro.site).toString(),
+    mainEntityOfPage: new URL(url, Astro.site).toString(),
+    author: { '@type': 'Person', name: authorName },
+    publisher: { '@type': 'Organization', name: SITE.title, logo: { '@type': 'ImageObject', url: new URL('/icon-512.png', Astro.site).toString() } },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: new URL('/', Astro.site).toString() },
+      { '@type': 'ListItem', position: 2, name: cat.name, item: new URL(categoryUrl(cat.id), Astro.site).toString() },
+      { '@type': 'ListItem', position: 3, name: title },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={`/og/${post.id}.png`}
+  imageAlt={title}
+  type="article"
+  publishedTime={pubDate}
+  modifiedTime={updatedDate}
+  section={cat.name}
+  tags={tags}
+  jsonLd={jsonLd}
+  autoHideHeader
+  pageType="article"
+>
+  <ReadingProgress minutes={minutes} />
+
+  <article class="post" data-post-id={post.id} data-post-url={url} data-post-title={title} data-minutes={minutes}>
+    <header class="container-page post-hero">
+      <nav aria-label="Breadcrumb" class="breadcrumbs">
+        <a href="/">Trang chủ</a>
+        <Icon name="chevron-right" size={14} />
+        <a href={categoryUrl(cat.id)}>{cat.name}</a>
+        {
+          series && (
+            <>
+              <Icon name="chevron-right" size={14} />
+              <a href={seriesUrl(series)} class="line-clamp-1">
+                {series}
+              </a>
+            </>
+          )
+        }
+      </nav>
+
+      <div data-pagefind-body>
+        <div class="mt-6 flex flex-wrap items-center gap-2" data-pagefind-ignore>
+          <CategoryChip id={category} />
+          {
+            series && seriesIndex >= 0 && (
+              <a href={seriesUrl(series)} class="chip" style="--chip-color: var(--fg-muted)">
+                <Icon name="layers" size={14} />
+                Phần {seriesIndex + 1}/{inSeries.length}
+              </a>
+            )
+          }
+        </div>
+
+        <h1 class="post-title" style={`view-transition-name: ${vtTitle}`}>{title}</h1>
+        <p class="post-lede">{description}</p>
+
+        <span hidden data-pagefind-filter="category">{cat.name}</span>
+        <span hidden data-pagefind-meta="category">{cat.id}</span>
+        <span hidden data-pagefind-meta="image">{coverSrc}</span>
+        <span hidden data-pagefind-meta="date">{pubDate.toISOString()}</span>
+        <span hidden data-pagefind-meta="minutes">{minutes}</span>
+        {tags.map((t) => <span hidden data-pagefind-filter="tag">{t}</span>)}
+      </div>
+
+      <div class="post-meta" data-pagefind-ignore>
+        <a href="/gioi-thieu/" class="author">
+          {
+            author?.data.avatar ? (
+              <img src={author.data.avatar.src} alt="" width="40" height="40" class="avatar" />
+            ) : (
+              <span class="avatar avatar-initials" aria-hidden="true">
+                {initials}
+              </span>
+            )
+          }
+          <span class="flex flex-col">
+            <span class="font-semibold text-fg">{authorName}</span>
+            <span class="text-fg-subtle">
+              <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+              {
+                updatedDate && (
+                  <span title={`Cập nhật ${formatDate(updatedDate)}`}>
+                    {' '}
+                    · cập nhật {timeAgo(updatedDate)}
+                  </span>
+                )
+              }
+            </span>
+          </span>
+        </a>
+        <span class="meta-sep" aria-hidden="true"></span>
+        <span class="meta-item"><Icon name="clock" size={16} />{minutes} phút đọc</span>
+        <ViewCount slug={post.id} />
+        <div class="meta-actions">
+          <BookmarkButton post={post} variant="pill" />
+          <button type="button" class="meta-btn" data-listen-toggle aria-label="Nghe bài viết">
+            <Icon name="headphones" size={18} /><span>Nghe</span>
+          </button>
+          <button type="button" class="meta-btn" data-open-settings aria-label="Tuỳ chỉnh đọc" title="Tuỳ chỉnh đọc">
+            <Icon name="text-size" size={18} />
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <figure class="post-cover container-page">
+      <div class="post-cover-frame">
+        <Cover post={post} loading="eager" sizes="(min-width: 1200px) 1136px, 100vw" widths={[640, 960, 1280, 1600, 2000]} />
+      </div>
+      {post.data.coverAlt && post.data.cover && <figcaption>{post.data.coverAlt}</figcaption>}
+    </figure>
+
+    <div class="container-page post-grid">
+      <aside class="post-rail" aria-label="Công cụ bài viết">
+        <ActionBar variant="rail" post={{ id: post.id, title, url, description }} />
+      </aside>
+
+      <div class="post-main">
+        <ResumeReading />
+
+        {
+          (summary || takeaways?.length) && (
+            <section class="summary" aria-labelledby="summary-title">
+              <p id="summary-title" class="summary-title">
+                <Icon name="sparkles" size={16} />
+                Tóm tắt nhanh
+              </p>
+              {summary && <p class="summary-text">{summary}</p>}
+              {takeaways?.length && (
+                <ul class="takeaways">
+                  {takeaways.map((t) => (
+                    <li>
+                      <Icon name="check" size={16} />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )
+        }
+
+        {
+          inSeries.length > 1 && (
+            <details class="series-box" open={seriesIndex === 0}>
+              <summary>
+                <span class="flex items-center gap-2">
+                  <Icon name="layers" size={16} />
+                  <span>
+                    Series <strong>{series}</strong> · phần {seriesIndex + 1}/{inSeries.length}
+                  </span>
+                </span>
+                <Icon name="chevron-down" size={18} class="series-chevron" />
+              </summary>
+              <ol>
+                {inSeries.map((p, i) => (
+                  <li>
+                    {p.id === post.id ? (
+                      <span class="series-current" aria-current="page">
+                        <span class="series-num">{i + 1}</span>
+                        {p.data.title}
+                      </span>
+                    ) : (
+                      <a href={postUrl(p)}>
+                        <span class="series-num">{i + 1}</span>
+                        {p.data.title}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )
+        }
+
+        <div class="prose post-body" data-pagefind-body id="post-body">
+          <slot />
+        </div>
+
+        <footer class="post-end" data-pagefind-ignore>
+          {
+            tags.length > 0 && (
+              <ul class="flex flex-wrap gap-2" aria-label="Thẻ">
+                {tags.map((t) => (
+                  <li>
+                    <a href={tagUrl(t)} class="tag">
+                      #{t}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+
+          <Reactions slug={post.id} />
+          <ShareButtons title={title} url={url} />
+
+          <section class="author-box" aria-label="Tác giả">
+            {
+              author?.data.avatar ? (
+                <img src={author.data.avatar.src} alt="" width="64" height="64" class="avatar avatar-lg" />
+              ) : (
+                <span class="avatar avatar-lg avatar-initials" aria-hidden="true">
+                  {initials}
+                </span>
+              )
+            }
+            <div>
+              <p class="eyebrow">Viết bởi</p>
+              <p class="mt-1 font-display text-lg font-bold">{authorName}</p>
+              {author?.data.bio && <p class="mt-1 text-fg-muted">{author.data.bio}</p>}
+            </div>
+          </section>
+
+          {
+            (older || newer) && (
+              <nav class="prev-next" aria-label="Bài trước và bài sau">
+                {older ? (
+                  <a href={postUrl(older)} class="pn pn-prev" rel="prev">
+                    <span class="pn-label">
+                      <Icon name="arrow-left" size={16} />
+                      Bài trước
+                    </span>
+                    <span class="pn-title">{older.data.title}</span>
+                  </a>
+                ) : (
+                  <span />
+                )}
+                {newer && (
+                  <a href={postUrl(newer)} class="pn pn-next" rel="next">
+                    <span class="pn-label">
+                      Bài mới hơn
+                      <Icon name="arrow-right" size={16} />
+                    </span>
+                    <span class="pn-title">{newer.data.title}</span>
+                  </a>
+                )}
+              </nav>
+            )
+          }
+        </footer>
+      </div>
+
+      <aside class="post-toc" aria-label="Mục lục">
+        <Toc headings={tocHeadings} />
+      </aside>
+    </div>
+
+    {
+      related.length > 0 && (
+        <section class="container-page mt-20" aria-labelledby="related-title" data-pagefind-ignore>
+          <div class="mb-8 flex items-end justify-between gap-4">
+            <h2 id="related-title" class="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+              Có thể bạn thích
+            </h2>
+            <a href={categoryUrl(cat.id)} class="link hidden text-sm font-semibold sm:inline">
+              Thêm bài về {cat.name} →
+            </a>
+          </div>
+          <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((p) => (
+              <PostCard post={p} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      post.data.comments && (
+        <section class="container-page mt-20" data-pagefind-ignore>
+          <div class="mx-auto max-w-3xl">
+            <Comments />
+          </div>
+        </section>
+      )
+    }
+
+    <section class="container-page mt-20" data-pagefind-ignore>
+      <Newsletter variant="card" />
+    </section>
+  </article>
+
+  <ActionBar variant="bar" post={{ id: post.id, title, url, description }} />
+  <ReaderSettings />
+  <ListenPlayer />
+  <SelectionShare />
+  <Lightbox />
+</BaseLayout>
+
+<style>
+  .post-hero {
+    max-width: 920px;
+    padding-top: clamp(20px, 4vw, 48px);
+  }
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 0.875rem;
+    color: var(--fg-subtle);
+  }
+  .breadcrumbs a {
+    padding: 4px 0;
+    transition: color 150ms var(--ease-out);
+  }
+  .breadcrumbs a:hover {
+    color: var(--fg);
+  }
+  .post-title {
+    margin-top: 16px;
+    font-size: clamp(2rem, 1.2rem + 3.6vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+  .post-lede {
+    margin-top: 16px;
+    font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.25rem);
+    line-height: 1.6;
+    color: var(--fg-muted);
+    max-width: 62ch;
+  }
+
+  .post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--fg-muted);
+  }
+  .author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    line-height: 1.35;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .avatar-lg {
+    width: 64px;
+    height: 64px;
+    font-size: 1.25rem;
+  }
+  .avatar-initials {
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #fff;
+    background: linear-gradient(135deg, #6d5dfc, #f0562e);
+  }
+  .avatar-lg.avatar-initials {
+    font-size: 1.25rem;
+  }
+  .meta-sep {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+  }
+  @media (max-width: 639px) {
+    .meta-sep {
+      display: none;
+    }
+  }
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  @media (max-width: 767px) {
+    .meta-actions {
+      display: none; /* the bottom action bar takes over on mobile */
+    }
+  }
+  .meta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    min-width: 40px;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .meta-btn:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .meta-btn[aria-pressed='true'] {
+    color: var(--accent);
+    border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+    background: var(--accent-soft);
+  }
+
+  .post-cover {
+    max-width: 1200px;
+    margin-top: clamp(24px, 4vw, 40px);
+  }
+  .post-cover-frame {
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    border-radius: clamp(14px, 2vw, var(--radius-xl));
+    background: var(--bg-muted);
+    box-shadow: var(--shadow);
+  }
+  @media (max-width: 639px) {
+    .post-cover {
+      padding-inline: 0;
+    }
+    .post-cover-frame {
+      border-radius: 0;
+    }
+  }
+  .post-cover figcaption {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--fg-subtle);
+  }
+
+  /* Article grid: [rail] [content] [toc] */
+  .post-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+    margin-top: clamp(28px, 5vw, 56px);
+    max-width: 1200px;
+  }
+  .post-rail,
+  .post-toc {
+    display: none;
+  }
+  .post-main {
+    min-width: 0;
+    width: 100%;
+    max-width: var(--reader-width);
+    margin-inline: auto;
+  }
+  @media (min-width: 1024px) {
+    .post-grid {
+      grid-template-columns: minmax(0, 1fr) 232px;
+    }
+    .post-toc {
+      display: block;
+    }
+  }
+  @media (min-width: 1280px) {
+    .post-grid {
+      grid-template-columns: 56px minmax(0, 1fr) 248px;
+    }
+    .post-rail {
+      display: block;
+    }
+  }
+  .post-rail > :global(*),
+  .post-toc > :global(*) {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+  }
+
+  .summary {
+    margin-bottom: 36px;
+    padding: 20px 22px;
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(500px 120px at 0% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
+      var(--bg-elevated);
+    border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
+  }
+  .summary-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .summary-text {
+    margin-top: 10px;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+  }
+  .takeaways {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .takeaways li {
+    display: flex;
+    gap: 10px;
+    line-height: 1.55;
+    color: var(--fg-muted);
+  }
+  .takeaways :global(svg) {
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: var(--success);
+  }
+
+  .series-box {
+    margin-bottom: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+  }
+  .series-box summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 56px;
+    padding: 0 18px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.95rem;
+  }
+  .series-box summary::-webkit-details-marker {
+    display: none;
+  }
+  .series-box[open] :global(.series-chevron) {
+    transform: rotate(180deg);
+  }
+  :global(.series-chevron) {
+    transition: transform 200ms var(--ease-out);
+    color: var(--fg-subtle);
+  }
+  .series-box ol {
+    display: grid;
+    gap: 2px;
+    padding: 0 10px 12px;
+  }
+  .series-box ol a,
+  .series-current {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    line-height: 1.45;
+  }
+  .series-box ol a {
+    color: var(--fg-muted);
+  }
+  .series-box ol a:hover {
+    background: var(--bg-muted);
+    color: var(--fg);
+  }
+  .series-current {
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--fg);
+  }
+  .series-num {
+    flex-shrink: 0;
+    width: 1.5em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-subtle);
+  }
+
+  .post-end {
+    display: grid;
+    gap: 32px;
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  .tag:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .author-box {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-subtle);
+  }
+  .prev-next {
+    display: grid;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .prev-next {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .pn {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color 150ms var(--ease-out),
+      background-color 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .pn:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-elevated);
+  }
+  .pn-next {
+    text-align: right;
+    align-items: flex-end;
+  }
+  .pn-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg-subtle);
+  }
+  .pn-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+</style>

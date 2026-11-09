@@ -1,0 +1,316 @@
+---
+/**
+ * Post card in four variants:
+ *  - featured: large hero card (home page top)
+ *  - default:  vertical card with cover (grids)
+ *  - row:      horizontal list item, thumbnail on the right (mobile-friendly lists)
+ *  - mini:     text-only, optionally numbered (sidebars, "đọc nhiều")
+ * The whole card is clickable (stretched link); inner buttons/links sit above it.
+ */
+import type { Post } from '../../lib/posts';
+import { postUrl, getReadingTime } from '../../lib/posts';
+import { formatDate } from '../../lib/date';
+import Cover from './Cover.astro';
+import CategoryChip from './CategoryChip.astro';
+import BookmarkButton from '../library/BookmarkButton.astro';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  post: Post;
+  variant?: 'featured' | 'default' | 'row' | 'mini';
+  index?: number;
+  headingLevel?: 2 | 3;
+  eager?: boolean;
+  /** Give cover/title view-transition names (must be unique per page — disable for duplicates). */
+  vt?: boolean;
+}
+
+const { post, variant = 'default', index, headingLevel = 3, eager = false, vt = true } = Astro.props;
+const { title, description, pubDate, category, series } = post.data;
+const url = postUrl(post);
+const minutes = getReadingTime(post).minutes;
+const H = `h${headingLevel}` as 'h2' | 'h3';
+const titleVt = `title-${post.id.replace(/[^a-z0-9-]/gi, '-')}`;
+---
+
+<article
+  class:list={['post-card group', `card-${variant}`]}
+  data-category={category}
+  data-pagefind-ignore
+>
+  {
+    variant !== 'mini' && (
+      <div class="card-media">
+        <Cover
+          post={post}
+          transition={vt}
+          loading={eager ? 'eager' : 'lazy'}
+          sizes={
+            variant === 'featured'
+              ? '(min-width: 1024px) 680px, 100vw'
+              : variant === 'row'
+                ? '(min-width: 640px) 220px, 112px'
+                : '(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw'
+          }
+          widths={variant === 'row' ? [240, 480] : variant === 'featured' ? [640, 960, 1360] : [400, 640, 960]}
+        />
+      </div>
+    )
+  }
+
+  <div class="card-body">
+    {
+      variant === 'mini' && index != null && (
+        <span class="card-num" aria-hidden="true">
+          {String(index + 1).padStart(2, '0')}
+        </span>
+      )
+    }
+    <div class="min-w-0 flex-1">
+      {
+        variant !== 'mini' && (
+          <div class="card-top">
+            <CategoryChip id={category} />
+            {series && (
+              <span class="series-tag" title={`Series: ${series}`}>
+                <Icon name="layers" size={14} />
+                <span class="line-clamp-1">{series}</span>
+              </span>
+            )}
+          </div>
+        )
+      }
+
+      <H class="card-title">
+        <a href={url} class="card-link" style={vt && (variant === 'featured' || variant === 'default') ? `view-transition-name: ${titleVt}` : undefined}>
+          {title}
+        </a>
+      </H>
+
+      {variant !== 'mini' && <p class="card-desc">{description}</p>}
+
+      <div class="card-meta">
+        <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+        <span aria-hidden="true">·</span>
+        <span class="inline-flex items-center gap-1"><Icon name="clock" size={14} />{minutes} phút đọc</span>
+        {variant !== 'mini' && <BookmarkButton post={post} class="ml-auto -my-2 -mr-2" />}
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .post-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  /* Stretched link: whole card clickable */
+  .card-link {
+    color: inherit;
+    text-decoration: none;
+  }
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+  }
+  .card-link:focus-visible {
+    outline: none;
+  }
+  .post-card:has(.card-link:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 6px;
+    border-radius: var(--radius-lg);
+  }
+
+  .card-media {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg);
+    background: var(--bg-muted);
+    isolation: isolate;
+  }
+  .card-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+    pointer-events: none;
+  }
+  .card-media :global(img) {
+    transition: transform 600ms var(--ease-out);
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .post-card:hover .card-media :global(img) {
+      transform: scale(1.04);
+    }
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin-bottom: 10px;
+  }
+  .series-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--fg-subtle);
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.1875rem;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: var(--fg);
+    text-wrap: balance;
+  }
+  .card-title a {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1.5px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 350ms var(--ease-out);
+  }
+  @media (hover: hover) {
+    .post-card:hover .card-title a {
+      background-size: 100% 1.5px;
+    }
+  }
+
+  .card-desc {
+    margin-top: 8px;
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 12px;
+    font-size: 0.8125rem;
+    color: var(--fg-subtle);
+  }
+
+  /* ---------- featured ---------- */
+  .card-featured {
+    gap: 20px;
+  }
+  .card-featured .card-media {
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-xl);
+  }
+  .card-featured .card-title {
+    font-size: clamp(1.6rem, 1.1rem + 2.2vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+  .card-featured .card-desc {
+    font-size: 1.0625rem;
+    -webkit-line-clamp: 3;
+    margin-top: 12px;
+  }
+  @media (min-width: 1024px) {
+    .card-featured {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      align-items: center;
+      gap: 40px;
+    }
+  }
+
+  /* ---------- row ---------- */
+  .card-row {
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 16px;
+    padding-block: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-row .card-media {
+    flex-shrink: 0;
+    width: 112px;
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+  }
+  .card-row .card-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .card-row .card-top {
+    margin-bottom: 6px;
+  }
+  .card-row .card-title {
+    font-size: 1.0625rem;
+  }
+  .card-row .card-desc {
+    display: none;
+  }
+  @media (min-width: 640px) {
+    .card-row {
+      gap: 28px;
+      padding-block: 28px;
+    }
+    .card-row .card-media {
+      width: 220px;
+      aspect-ratio: 16 / 10;
+    }
+    .card-row .card-title {
+      font-size: 1.3125rem;
+    }
+    .card-row .card-desc {
+      display: -webkit-box;
+    }
+  }
+
+  /* ---------- mini ---------- */
+  .card-mini {
+    gap: 0;
+  }
+  .card-mini .card-body {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .card-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    color: var(--border-strong);
+    font-variant-numeric: tabular-nums;
+    transition: color 150ms var(--ease-out);
+  }
+  .card-mini:hover .card-num {
+    color: var(--accent);
+  }
+  .card-mini .card-title {
+    font-size: 1rem;
+  }
+  .card-mini .card-meta {
+    margin-top: 6px;
+  }
+</style>

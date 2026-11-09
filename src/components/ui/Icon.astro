@@ -1,0 +1,119 @@
+---
+/**
+ * Inline SVG icon, rendered at build time (0 bytes of JS).
+ * UI icons come from Lucide, brand logos from Simple Icons.
+ * Usage: <Icon name="search" />  <Icon name="brand-github" size={18} />
+ */
+import * as lucide from 'lucide-static';
+import { siGithub, siFacebook, siX, siYoutube, siZalo, siThreads, siRss } from 'simple-icons';
+
+const UI = {
+  search: lucide.Search,
+  sun: lucide.Sun,
+  moon: lucide.Moon,
+  monitor: lucide.Monitor,
+  menu: lucide.Menu,
+  x: lucide.X,
+  bookmark: lucide.Bookmark,
+  'bookmark-check': lucide.BookmarkCheck,
+  share: lucide.Share2,
+  link: lucide.Link,
+  clock: lucide.Clock,
+  eye: lucide.Eye,
+  'chevron-right': lucide.ChevronRight,
+  'chevron-left': lucide.ChevronLeft,
+  'chevron-down': lucide.ChevronDown,
+  'arrow-up': lucide.ArrowUp,
+  'arrow-right': lucide.ArrowRight,
+  'arrow-left': lucide.ArrowLeft,
+  'arrow-up-right': lucide.ArrowUpRight,
+  rss: lucide.Rss,
+  mail: lucide.Mail,
+  list: lucide.List,
+  'list-tree': lucide.ListTree,
+  type: lucide.Type,
+  'text-size': lucide.ALargeSmall,
+  headphones: lucide.Headphones,
+  play: lucide.Play,
+  pause: lucide.Pause,
+  stop: lucide.Square,
+  heart: lucide.Heart,
+  copy: lucide.Copy,
+  check: lucide.Check,
+  sparkles: lucide.Sparkles,
+  dice: lucide.Dices,
+  home: lucide.House,
+  library: lucide.Library,
+  hash: lucide.Hash,
+  calendar: lucide.Calendar,
+  sliders: lucide.SlidersHorizontal,
+  'external-link': lucide.ExternalLink,
+  quote: lucide.Quote,
+  'text-quote': lucide.TextQuote,
+  command: lucide.Command,
+  flame: lucide.Flame,
+  'book-open': lucide.BookOpen,
+  'wifi-off': lucide.WifiOff,
+  history: lucide.History,
+  settings: lucide.Settings2,
+  help: lucide.CircleHelp,
+  keyboard: lucide.Keyboard,
+  'thumbs-up': lucide.ThumbsUp,
+  lightbulb: lucide.Lightbulb,
+  info: lucide.Info,
+  warning: lucide.TriangleAlert,
+  'circle-check': lucide.CircleCheck,
+  'circle-x': lucide.CircleX,
+  zap: lucide.Zap,
+  layers: lucide.Layers,
+  newspaper: lucide.Newspaper,
+  pen: lucide.PenLine,
+  message: lucide.MessageCircle,
+  tag: lucide.Tag,
+  folder: lucide.FolderOpen,
+  timer: lucide.Timer,
+  pointer: lucide.MousePointerClick,
+} as const;
+
+const BRANDS = {
+  'brand-github': siGithub,
+  'brand-facebook': siFacebook,
+  'brand-x': siX,
+  'brand-youtube': siYoutube,
+  'brand-zalo': siZalo,
+  'brand-threads': siThreads,
+  'brand-rss': siRss,
+} as const;
+
+export type IconName = keyof typeof UI | keyof typeof BRANDS;
+
+interface Props {
+  name: IconName;
+  size?: number;
+  class?: string;
+  /** Accessible label. Omit for decorative icons (default: aria-hidden). */
+  label?: string;
+  strokeWidth?: number;
+}
+
+const { name, size = 20, class: className = '', label, strokeWidth = 2 } = Astro.props;
+
+const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true" focusable="false"';
+let svg = '';
+
+if (name in UI) {
+  svg = UI[name as keyof typeof UI]
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\s(width|height)="24"/g, '')
+    .replace('stroke-width="2"', `stroke-width="${strokeWidth}"`)
+    .replace(/class="[^"]*"/, `class="icon ${className}" width="${size}" height="${size}" ${a11y}`)
+    .replace(/\s*\n\s*/g, ' ');
+} else if (name in BRANDS) {
+  const icon = BRANDS[name as keyof typeof BRANDS];
+  svg = `<svg class="icon ${className}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" ${a11y}><path d="${icon.path}"/></svg>`;
+} else {
+  throw new Error(`Icon "${name}" không tồn tại — thêm vào src/components/ui/Icon.astro`);
+}
+---
+
+<Fragment set:html={svg} />

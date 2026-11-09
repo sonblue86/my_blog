@@ -1,0 +1,68 @@
+---
+/**
+ * Root layout for every page: <head>, header, footer and the global features
+ * (command palette, keyboard shortcuts, personal library, toasts).
+ */
+import Head, { type SeoProps } from '../components/layout/Head.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import Toaster from '../components/ui/Toaster.astro';
+import SearchPalette from '../components/search/SearchPalette.astro';
+import Shortcuts from '../components/search/Shortcuts.astro';
+import LibraryCore from '../components/library/LibraryCore.astro';
+import { SITE } from '../config';
+
+interface Props extends SeoProps {
+  /** Auto-hide header on scroll down (article pages). */
+  autoHideHeader?: boolean;
+  /** Extra class on <main>. */
+  mainClass?: string;
+  /** Mark the page body for Pagefind indexing (articles only). */
+  pageType?: 'article' | 'page';
+}
+
+const { autoHideHeader = false, mainClass = '', pageType = 'page', ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.lang} data-theme="light" data-page-type={pageType}>
+  <head>
+    <Head {...seo} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Bỏ qua, tới nội dung chính</a>
+    <Header autoHide={autoHideHeader} />
+    <main id="main" class:list={['flex-1', mainClass]} tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <Toaster />
+    <SearchPalette />
+    <Shortcuts />
+    <LibraryCore />
+    <slot name="end" />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 200;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-weight: 600;
+    transform: translateY(-160%);
+    transition: transform 200ms var(--ease-out);
+  }
+  .skip-link:focus {
+    transform: none;
+  }
+  main:focus {
+    outline: none;
+  }
+</style>

@@ -1,0 +1,107 @@
+---
+/**
+ * "Lưu đọc sau" toggle. Markup only — behaviour is wired globally by LibraryCore.astro
+ * (event delegation on [data-bookmark]), which sets aria-pressed from localStorage.
+ */
+import Icon from '../ui/Icon.astro';
+import type { Post } from '../../lib/posts';
+import { postUrl, getReadingTime } from '../../lib/posts';
+
+interface Props {
+  post: Post;
+  variant?: 'icon' | 'pill';
+  class?: string;
+}
+const { post, variant = 'icon', class: className = '' } = Astro.props;
+const cover = typeof post.data.cover === 'object' ? post.data.cover.src : `/covers/${post.id}.svg`;
+---
+
+<button
+  type="button"
+  class:list={['bookmark-btn', `bookmark-${variant}`, className]}
+  data-bookmark
+  data-id={post.id}
+  data-title={post.data.title}
+  data-url={postUrl(post)}
+  data-description={post.data.description}
+  data-category={post.data.category}
+  data-minutes={getReadingTime(post).minutes}
+  data-cover={cover}
+  data-date={post.data.pubDate.toISOString()}
+  aria-pressed="false"
+  aria-label={`Lưu “${post.data.title}” để đọc sau`}
+  title="Lưu đọc sau (B)"
+>
+  <span class="bm-off"><Icon name="bookmark" size={variant === 'pill' ? 18 : 19} /></span>
+  <span class="bm-on"><Icon name="bookmark-check" size={variant === 'pill' ? 18 : 19} /></span>
+  {variant === 'pill' && <span class="bm-label" data-bookmark-label>Lưu</span>}
+</button>
+
+<style>
+  .bookmark-btn {
+    position: relative;
+    z-index: 2;
+    display: inline-grid;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--fg-subtle);
+    transition:
+      color 150ms var(--ease-out),
+      background-color 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .bookmark-icon {
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+  }
+  .bookmark-pill {
+    height: 40px;
+    padding: 0 14px 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+  }
+  .bookmark-btn:hover {
+    color: var(--fg);
+    background: var(--bg-muted);
+  }
+  .bookmark-btn:active {
+    transform: scale(0.92);
+  }
+  .bm-off,
+  .bm-on {
+    display: grid;
+    grid-area: 1 / 1;
+    place-items: center;
+  }
+  .bookmark-pill .bm-label {
+    grid-area: 1 / 2;
+  }
+  .bm-on {
+    visibility: hidden;
+  }
+  .bookmark-btn[aria-pressed='true'] {
+    color: var(--accent);
+  }
+  .bookmark-btn[aria-pressed='true'] .bm-on {
+    visibility: visible;
+  }
+  .bookmark-btn[aria-pressed='true'] .bm-off {
+    visibility: hidden;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .bookmark-btn[aria-pressed='true'] .bm-on {
+      animation: bm-pop 380ms var(--ease-spring);
+    }
+  }
+  @keyframes bm-pop {
+    from {
+      transform: scale(0.4);
+    }
+  }
+</style>
