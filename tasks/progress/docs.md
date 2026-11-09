@@ -4,10 +4,12 @@ Phạm vi: Sveltia CMS (`public/admin/**`), `scripts/new-post.mjs` + `scripts/li
 (`tests/unit/{posts,date,newpost}*.test.ts`), `README.md` + `LICENSE`, `.github/**`.
 
 ## Done
-- [ ] (chưa có)
+- [x] Sveltia CMS: `public/admin/index.html` + `public/admin/config.yml`. Đã kiểm tra: YAML parse OK; hợp lệ theo
+  JSON schema chính thức @sveltia/cms 0.262.1 (ajv, schema strict additionalProperties=false; thử case sai → bị bắt);
+  khớp mọi trường zod của posts/authors trừ `slug` (cố ý). Build thử xác nhận `cover: sample.jpg` (không có `./`,
+  đúng dạng CMS ghi ra) và avatar JSON đều được Astro `image()` nhận và tối ưu.
 
 ## Next
-1. Sveltia CMS: `public/admin/index.html` + `public/admin/config.yml` (+ kiểm tra YAML/schema)
 2. `scripts/new-post.mjs` + `scripts/lib/new-post-core.mjs` + `tests/unit/newpost.test.ts`
 3. `tests/unit/posts.test.ts`, `tests/unit/date.test.ts`
 4. `README.md` + `LICENSE`
@@ -17,3 +19,9 @@ Phạm vi: Sveltia CMS (`public/admin/**`), `scripts/new-post.mjs` + `scripts/li
 ## Notes
 - Worktree: D:/project-AI/blog-wt/docs. node_modules là junction — không npm install.
 - Preview port 4415, playwright-cli session `docs`.
+- CMS: `preview_path` dùng `{{dirname}}` thay vì `{{slug}}` (với `path: '{{slug}}/index'`, "slug đầy đủ" của entry có thể
+  là `x/index`; `{{dirname}}` là tên thư mục = id Astro).
+- CMS: `pubDate`/`updatedDate` dùng `input_timezone: Asia/Ho_Chi_Minh` để lưu kèm `+07:00`. Mặc định Sveltia lưu giờ
+  không múi giờ → `z.coerce.date()` trên máy build (UTC) hiểu sai 7 tiếng.
+- Validator tạm ở scratchpad/validate-cms.mjs (dùng `yaml` + `ajv` có sẵn trong node_modules, không thêm dep).
+- Không chạy `python -` trong bash (treo chờ stdin).
