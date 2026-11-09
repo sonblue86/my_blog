@@ -19,10 +19,10 @@
   entry is the browser's network log for the single 404 GET /api/stats per tab (then cached 2 min).
   Fixes: Newsletter invalid state never cleared on typing; ViewCount collapsed on failure → CLS 0.014 on mobile.
 - scripts/test-api.mjs → 41/41 (incl. --burst) vs :8792; default slug now llm-hoat-dong-the-nao, port 8787.
+- docs/CLOUDFLARE.md (Vietnamese, beginner, 19 sections; anchors/links verified by script; export commands tested locally in bash + PowerShell 5.1)
 
 ## Next
-1. docs/CLOUDFLARE.md
-2. Final: tsc worker, vitest, astro check
+1. Final: tsc worker, vitest, astro check
 
 ## Integration notes (files I don't own)
 - PostLayout: `<section class="container-page mt-20">` around `<Comments />` stays (empty, +80px gap) when GISCUS
