@@ -14,9 +14,11 @@
 - 9/9 ghi-chep-thong-minh-zettelkasten (commit a4ec538). Đã merge vào main tích hợp.
 - (phiên 2) Xoá src/content/posts/xin-chao/; authors/nhip-so.json: bio chỉ cho người đọc (bỏ câu "sửa trong file"),
   links chỉ còn website = domain site (bỏ link github.com trống). Hướng dẫn sửa sẽ nằm trong docs/WRITING.md.
+- OG images xong: src/lib/og.ts (satori → sharp, font BVP 500/700/800 tách 3 subset), src/pages/og/[...slug].png.ts,
+  src/pages/og/index.png.ts, tests/unit/og.test.ts (17 test). Build sinh 10 PNG 230–390KB, ~0.3–0.5s/ảnh.
+  Đã mở xem: index, passkey/digital-detox/zettelkasten (cover riêng), deep-work (dài nhất), llm, git, rag — dấu tiếng Việt đủ.
 
 ## Next
-3. OG images: src/lib/og.ts, src/pages/og/[...slug].png.ts, src/pages/og/index.png.ts, tests/unit/og.test.ts
 4. docs/WRITING.md
 5. Verify: build, astro check, vitest, browser 390/1440 light/dark
 
@@ -26,3 +28,6 @@
 - Icon inline trong flex/grid: cần `flex:none` cho svg, nếu không svg bị kéo giãn chiều cao.
 - Worktree D:/project-AI/blog-wt/content, port 4421, playwright session `content`.
 - node_modules là junction — không npm install.
+- OG/satori: phần tử absolute vẽ đè lên phần tử thường bất kể thứ tự → khối chữ cũng phải absolute.
+  textWrap:'balance' + lineClamp làm tiêu đề bị bóp hẹp → không dùng. Ảnh cover riêng lấy qua `cover.fsPath`.
+  Thử nhanh không cần build: node <scratchpad>/og-try.mts (cwd = worktree).
