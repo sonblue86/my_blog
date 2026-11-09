@@ -1,19 +1,24 @@
 # Build & deploy lại site mỗi sáng để các bài HẸN GIỜ (pubDate trong tương lai) tự lên trang.
 #
-# TUỲ CHỌN. Site tĩnh chỉ được build khi có commit mới, nên bài hẹn giờ sẽ "nằm chờ" tới lần build sau.
-# - Nếu bạn deploy bằng Cloudflare Workers Builds (kết nối repo GitHub trong dashboard), push vẫn tự deploy
-#   như thường; workflow này chỉ cần khi bạn dùng bài hẹn giờ. Không dùng thì cứ để đó — thiếu secrets
-#   thì job tự bỏ qua, không báo lỗi.
-# - Cần 2 secrets (Settings → Secrets and variables → Actions → New repository secret):
-#     CLOUDFLARE_API_TOKEN   token tạo từ mẫu "Edit Cloudflare Workers"
-#     CLOUDFLARE_ACCOUNT_ID  Account ID trong dashboard Cloudflare
-# - Chạy tay: tab Actions → "Deploy hằng ngày" → Run workflow.
+# TUỲ CHỌN — chỉ cần nếu bạn dùng bài hẹn giờ. Site tĩnh chỉ được build khi có commit mới, nên bài hẹn giờ
+# sẽ "nằm chờ" tới lần build kế tiếp. Workflow này tạo ra lần build đó mỗi ngày. Chọn MỘT trong hai cách
+# (Settings → Secrets and variables → Actions → New repository secret):
+#
+#   A. Đang deploy bằng Cloudflare Workers Builds (kết nối repo GitHub trong dashboard) — đơn giản nhất:
+#        CLOUDFLARE_DEPLOY_HOOK_URL   Dashboard → Worker → Settings → Builds → Deploy Hooks → tạo hook cho nhánh main
+#      Workflow chỉ gọi hook; Cloudflare tự build & deploy. Không cần API token.
+#   B. Deploy thẳng từ GitHub Actions bằng wrangler:
+#        CLOUDFLARE_API_TOKEN         token tạo từ mẫu "Edit Cloudflare Workers"
+#        CLOUDFLARE_ACCOUNT_ID        Account ID trong dashboard Cloudflare
+#
+# Chưa đặt secret nào thì job tự bỏ qua (chỉ ghi chú), không báo lỗi mỗi ngày.
+# Chạy tay: tab Actions → "Deploy hằng ngày" → Run workflow.
 # Lưu ý: GitHub tự tắt lịch chạy của repo không có hoạt động trong 60 ngày.
 name: Deploy hằng ngày
 
 on:
   schedule:
-    # 23:00 UTC = 06:00 sáng giờ Việt Nam (UTC+7). Muốn chạy nhiều lần/ngày: '0 23,5,11 * * *'.
+    # 23:00 UTC = 06:00 sáng giờ Việt Nam (UTC+7). Muốn chạy nhiều lần/ngày, ví dụ: '0 23,5,11 * * *'.
     - cron: '0 23 * * *'
   workflow_dispatch:
 
@@ -30,42 +35,53 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Kiểm tra secrets
-        id: secrets
+      - name: Chọn cách deploy
+        id: mode
         env:
+          DEPLOY_HOOK_URL: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          if [ -n "$DEPLOY_HOOK_URL" ]; then
+            echo "mode=hook" >> "$GITHUB_OUTPUT"
+          elif [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "mode=wrangler" >> "$GITHUB_OUTPUT"
           else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Bỏ qua deploy::Chưa có secret CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID — xem README, mục 'Bài hẹn giờ'."
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Bỏ qua deploy::Chưa có secret CLOUDFLARE_DEPLOY_HOOK_URL hoặc CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID — xem README, mục 'Bài hẹn giờ'."
           fi
 
+      # ── Cách A: gọi Deploy Hook của Workers Builds ──
+      - name: Gọi Deploy Hook (Workers Builds)
+        if: steps.mode.outputs.mode == 'hook'
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}
+        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
+
+      # ── Cách B: build và wrangler deploy ngay trên GitHub Actions ──
       - name: Lấy mã nguồn
-        if: steps.secrets.outputs.enabled == 'true'
+        if: steps.mode.outputs.mode == 'wrangler'
         uses: actions/checkout@v7
 
       - name: Cài Node theo .nvmrc
-        if: steps.secrets.outputs.enabled == 'true'
+        if: steps.mode.outputs.mode == 'wrangler'
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
       - name: Cài dependencies
-        if: steps.secrets.outputs.enabled == 'true'
+        if: steps.mode.outputs.mode == 'wrangler'
         run: npm ci
 
       - name: Build (Astro + Pagefind)
-        if: steps.secrets.outputs.enabled == 'true'
+        if: steps.mode.outputs.mode == 'wrangler'
         run: npm run build
         env:
           SITE_URL: ${{ vars.SITE_URL }}
 
       - name: Deploy (wrangler deploy)
-        if: steps.secrets.outputs.enabled == 'true'
+        if: steps.mode.outputs.mode == 'wrangler'
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
