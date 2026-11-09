@@ -283,8 +283,16 @@ import Icon from '../ui/Icon.astro';
     document.addEventListener('keydown', (e) => {
       if (e.shiftKey && e.key.startsWith('Arrow')) viaKeyboard = true;
     });
-    addEventListener('scroll', hide, { passive: true });
-    addEventListener('resize', hide);
+    // The toolbar is position: fixed → hide while the page moves, bring it back once scrolling settles
+    // (a selection still on screen keeps its toolbar, like an in-flow one would).
+    let settle = 0;
+    const hideUntilSettled = () => {
+      hide();
+      clearTimeout(settle);
+      settle = window.setTimeout(check, 200);
+    };
+    addEventListener('scroll', hideUntilSettled, { passive: true });
+    addEventListener('resize', hideUntilSettled);
 
     // Keep the page selection when pressing a toolbar button.
     bar.addEventListener('pointerdown', (e) => e.preventDefault());
