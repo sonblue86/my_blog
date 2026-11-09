@@ -26,8 +26,12 @@ Phạm vi: Sveltia CMS (`public/admin/**`), `scripts/new-post.mjs` + `scripts/li
   ::notice, không fail hằng ngày). actions/checkout@v7, setup-node@v7 (bản mới nhất, kiểm tra qua GitHub API).
   YAML hợp lệ theo schema github-workflow (schemastore) bằng ajv. CHƯA chạy thật trên GitHub.
 
+- [x] `README.md` (tiếng Việt: tính năng, kiến trúc + bảng free tier lấy từ docs Cloudflare 11/2026, yêu cầu, bắt đầu
+  nhanh, cấu trúc thư mục, viết bài, CMS, deploy 6 bước, bài hẹn giờ, Giscus, tuỳ biến, phím tắt, test/CI, FAQ,
+  giấy phép) + `LICENSE` (MIT, "Nhịp Số contributors"). Link nội bộ + anchor đã kiểm bằng script; còn thiếu (đúng dự
+  kiến): docs/screenshot.png, docs/WRITING.md, docs/CLOUDFLARE.md (agent khác/integrator).
+
 ## Next
-4. `README.md` + `LICENSE`
 6. Kiểm tra: astro build, astro check, vitest, xem /admin trong trình duyệt (390 & 1440)
 
 ## Notes
