@@ -6,6 +6,7 @@
  * textContent / attributes — never innerHTML — except the Markdown preview, which is rendered by
  * markdown-it with raw HTML disabled (src/studio/preview.ts).
  */
+import { BLOCKS, blockMarkdown } from '../lib/blocks';
 import { initTheme, toggleTheme } from '../scripts/theme';
 import { aiAvailable, aiMeta, aiStream, type AiRequest } from './ai-client';
 import { createEditor, type Range, type StudioEditor } from './editor';
@@ -706,6 +707,51 @@ function toggleDrawer(name: 'settings' | 'ai') {
   if (open && name === 'ai') void openAi();
 }
 
+/* -- block gallery -- */
+
+const gallery = () => $<HTMLDialogElement>('[data-gallery]');
+
+/** Built once: every block with a miniature of its real rendering (templates are our own trusted text). */
+function buildGallery() {
+  const host = $('[data-gallery-body]');
+  if (host.childElementCount) return;
+  for (const group of [...new Set(BLOCKS.map((b) => b.group))]) {
+    const grid = el('div', { class: 'st-gallery-grid' });
+    for (const block of BLOCKS.filter((b) => b.group === group)) {
+      const mini = el('div');
+      mini.innerHTML = block.render(block.template);
+      const card = el(
+        'button',
+        { type: 'button', class: 'st-block', 'data-block': block.name },
+        el('span', { class: 'st-block-thumb', 'aria-hidden': 'true' }, mini),
+        el('span', {}, el('span', { class: 'st-block-name', text: block.label }), el('span', { class: 'st-block-desc', text: block.description })),
+      );
+      grid.append(card);
+    }
+    host.append(el('p', { class: 'st-gallery-group', text: group }), grid);
+  }
+}
+
+function openGallery() {
+  if (!editor) return;
+  setMode('write');
+  buildGallery();
+  gallery().showModal();
+}
+
+$('[data-gallery-body]').addEventListener('click', (e) => {
+  const card = (e.target as HTMLElement).closest<HTMLElement>('[data-block]');
+  if (!card || !editor) return;
+  gallery().close();
+  editor.insertAtCursor(blockMarkdown(card.dataset.block!));
+  markDirty();
+  toast('Đã chèn khối — bấm “Sửa nội dung” trên khối để thay chữ.');
+});
+// Click on the backdrop closes the gallery.
+gallery().addEventListener('click', (e) => {
+  if (e.target === gallery()) gallery().close();
+});
+
 /* -- save -- */
 
 function flagErrors(errors: { field: string; message: string }[]) {
@@ -1112,6 +1158,8 @@ const actions: Record<string, (e: Event) => void | Promise<void>> = {
   back: () => go('#/'),
   'toggle-settings': () => toggleDrawer('settings'),
   'toggle-ai': () => toggleDrawer('ai'),
+  'insert-block': openGallery,
+  'close-gallery': () => gallery().close(),
   'close-drawer': closeDrawers,
   'save-draft': () => save(false),
   publish: () => save(true),

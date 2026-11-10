@@ -32,3 +32,4 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Build lại khi `wrangler dev` đang chạy có thể để lại 404 bị cache (header Cache-Control áp cả cho 404) → tải lại trang trước khi kết luận lỗi.
 - Đo kích thước phần tử (scrollHeight…) khi view còn `display:none` luôn ra 0 → ô tiêu đề tự co về 0px. Đo sau khi hiện view.
 - Sửa nhiều file bằng một script thay chuỗi: script dừng ở chuỗi đầu tiên không khớp và bỏ dở phần sau → kiểm lại từng thay đổi, hoặc dùng Edit.
+- Nội dung tự dựng chèn vào `.prose` sẽ dính kiểu danh sách của bài (số thứ tự, chấm tròn, khoảng cách li). Khối tự vẽ marker phải tắt các kiểu đó bằng selector đủ mạnh (`ol.nb.nb-steps`), không dựa vào thứ tự file CSS.

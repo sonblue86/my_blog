@@ -10,6 +10,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeExternalLinks from 'rehype-external-links';
 import sitemapTidy from './integrations/sitemap-tidy.mjs';
 import cspInline from './integrations/csp-inline.mjs';
+import remarkBlocks from './src/lib/remark-blocks.ts';
 import { SITE } from './src/config.ts';
 
 export default defineConfig({
@@ -86,6 +87,8 @@ export default defineConfig({
   ],
   markdown: {
     processor: unified({
+      // ```steps, ```tip, ```chart… in .md posts → rich blocks (same renderer as the writing studio).
+      remarkPlugins: [remarkBlocks],
       remarkRehype: {
         footnoteLabel: 'Chú thích',
         footnoteBackLabel: (/** @type {number} */ i) => `Quay lại đoạn tham chiếu ${i + 1}`,

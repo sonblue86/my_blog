@@ -20,6 +20,7 @@ import '@milkdown/crepe/theme/common/top-bar.css';
 import { editorViewCtx } from '@milkdown/kit/core';
 import { Selection } from '@milkdown/kit/prose/state';
 import { getMarkdown, insert, replaceRange } from '@milkdown/kit/utils';
+import { renderBlock } from '../lib/blocks';
 
 export interface Range {
   from: number;
@@ -107,7 +108,17 @@ export async function createEditor(opts: EditorOptions): Promise<StudioEditor> {
         inlineConfirmButton: 'Xong',
       },
       [Crepe.Feature.LinkTooltip]: { inputPlaceholder: 'Dán đường dẫn…' },
-      [Crepe.Feature.CodeMirror]: { searchPlaceholder: 'Tìm ngôn ngữ', noResultText: 'Không có kết quả', copyText: 'Sao chép' },
+      [Crepe.Feature.CodeMirror]: {
+        searchPlaceholder: 'Tìm ngôn ngữ',
+        noResultText: 'Không có kết quả',
+        copyText: 'Sao chép',
+        // "Khối nội dung" (```steps, ```tip, ```chart…): show the rendered block, with the text behind
+        // an "edit" toggle. Ordinary code languages return null and stay plain code blocks.
+        renderPreview: (language, content) => renderBlock(language, content),
+        previewOnlyByDefault: true,
+        previewLabel: 'Hiển thị trên blog',
+        previewToggleText: (previewOnly) => (previewOnly ? 'Sửa nội dung' : 'Xong'),
+      },
     },
   });
 

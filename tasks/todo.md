@@ -70,3 +70,14 @@ GitHub thật): đăng nhập, danh sách 9 bài, mở/sửa bài .md, ảnh bì
 dựng prompt, xác thực, chuyển SSE); kéo-thả/dán ảnh vào thân bài (dùng chung đường xử lý với ảnh bìa); Safari/Firefox.
 
 **Việc của chủ blog:** merge nhánh; (tuỳ chọn) `npx wrangler secret put DEEPSEEK_API_KEY`.
+
+## Khối nội dung cho bài .md (2026-11-10, nhánh feat/viet-bai)
+- [x] src/lib/blocks.ts: 17 khối (5 callout, ý chính, trích dẫn, các bước, ưu/nhược, dòng thời gian, quy trình, thẻ, hỏi–đáp,
+      biểu đồ 5 kiểu, số liệu, YouTube, nút) — một bộ dựng hình cho blog, trình soạn và xem trước
+- [x] remark plugin (bài .md), thư viện "Chèn khối" có hình thu nhỏ, khối hiện trực tiếp trong trình soạn
+- [x] 23 unit test (escape/XSS mọi khối, từng cú pháp, biểu đồ, plugin, xem trước)
+
+**Đã kiểm chứng:** bài thử chứa đủ 21 khối build bằng Astro thật và xem trên trình duyệt (callout, bước, ưu/nhược, timeline,
+quy trình, thẻ, biểu đồ thanh/cột); chèn khối trong trình soạn, sửa nội dung, xem trước, nội dung lưu ra đúng cú pháp.
+**Chưa nhìn tận mắt:** biểu đồ tròn/vành, số liệu, FAQ, YouTube, nút trên trang blog (công cụ chụp màn hình trả ảnh trắng
+ở cuối trang dài; DOM và kích thước đúng, hình học có unit test) và giao diện tối của các khối.

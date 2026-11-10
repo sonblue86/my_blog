@@ -34,6 +34,49 @@ Cách thuận tiện nhất để soạn và đăng bài, không cần mở mã 
 - **Trợ lý AI** (nút AI): viết nháp từ ý tưởng, sửa đoạn đang bôi đen, gợi ý tiêu đề/mô tả/thẻ. Cần đặt khoá DeepSeek
   một lần — xem docs/CLOUDFLARE.md, mục `DEEPSEEK_API_KEY`. AI có thể sai: hãy đọc lại và kiểm chứng trước khi đăng.
 
+## Khối nội dung (callout, các bước, biểu đồ…)
+
+Bài `.md` dùng được các khối trình bày phong phú mà không cần MDX. Trong trang `/viet-bai/`, bấm **Chèn khối** để chọn
+từ thư viện (có hình thu nhỏ); khối hiện ngay trong trình soạn đúng như trên blog, bấm **Sửa nội dung** trên khối để thay chữ.
+
+Về bản chất, mỗi khối là một khối mã có "ngôn ngữ" là tên khối, nên cũng gõ tay được trong file Markdown:
+
+| Khối | Tên | Cách viết nội dung |
+| --- | --- | --- |
+| Ghi chú | `note` | Dòng đầu `# Tiêu đề` (tuỳ chọn), sau đó là nội dung; hỗ trợ gạch đầu dòng `- ` |
+| Mẹo | `tip` | Như Ghi chú |
+| Lưu ý | `warning` | Như Ghi chú |
+| Cảnh báo | `danger` | Như Ghi chú |
+| Kết quả | `success` | Như Ghi chú |
+| Ý chính | `keypoint` | Một hai câu cần nhấn mạnh |
+| Trích dẫn | `quote` | Câu trích; dòng cuối `— Tên người nói` (tuỳ chọn) |
+| Các bước | `steps` | Mỗi bước: một dòng `# Tên bước` rồi phần mô tả |
+| Ưu / nhược điểm | `proscons` | `+ ưu điểm` và `- nhược điểm`, mỗi ý một dòng; `# Tên cột trái \| Tên cột phải` để đổi tiêu đề |
+| Dòng thời gian | `timeline` | Mỗi dòng: `mốc \| tiêu đề \| mô tả` |
+| Quy trình | `flow` | Mỗi dòng một khâu: `tên \| mô tả` |
+| Thẻ | `cards` | Mỗi thẻ: `# Tiêu đề` rồi mô tả |
+| Hỏi – đáp | `faq` | `? Câu hỏi` rồi các dòng trả lời |
+| Biểu đồ | `chart` | `type: bar / column / line / pie / donut`, `title:`, `unit:`, rồi mỗi dòng `Nhãn: số` |
+| Số liệu nổi bật | `stats` | Mỗi dòng: `con số \| nhãn \| ghi chú` |
+| Video YouTube | `youtube` | Dòng 1: đường dẫn video; dòng 2: tiêu đề (tuỳ chọn) |
+| Nút bấm | `button` | Mỗi dòng: `Nhãn nút \| đường dẫn` (nút đầu là nút chính) |
+
+Ví dụ:
+
+````md
+```steps
+# Cài đặt
+Chạy `npm install`.
+
+# Chạy thử
+Mở `http://localhost:4321`.
+```
+````
+
+Trong nội dung khối dùng được `**in đậm**`, `*nghiêng*`, `` `mã` `` và `[liên kết](https://…)`. Mọi thứ khác được hiển thị nguyên văn
+(không chạy HTML). Bộ dựng hình nằm ở `src/lib/blocks.ts`, kiểu dáng ở `src/styles/blocks.css`; thêm khối mới = thêm một mục
+vào `BLOCKS`. Bài `.mdx` không dùng cú pháp này — ở đó đã có component `<Callout>`, `<Steps>`, `<ProsCons>`…
+
 ## Bắt đầu nhanh
 
 ```bash

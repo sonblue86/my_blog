@@ -4,6 +4,7 @@
  * never run in the studio, where the GitHub token lives.
  */
 import MarkdownIt from 'markdown-it';
+import { renderBlock } from '../lib/blocks';
 import { normalizeRel } from './post-file';
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: false });
@@ -27,6 +28,14 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
   if (!/^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(src)) token.attrSet('src', images[normalizeRel(src)] ?? '');
   token.attrSet('loading', 'lazy');
   return defaultImage(tokens, idx, options, env, self);
+};
+
+// "Khối nội dung" fences render exactly as on the blog (the renderer escapes everything itself).
+const defaultFence = md.renderer.rules.fence!;
+md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  const token = tokens[idx]!;
+  const block = renderBlock(token.info.trim().split(/\s+/)[0], token.content);
+  return block ?? defaultFence(tokens, idx, options, env, self);
 };
 
 /** @param images relative image name → displayable URL (already resolved by the caller). */

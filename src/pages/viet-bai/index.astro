@@ -120,6 +120,9 @@ import { CATEGORIES, SITE, STUDIO } from '../../config';
           <button type="button" role="tab" data-mode-btn="write" aria-selected="true"><Icon name="pen" size={16} /> <span>Soạn</span></button>
           <button type="button" role="tab" data-mode-btn="preview" aria-selected="false"><Icon name="eye" size={16} /> <span>Xem trước</span></button>
         </div>
+        <button type="button" class="btn btn-ghost st-btn-sm st-insert-btn" data-action="insert-block" title="Chèn khối nội dung: callout, các bước, biểu đồ…">
+          <Icon name="layers" size={16} /> <span>Chèn khối</span>
+        </button>
         <button type="button" class="btn btn-ghost st-btn-sm st-ai-btn" data-action="toggle-ai" aria-expanded="false" title="Trợ lý AI">
           <Icon name="sparkles" size={16} /> <span>AI</span>
         </button>
@@ -324,6 +327,18 @@ import { CATEGORIES, SITE, STUDIO } from '../../config';
           <button class="btn btn-primary st-btn-sm" value="ok" data-dialog-ok>Đồng ý</button>
         </div>
       </form>
+    </dialog>
+
+    <!-- ───────────────────────────── Block gallery ───────────────────────────── -->
+    <dialog class="st-dialog st-gallery" data-gallery aria-label="Chèn khối nội dung">
+      <div class="st-gallery-head">
+        <div>
+          <h2>Chèn khối nội dung</h2>
+          <p>Chọn một khối: mẫu có sẵn sẽ được chèn vào chỗ con trỏ, bạn chỉ việc sửa chữ.</p>
+        </div>
+        <button type="button" class="btn-icon" data-action="close-gallery" aria-label="Đóng"><Icon name="x" /></button>
+      </div>
+      <div class="st-gallery-body" data-gallery-body></div>
     </dialog>
 
     <!-- Icons the list rows clone at runtime (icons are build-time SVG; there is no JS icon set). -->
@@ -926,6 +941,168 @@ import { CATEGORIES, SITE, STUDIO } from '../../config';
     border-radius: var(--radius);
   }
 
+  /* Editor typography: headings and quotes look like the blog, not like a form */
+  .st-crepe .milkdown .ProseMirror h2 {
+    margin-top: 1.6em;
+    font-size: 1.6em;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+  .st-crepe .milkdown .ProseMirror h3 {
+    margin-top: 1.4em;
+    font-size: 1.28em;
+    font-weight: 700;
+  }
+  .st-crepe .milkdown .ProseMirror h4 {
+    font-size: 1.08em;
+    font-weight: 700;
+  }
+  .st-crepe .milkdown .ProseMirror blockquote {
+    border-left: 3px solid var(--accent);
+    background: var(--bg-subtle);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  /* "Khối nội dung" inside the editor: show the rendered block, keep the controls out of the way */
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel) {
+    padding: 4px 0;
+    background: none;
+    border-radius: var(--radius);
+    outline: 1px dashed transparent;
+    outline-offset: 6px;
+    transition: outline-color 150ms var(--ease-out);
+  }
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel):is(:hover, :focus-within, .selected) {
+    outline-color: var(--border-strong);
+  }
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel) .tools {
+    opacity: 0;
+    transition: opacity 150ms var(--ease-out);
+  }
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel):is(:hover, :focus-within, .selected) .tools {
+    opacity: 1;
+  }
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel) .tools .tools-button-group > button,
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel) .tools .language-button {
+    opacity: 1;
+  }
+  .st-crepe .milkdown .milkdown-code-block:has(.preview-panel) .codemirror-host:not(.hidden) {
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    overflow: hidden;
+  }
+  .st-crepe .milkdown .milkdown-code-block .preview-panel .preview {
+    text-align: left;
+    overflow-x: visible;
+  }
+  .st-crepe .milkdown .milkdown-code-block .preview-panel .preview .nb {
+    margin-block: 0.25em;
+  }
+  @media (hover: none) {
+    .st-crepe .milkdown .milkdown-code-block:has(.preview-panel) .tools {
+      opacity: 1;
+    }
+  }
+
+  /* Block gallery */
+  .st-dialog.st-gallery {
+    width: min(860px, calc(100vw - 24px));
+    max-height: min(86dvh, 760px);
+    padding: 0;
+    overflow: hidden;
+  }
+  .st-dialog.st-gallery[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .st-gallery-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 12px 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .st-gallery-head p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .st-gallery-body {
+    padding: 8px 24px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .st-gallery-group {
+    margin: 18px 0 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+  .st-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+  }
+  .st-block {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-elevated);
+    text-align: left;
+    transition:
+      border-color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+  .st-block:hover,
+  .st-block:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none;
+  }
+  .st-block:active {
+    transform: scale(0.985);
+  }
+  /* Miniature of the real block: rendered at full size, scaled down, not interactive */
+  .st-block-thumb {
+    position: relative;
+    height: 112px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-subtle);
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .st-block-thumb > div {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 250%;
+    transform: scale(0.38);
+    transform-origin: top left;
+  }
+  .st-block-thumb .nb {
+    margin: 0;
+  }
+  .st-block-name {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+  .st-block-desc {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--fg-muted);
+  }
+
   /* Preview */
   .st-preview {
     flex: 1;
@@ -1261,6 +1438,7 @@ import { CATEGORIES, SITE, STUDIO } from '../../config';
     }
     .st-edbar [data-mode-btn] span,
     .st-ai-btn span,
+    .st-insert-btn span,
     [data-action='toggle-settings'] span {
       display: none;
     }

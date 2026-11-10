@@ -1,3 +1,4 @@
+@import './blocks.css';
 /*
  * Article typography. Applied with class="prose" on the rendered Markdown/MDX body.
  * Driven by reader-setting variables (--font-reading, --reader-size, --reader-leading, --reader-width).

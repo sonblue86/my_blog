@@ -84,7 +84,11 @@ Nguyên tắc:
 - Chỉ trả về đúng nội dung được yêu cầu, không mở đầu kiểu "Dưới đây là…", không lời kết giải thích.`;
 
 const MARKDOWN_RULES = `Định dạng: Markdown thuần. Dùng "## " cho mục lớn và "### " cho mục con (không dùng "# " vì tiêu đề bài nằm riêng).
-Không dùng HTML, không frontmatter, không bọc toàn bộ câu trả lời trong khối \`\`\`.`;
+Không dùng HTML, không frontmatter, không bọc toàn bộ câu trả lời trong khối \`\`\`.
+Khi thật sự hợp (tối đa 2–3 lần mỗi bài), có thể dùng các khối đặc biệt sau, viết đúng cú pháp:
+- Hộp mẹo / lưu ý: mở bằng \`\`\`tip hoặc \`\`\`warning, dòng đầu là "# Tiêu đề ngắn", các dòng sau là nội dung, đóng bằng \`\`\`.
+- Hướng dẫn từng bước: mở bằng \`\`\`steps, mỗi bước là một dòng "# Tên bước" rồi 1–2 dòng mô tả, đóng bằng \`\`\`.
+- So sánh ưu nhược: mở bằng \`\`\`proscons, mỗi ưu điểm một dòng bắt đầu bằng "+ ", mỗi nhược điểm một dòng bắt đầu bằng "- ", đóng bằng \`\`\`.`;
 
 const REWRITE_TASKS: Record<Exclude<RewriteMode, 'custom'>, string> = {
   improve: 'Viết lại cho mạch lạc, tự nhiên và dễ đọc hơn. Giữ nguyên ý, độ dài tương đương.',
