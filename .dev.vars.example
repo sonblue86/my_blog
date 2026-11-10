@@ -11,3 +11,7 @@ TURNSTILE_SECRET=
 # Extra origins allowed to POST to /api/* — needed when the page is served by `astro dev` (port 4321)
 # and /api is proxied to wrangler dev.
 ALLOWED_ORIGINS=http://localhost:4321,http://127.0.0.1:4321
+
+# DeepSeek API key for the writing assistant on /viet-bai/ (optional). Leave empty to hide the AI panel.
+# Get one at https://platform.deepseek.com/api_keys
+DEEPSEEK_API_KEY=

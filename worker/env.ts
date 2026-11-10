@@ -16,6 +16,12 @@ export interface Env {
   HASH_SALT?: string;
   /** Cloudflare Turnstile secret. When set, /api/subscribe requires a valid token. */
   TURNSTILE_SECRET?: string;
+  /** DeepSeek API key for the writing assistant (/api/ai). Set with `npx wrangler secret put DEEPSEEK_API_KEY`. */
+  DEEPSEEK_API_KEY?: string;
+  /** DeepSeek model id (default "deepseek-flash"). */
+  DEEPSEEK_MODEL?: string;
+  /** "owner/name" of the blog repository: /api/ai only serves GitHub tokens that can push to it. */
+  GITHUB_REPO?: string;
   /** Extra origins allowed to POST, comma-separated (e.g. "http://localhost:4321" for `astro dev`). */
   ALLOWED_ORIGINS?: string;
 }

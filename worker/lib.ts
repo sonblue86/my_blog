@@ -94,13 +94,13 @@ export function isAllowedOrigin(origin: string | null, selfOrigin: string, extra
 export const MAX_BODY = 2048;
 
 /** Parse a small JSON object body or throw an HttpError with a Vietnamese message. */
-export async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+export async function readJsonBody(request: Request, maxBody = MAX_BODY): Promise<Record<string, unknown>> {
   const type = request.headers.get('content-type') || '';
   if (!type.toLowerCase().includes('application/json')) throw new HttpError(415, MESSAGES.notJson);
   const declared = Number(request.headers.get('content-length') || 0);
-  if (declared > MAX_BODY) throw new HttpError(413, MESSAGES.tooLarge);
+  if (declared > maxBody) throw new HttpError(413, MESSAGES.tooLarge);
   const text = await request.text();
-  if (text.length > MAX_BODY) throw new HttpError(413, MESSAGES.tooLarge);
+  if (text.length > maxBody) throw new HttpError(413, MESSAGES.tooLarge);
   let data: unknown;
   try {
     data = JSON.parse(text);

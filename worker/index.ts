@@ -18,6 +18,7 @@ import {
   type SubscribeResult,
   type WriteResult,
 } from './shared';
+import { AI_MAX_BODY, handleAi } from './ai';
 import {
   HttpError,
   MESSAGES,
@@ -70,14 +71,16 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
   if (path === '/api/health') {
     if (method !== 'GET' && method !== 'HEAD') return methodNotAllowed('GET, HEAD');
     // `salt` only says whether the secret exists — lets the owner verify the deploy without wrangler.
-    return json({ ok: true, db: Boolean(env.DB), salt: Boolean(env.HASH_SALT) });
+    return json({ ok: true, db: Boolean(env.DB), salt: Boolean(env.HASH_SALT), ai: Boolean(env.DEEPSEEK_API_KEY) });
   }
 
-  const handlers: Record<string, { method: 'GET' | 'POST'; run: (c: Ctx) => Promise<Response> }> = {
+  const handlers: Record<string, { method: 'GET' | 'POST'; noDb?: boolean; run: (c: Ctx) => Promise<Response> }> = {
     '/api/stats': { method: 'GET', run: handleStats },
     '/api/view': { method: 'POST', run: handleView },
     '/api/react': { method: 'POST', run: handleReact },
     '/api/subscribe': { method: 'POST', run: handleSubscribe },
+    // Writing assistant for /viet-bai/ (owner only, see worker/ai.ts). Needs no database.
+    '/api/ai': { method: 'POST', noDb: true, run: handleAiRoute },
   };
   const handler = handlers[path];
   if (!handler) return errorResponse(404, MESSAGES.notFound);
@@ -90,6 +93,7 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
   if (handler.method === 'POST' && !isAllowedOrigin(request.headers.get('origin'), url.origin, env.ALLOWED_ORIGINS)) {
     return errorResponse(403, MESSAGES.badOrigin);
   }
+  if (handler.noDb) return handler.run({ request, env, url, db: env.DB as D1Database });
   if (!env.DB) return errorResponse(503, MESSAGES.disabled);
 
   return handler.run({ request, env, url, db: env.DB });
@@ -229,6 +233,14 @@ async function handleReact(c: Ctx): Promise<Response> {
   const counted = (results[0]?.meta.changes ?? 0) > 0;
   const result: WriteResult = { ...collectStats([slug], results.slice(write.length))[slug]!, counted };
   return json(result);
+}
+
+/* ----------------------------------------------------------------------- ai */
+
+async function handleAiRoute(c: Ctx): Promise<Response> {
+  const body = await readJsonBody(c.request, AI_MAX_BODY);
+  await rateLimit(c, 'ai');
+  return handleAi(c.request, c.env, body);
 }
 
 /* --------------------------------------------------------------- newsletter */

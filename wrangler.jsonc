@@ -52,10 +52,12 @@
 			"17 3 * * *"
 		]
 	},
-	// Non-secret settings. Secrets (HASH_SALT, TURNSTILE_SECRET) go in `.dev.vars` locally
+	// Non-secret settings. Secrets (HASH_SALT, TURNSTILE_SECRET, DEEPSEEK_API_KEY) go in `.dev.vars` locally
 	// and `npx wrangler secret put <NAME>` in production.
 	"vars": {
 		// Extra origins allowed to POST (comma-separated), e.g. a preview domain. The Worker's own origin is always allowed.
-		"ALLOWED_ORIGINS": ""
+		"ALLOWED_ORIGINS": "",
+		// Repo of the blog ("owner/name"). The writing assistant (/api/ai) only answers GitHub tokens that can push to it.
+		"GITHUB_REPO": "sonblue86/my_blog"
 	}
 }
