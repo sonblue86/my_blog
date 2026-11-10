@@ -19,3 +19,11 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Gỡ worktree có junction `node_modules`: xoá junction bằng PowerShell `(Get-Item … -Force).Delete()` và KIỂM TRA nó đã mất,
   rồi mới `git worktree remove`. Lý do: `cmd //c rmdir` từ Git Bash thất bại âm thầm, `git worktree remove --force` xoá
   xuyên qua junction → hỏng node_modules của repo chính (phải `npm ci` lại).
+- `<dialog>` modal đặt trong phần tử `display:none` vẫn "mở" và làm cả trang trơ (inert) nhưng vô hình → đơ trang.
+  Đặt dialog/sheet ngoài các cột bị ẩn theo breakpoint. Lý do: lỗi chỉ hiện ở mobile, desktop vẫn chạy đúng.
+- Không đặt biến CSS thay đổi liên tục (tiến độ cuộn) trên `<html>`, và tránh `html:has(...)`: cả hai buộc tính lại
+  style toàn trang (đo được ~0.5 s/lần trên máy tầm trung). Đặt biến trên đúng phần tử dùng nó; đồng bộ trạng thái bằng data-attribute.
+- Style scoped của Astro không nằm trong layer → luôn thắng utility Tailwind v4 (vd. `max-sm:hidden` bị `.x{display:flex}` đè).
+  Ẩn/hiện theo breakpoint thì viết trong chính `<style>` của component.
+- Animation `box-shadow` lặp vô hạn giữ main thread bận liên tục; chỉ animate `transform`/`opacity`.
+- Ảnh OG là gradient đục → JPEG (~50 KB) thay vì PNG RGBA (~300 KB, app nhắn tin bỏ preview khi > ~300 KB).

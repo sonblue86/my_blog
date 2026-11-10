@@ -1,6 +1,7 @@
 import { defineCollection, reference } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { slugify } from './lib/text';
 
 /**
  * Bài viết: mỗi bài là một thư mục `src/content/posts/<slug>/index.md(x)` — ảnh đặt cùng thư mục.
@@ -11,10 +12,13 @@ const posts = defineCollection({
     base: './src/content/posts',
     pattern: '**/[^_]*.{md,mdx}',
     // "slug/index.mdx" -> "slug", "slug.mdx" -> "slug"
+    // Always an ASCII slug ("bài-mới/" -> "bai-moi"): clean URLs, and the view/reaction API only accepts [a-z0-9-].
     generateId: ({ entry, data }) =>
-      typeof data.slug === 'string' && data.slug
-        ? data.slug
-        : entry.replace(/\.(md|mdx)$/, '').replace(/\/index$/, ''),
+      slugify(
+        typeof data.slug === 'string' && data.slug
+          ? data.slug
+          : entry.replace(/\.(md|mdx)$/, '').replace(/\/index$/, ''),
+      ),
   }),
   schema: ({ image }) =>
     z.object({
