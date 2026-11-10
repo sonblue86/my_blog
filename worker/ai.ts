@@ -267,7 +267,8 @@ export async function canPushToRepo(token: string, repo: string, fetcher: typeof
   return ok;
 }
 
-const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+/** "owner/name"; neither part may start with a dot (no ".." path tricks in the GitHub URL). */
+const REPO_RE = /^(?!\.)[A-Za-z0-9_.-]+\/(?!\.)[A-Za-z0-9_.-]+$/;
 
 /* --------------------------------------------------------------- handler */
 
