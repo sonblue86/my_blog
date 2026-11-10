@@ -56,3 +56,17 @@ tương phản, vùng chạm 44px, theme-color, TTS + bfcache, lộ email đã �
 - [ ] giscus.json giới hạn origin; bật branch protection + secret scanning trên GitHub (chưa kiểm được, máy không có gh)
 - [ ] Header vỡ dòng ở bề rộng ~800px
 
+## Trang viết bài /viet-bai/ (2026-11-10, nhánh feat/viet-bai)
+- [x] Lõi: GitHub client (1 lần lưu = 1 commit), đọc/ghi frontmatter, nén ảnh trong trình duyệt
+- [x] Trình soạn trực quan (Milkdown Crepe), bảng thiết lập, xem trước máy tính/điện thoại, lưu nháp/đăng/gỡ/xoá, tự giữ bản dở
+- [x] /api/ai (DeepSeek): chỉ phục vụ token GitHub ghi được repo; dàn ý, viết nháp, sửa đoạn, gợi ý tiêu đề/mô tả/thẻ
+- [x] CSP (connect-src api.github.com), robots, sitemap, service worker, tài liệu
+
+**Đã kiểm chứng:** 253 unit test; astro check; build; trên wrangler dev với GitHub giả lập cho thao tác GHI (đọc thì gọi
+GitHub thật): đăng nhập, danh sách 9 bài, mở/sửa bài .md, ảnh bìa tải từ GitHub, tạo bài mới + ảnh bìa (2,3 MB → 203 KB),
+đăng bài = 1 commit đúng nội dung; file sinh ra build được bằng Astro thật; sáng/tối, 375px; không vi phạm CSP.
+
+**Chưa kiểm chứng:** ghi lên GitHub thật bằng token thật; trợ lý AI với khoá DeepSeek thật (mới test đơn vị phần
+dựng prompt, xác thực, chuyển SSE); kéo-thả/dán ảnh vào thân bài (dùng chung đường xử lý với ảnh bìa); Safari/Firefox.
+
+**Việc của chủ blog:** merge nhánh; (tuỳ chọn) `npx wrangler secret put DEEPSEEK_API_KEY`.

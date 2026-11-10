@@ -3,7 +3,20 @@
  * natively — what you see is exactly what gets committed to the repo.
  */
 import { Crepe } from '@milkdown/crepe';
-import '@milkdown/crepe/theme/common/style.css';
+// Only the stylesheets of the features in use (common/style.css also pulls in KaTeX with data: fonts,
+// which the site's CSP rightly blocks).
+import '@milkdown/crepe/theme/common/prosemirror.css';
+import '@milkdown/crepe/theme/common/reset.css';
+import '@milkdown/crepe/theme/common/block-edit.css';
+import '@milkdown/crepe/theme/common/code-mirror.css';
+import '@milkdown/crepe/theme/common/cursor.css';
+import '@milkdown/crepe/theme/common/image-block.css';
+import '@milkdown/crepe/theme/common/link-tooltip.css';
+import '@milkdown/crepe/theme/common/list-item.css';
+import '@milkdown/crepe/theme/common/placeholder.css';
+import '@milkdown/crepe/theme/common/toolbar.css';
+import '@milkdown/crepe/theme/common/table.css';
+import '@milkdown/crepe/theme/common/top-bar.css';
 import { editorViewCtx } from '@milkdown/kit/core';
 import { Selection } from '@milkdown/kit/prose/state';
 import { getMarkdown, insert, replaceRange } from '@milkdown/kit/utils';

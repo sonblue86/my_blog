@@ -11,6 +11,29 @@ Mọi ví dụ đều sao chép — dán là chạy.
 
 ---
 
+## Viết bài ngay trên web: trang `/viet-bai/`
+
+Cách thuận tiện nhất để soạn và đăng bài, không cần mở mã nguồn.
+
+1. Mở `https://<domain>/viet-bai/` và dán **token GitHub** (màn hình đăng nhập có hướng dẫn tạo token: chỉ cấp cho
+   repo của blog, quyền *Contents: Read and write*).
+2. Bấm **Bài mới**, gõ tiêu đề và mô tả, rồi soạn nội dung như trong Word: thanh công cụ có tiêu đề, in đậm, danh sách,
+   link, ảnh, bảng, khối mã; gõ `/` để chèn nhanh. Ảnh kéo-thả hoặc dán vào bài sẽ tự được thu nhỏ và lưu cùng bài.
+3. **Thiết lập**: chuyên mục, thẻ, ngày đăng, ảnh bìa, tóm tắt nhanh, series… Đường dẫn bài tự sinh từ tiêu đề.
+4. **Xem trước**: xem bài gần đúng như trên blog, ở cỡ máy tính và điện thoại.
+5. **Lưu nháp** (chưa hiện trên blog) hoặc **Đăng bài**. Mỗi lần lưu là một commit lên GitHub; blog cập nhật sau 1–2 phút.
+   Ngày đăng ở tương lai = hẹn giờ (cần bật lịch deploy hằng ngày, xem README).
+
+Điều nên biết:
+
+- Bài đang viết dở được giữ tự động trên trình duyệt (chỉ phần chữ). Ảnh chưa lưu lên blog sẽ mất nếu đóng trang.
+- Trang chỉ sửa bài `.md`. Bài `.mdx` (có component như `<Callout>`, `<Figure>`) vẫn sửa trong mã nguồn hoặc trên GitHub.
+- Sau lần sửa đầu tiên, phần nội dung được trình soạn ghi lại theo chuẩn Markdown của nó (ví dụ đổi `*` thành `-`
+  ở danh sách) — nội dung hiển thị không đổi.
+- Repo công khai nên **bản nháp cũng đọc được trên GitHub**, chỉ là không hiện trên blog.
+- **Trợ lý AI** (nút AI): viết nháp từ ý tưởng, sửa đoạn đang bôi đen, gợi ý tiêu đề/mô tả/thẻ. Cần đặt khoá DeepSeek
+  một lần — xem docs/CLOUDFLARE.md, mục `DEEPSEEK_API_KEY`. AI có thể sai: hãy đọc lại và kiểm chứng trước khi đăng.
+
 ## Bắt đầu nhanh
 
 ```bash

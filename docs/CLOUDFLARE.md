@@ -177,6 +177,18 @@ Từ giờ: push lên nhánh `main` → tự deploy bản chính thức. Push nh
 Secret là giá trị bí mật, chỉ Worker đọc được; **không** nằm trong code hay trong `wrangler.jsonc`.
 Đặt sau khi Worker đã tồn tại (sau bước 6). Secret có hiệu lực ngay, không cần build lại.
 
+### `DEEPSEEK_API_KEY` — tuỳ chọn (trợ lý AI ở trang viết bài)
+
+Bật trợ lý AI trên `/viet-bai/`. Tạo khoá tại <https://platform.deepseek.com/api_keys> (cần nạp số dư), rồi:
+
+```bash
+npx wrangler secret put DEEPSEEK_API_KEY
+```
+
+Khoá chỉ nằm trên Cloudflare — không có trong mã nguồn hay trình duyệt. Endpoint `/api/ai` chỉ phục vụ người có token
+GitHub **ghi được** vào repo khai báo ở `GITHUB_REPO` (wrangler.jsonc), nên người lạ không dùng chùa được khoá của bạn.
+Kiểm tra: `https://<domain>/api/health` phải có `"ai":true`. Đổi model bằng biến `DEEPSEEK_MODEL` (mặc định `deepseek-flash`).
+
 ### `HASH_SALT` — bắt buộc
 
 Worker không lưu IP hay thông tin cá nhân của bạn đọc. Để chống đếm trùng, nó chỉ giữ một mã băm ẩn danh đổi mỗi ngày:

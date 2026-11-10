@@ -42,6 +42,7 @@ từ điện thoại tới màn hình lớn.
 ### Cho người viết
 
 - **Markdown hoặc MDX** — mỗi bài một thư mục, ảnh đặt ngay cạnh bài và được Astro tự tối ưu (WebP/AVIF, nhiều kích thước).
+- **Trang viết bài `/viet-bai/`** — soạn trực quan như Word, xem trước, lưu nháp/đăng bài, có trợ lý AI (DeepSeek, tuỳ chọn). Xem [docs/WRITING.md](docs/WRITING.md).
 - **CMS trên web tại `/admin/`** ([Sveltia CMS](https://sveltiacms.app)) — viết, sửa, tải ảnh ngay trên trình duyệt, kể cả trên điện thoại.
 - **`npm run new`** — tạo khung bài mới với frontmatter đầy đủ trong 1 giây.
 - **Bài nháp & hẹn giờ** — `draft: true` chỉ hiện khi chạy dev; `pubDate` trong tương lai sẽ tự lên trang đúng ngày.

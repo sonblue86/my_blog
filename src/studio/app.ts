@@ -316,6 +316,9 @@ function autoGrow(area: HTMLTextAreaElement) {
   area.style.height = `${area.scrollHeight}px`;
 }
 
+const growFields = () => [F.title(), F.description()].forEach(autoGrow);
+window.addEventListener('resize', growFields);
+
 function fillForm(d: Doc) {
   const m = d.meta;
   F.title().value = m.title;
@@ -334,7 +337,6 @@ function fillForm(d: Doc) {
   F.comments().checked = m.comments;
   $('[data-slug-field]').hidden = !d.isNew;
   $('[data-action="delete"]').hidden = d.isNew;
-  [F.title(), F.description()].forEach(autoGrow);
   syncDerived();
   void syncCover();
 }
@@ -508,6 +510,7 @@ async function mountEditor(d: Doc, text: string) {
   setMode('write');
   closeDrawers();
   show('editor');
+  growFields(); // only measurable once the editor view is visible
   setStatus('saved', d.isNew ? 'Bài mới — chưa lưu lên blog' : 'Đã đồng bộ với blog');
   editor = await buildEditor(text);
   syncDerived();
@@ -638,6 +641,7 @@ function setMode(mode: 'write' | 'preview') {
   $$('[data-mode-btn]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.modeBtn === mode)));
   $('[data-pane="write"]').hidden = mode !== 'write';
   $('[data-pane="preview"]').hidden = mode !== 'preview';
+  if (mode === 'write') growFields();
   if (mode === 'preview') void renderPreview();
 }
 

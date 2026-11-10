@@ -30,3 +30,5 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Astro `security.csp` KHÔNG băm `<script is:inline>` và `style-src-elem` không kế thừa `style-src` → trang mất JS/CSS âm thầm.
   Giữ `integrations/csp-inline.mjs`; mỗi lần thêm nguồn ngoài (iframe, script, CSS) phải thử bản build trên `wrangler dev`, không phải `astro dev` (dev không áp CSP).
 - Build lại khi `wrangler dev` đang chạy có thể để lại 404 bị cache (header Cache-Control áp cả cho 404) → tải lại trang trước khi kết luận lỗi.
+- Đo kích thước phần tử (scrollHeight…) khi view còn `display:none` luôn ra 0 → ô tiêu đề tự co về 0px. Đo sau khi hiện view.
+- Sửa nhiều file bằng một script thay chuỗi: script dừng ở chuỗi đầu tiên không khớp và bỏ dở phần sau → kiểm lại từng thay đổi, hoặc dùng Edit.
