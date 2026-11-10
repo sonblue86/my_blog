@@ -180,8 +180,9 @@ Secret là giá trị bí mật, chỉ Worker đọc được; **không** nằm 
 ### `HASH_SALT` — bắt buộc
 
 Worker không lưu IP hay thông tin cá nhân của bạn đọc. Để chống đếm trùng, nó chỉ giữ một mã băm ẩn danh đổi mỗi ngày:
-`SHA-256(ngày | IP | trình duyệt | HASH_SALT)`. Thiếu `HASH_SALT`, Worker dùng một chuỗi mặc định ai cũng biết — mã
-băm khi đó không còn thật sự ẩn danh.
+`SHA-256(ngày | IP | trình duyệt | HASH_SALT)`. Thiếu `HASH_SALT`, Worker **từ chối ghi** lượt xem và
+cảm xúc (trả 503; trang vẫn đọc bình thường) — vì mã nguồn công khai, một chuỗi mặc định sẽ cho phép dò ngược mã băm ra IP.
+Kiểm tra nhanh: mở `https://<domain>/api/health`, phải thấy `"salt":true`.
 
 ```bash
 # 1) Tạo một chuỗi ngẫu nhiên dài:

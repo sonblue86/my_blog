@@ -1,8 +1,23 @@
+# Header bảo mật cho mọi file tĩnh (Workers Static Assets). Các rule khớp cùng một đường dẫn được CỘNG DỒN.
+#
+# CSP chia làm hai phần:
+#   • Trang Astro: script-src/style-src (kèm mã băm từng script/style) nằm trong thẻ <meta> do Astro sinh lúc build
+#     — xem security.csp trong astro.config.mjs. Thêm nguồn bên ngoài (iframe, script…) thì sửa ở đó.
+#   • File này: các chỉ thị mà <meta> không hỗ trợ (frame-ancestors) + chính sách riêng cho /admin/.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'
+
+# Trang quản trị nhận token GitHub: script chỉ được tải từ unpkg.com (bản Sveltia CMS chính được ghim + kiểm mã băm
+# trong public/admin/index.html; nó tự tải thêm module phụ cũng từ unpkg.com). Không cho nhúng vào iframe, không cache.
+/admin/*
+  Content-Security-Policy: script-src https://unpkg.com; frame-ancestors 'none'
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
 
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable

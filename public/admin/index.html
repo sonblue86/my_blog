@@ -11,7 +11,16 @@
       Sveltia CMS — trình soạn bài trên web cho blog Nhịp Số.
       Cấu hình ở ./config.yml (cùng thư mục). Khi chạy `npm run dev`, mở /admin/index.html.
       Tài liệu: https://sveltiacms.app/en/docs
+
+      BẢO MẬT: trang này nhận token GitHub có quyền ghi repo, nên script được GHIM phiên bản và kèm
+      mã băm `integrity` — trình duyệt từ chối chạy nếu file trên CDN bị thay đổi.
+      Nâng cấp: đổi số phiên bản ở `src` rồi tính lại mã băm:
+        curl -sL https://unpkg.com/@sveltia/cms@<phiên-bản>/dist/sveltia-cms.js | openssl dgst -sha384 -binary | openssl base64 -A
     -->
-    <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
+    <script
+      src="https://unpkg.com/@sveltia/cms@0.262.1/dist/sveltia-cms.js"
+      integrity="sha384-0I8SJ0aZj6wQEpF/FIs2iCJqDlIhSR5xzNQNZFYMRgxcTNPPtFqCLM+PYhVLP+gg"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>

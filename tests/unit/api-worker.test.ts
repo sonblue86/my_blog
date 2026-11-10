@@ -51,6 +51,9 @@ describe('visitorId', () => {
     expect(a).toMatch(/^[0-9a-f]{24}$/);
     expect(a).not.toContain('203');
   });
+  it('refuses to hash without a secret salt (no public fallback)', async () => {
+    await expect(visitorId('2026-11-09', '1.1.1.1', 'UA', '')).rejects.toThrow(/salt/);
+  });
   it('rotates daily and depends on ip, ua and salt', async () => {
     const base = await visitorId('2026-11-09', '1.1.1.1', 'UA', 's');
     expect(await visitorId('2026-11-10', '1.1.1.1', 'UA', 's')).not.toBe(base);

@@ -69,7 +69,8 @@ async function route(request: Request, env: Env, url: URL): Promise<Response> {
 
   if (path === '/api/health') {
     if (method !== 'GET' && method !== 'HEAD') return methodNotAllowed('GET, HEAD');
-    return json({ ok: true, db: Boolean(env.DB) });
+    // `salt` only says whether the secret exists — lets the owner verify the deploy without wrangler.
+    return json({ ok: true, db: Boolean(env.DB), salt: Boolean(env.HASH_SALT) });
   }
 
   const handlers: Record<string, { method: 'GET' | 'POST'; run: (c: Ctx) => Promise<Response> }> = {
@@ -173,6 +174,12 @@ async function rateLimit({ env, request }: Ctx, bucket: string) {
 }
 
 async function reader({ request, env }: Ctx) {
+  // No secret salt → no writes. Falling back to a salt committed in this public repo would make the
+  // stored hashes reversible to IP addresses.
+  if (!env.HASH_SALT) {
+    console.error('HASH_SALT is not set: views/reactions are disabled. Run `npx wrangler secret put HASH_SALT`.');
+    throw new HttpError(503, MESSAGES.disabled);
+  }
   const day = dayKey();
   const visitor = await visitorId(day, clientIp(request), request.headers.get('user-agent') || '', env.HASH_SALT);
   return { day, visitor };

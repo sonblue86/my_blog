@@ -9,6 +9,7 @@ import rehypeHeadingIds from './src/lib/rehype-heading-ids.mjs';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeExternalLinks from 'rehype-external-links';
 import sitemapTidy from './integrations/sitemap-tidy.mjs';
+import cspInline from './integrations/csp-inline.mjs';
 import { SITE } from './src/config.ts';
 
 export default defineConfig({
@@ -20,6 +21,37 @@ export default defineConfig({
   // Project-local caches: worktrees can share one node_modules (junction) without clobbering each other.
   cacheDir: './.cache/astro',
   prefetch: { prefetchAll: true, defaultStrategy: 'tap' },
+  // Content-Security-Policy as a <meta> on every page: Astro hashes each script/style it emits, so an
+  // injected inline <script> never runs. Header-only directives (frame-ancestors) are in public/_headers.
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        // Articles may embed images from anywhere (Markdown), YouTube thumbnails included.
+        "img-src 'self' data: blob: https:",
+        "font-src 'self'",
+        "media-src 'self'",
+        // /api/* is same-origin; cloudflareinsights = optional Web Analytics beacon.
+        "connect-src 'self' https://cloudflareinsights.com",
+        // Comments (Giscus), newsletter captcha (Turnstile), <YouTube> player.
+        "frame-src https://giscus.app https://challenges.cloudflare.com https://www.youtube-nocookie.com",
+        "worker-src 'self'",
+        "manifest-src 'self'",
+      ],
+      scriptDirective: {
+        resources: ["'self'", 'https://giscus.app', 'https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'],
+      },
+      styleDirective: {
+        resources: [
+          { resource: "'self'", kind: 'element' },
+          // giscus client.js loads https://giscus.app/default.css for its iframe.
+          { resource: 'https://giscus.app', kind: 'element' },
+          // style="…" attributes (cover gradients, Expressive Code, CSS variables) cannot be hashed.
+          { resource: "'unsafe-inline'", kind: 'attribute' },
+        ],
+      },
+    },
+  },
   integrations: [
     // Expressive Code must come before MDX so code blocks in .mdx are handled too.
     expressiveCode({
@@ -48,6 +80,8 @@ export default defineConfig({
       filter: (page) => !page.includes('/thu-vien/') && !page.includes('/tim-kiem/') && !page.includes('/admin/'),
     }),
     sitemapTidy(),
+    // Adds the hashes of <script is:inline> blocks to each page's CSP (Astro only hashes bundled scripts).
+    cspInline(),
   ],
   markdown: {
     processor: unified({

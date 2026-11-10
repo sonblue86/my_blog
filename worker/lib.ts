@@ -56,14 +56,16 @@ export async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const DEV_SALT = 'nhip-so-dev-salt-change-me';
-
 /**
  * Anonymous, daily-rotating reader key: SHA-256(day | ip | user-agent | salt), truncated to 96 bits.
  * Neither the IP nor the user agent is ever stored.
+ *
+ * The salt is REQUIRED and must be secret: this repository is public, so any built-in fallback would
+ * let anyone brute-force the stored hashes back to IP addresses. Callers refuse to write without it.
  */
-export async function visitorId(day: string, ip: string, ua: string, salt: string | undefined): Promise<string> {
-  return (await sha256Hex(`${day}|${ip}|${ua}|${salt || DEV_SALT}`)).slice(0, 24);
+export async function visitorId(day: string, ip: string, ua: string, salt: string): Promise<string> {
+  if (!salt) throw new Error('visitorId: missing salt');
+  return (await sha256Hex(`${day}|${ip}|${ua}|${salt}`)).slice(0, 24);
 }
 
 export function clientIp(request: Request): string {

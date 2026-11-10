@@ -43,3 +43,16 @@ tương phản, vùng chạm 44px, theme-color, TTS + bfcache, lộ email đã �
 - Header tự ẩn có thể chen vào khi kéo bôi đen sát mép trên (nhỏ).
 - Be Vietnam Pro 600 chỉ dùng cho nút/chip — gộp vào 700 sẽ bớt ~34 KB (quyết định thiết kế).
 
+## Review sau deploy (2026-11-10)
+Đã kiểm: lịch sử git (105 commit, không lộ secret), Worker API trên site thật, header, sink HTML, SW, build + 222 test.
+- [x] /admin: ghim Sveltia CMS 0.262.1 + SRI; CSP /admin/* chỉ cho script từ unpkg.com (chưa thử sau khi đăng nhập bằng token)
+- [x] Worker từ chối ghi (503) khi thiếu HASH_SALT; /api/health báo "salt"
+- [ ] Chủ blog: xác nhận HASH_SALT đã đặt trên production TRƯỚC khi deploy (thiếu thì lượt xem/cảm xúc ngừng đếm)
+- [x] Newsletter: bỏ lời hứa chưa làm được (tần suất, huỷ đăng ký)
+- [ ] Chủ blog: tạo khoá Turnstile (siteKey vào src/config.ts, secret bằng wrangler) — chưa bật
+- [x] CSP (meta do Astro sinh + integrations/csp-inline.mjs cho script is:inline) + HSTS; đã thử trên wrangler dev: bài viết, Giscus, tìm kiếm Pagefind, /ngau-nhien/, /admin/ — không vi phạm
+- [ ] Gỡ link nhipso.pages.dev (không tồn tại) và link GitHub/Facebook chung chung ở footer
+- [ ] Domain riêng (workers.dev đang lộ tên tài khoản email); đổi email commit sang noreply của GitHub
+- [ ] giscus.json giới hạn origin; bật branch protection + secret scanning trên GitHub (chưa kiểm được, máy không có gh)
+- [ ] Header vỡ dòng ở bề rộng ~800px
+

@@ -27,3 +27,6 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
   Ẩn/hiện theo breakpoint thì viết trong chính `<style>` của component.
 - Animation `box-shadow` lặp vô hạn giữ main thread bận liên tục; chỉ animate `transform`/`opacity`.
 - Ảnh OG là gradient đục → JPEG (~50 KB) thay vì PNG RGBA (~300 KB, app nhắn tin bỏ preview khi > ~300 KB).
+- Astro `security.csp` KHÔNG băm `<script is:inline>` và `style-src-elem` không kế thừa `style-src` → trang mất JS/CSS âm thầm.
+  Giữ `integrations/csp-inline.mjs`; mỗi lần thêm nguồn ngoài (iframe, script, CSS) phải thử bản build trên `wrangler dev`, không phải `astro dev` (dev không áp CSP).
+- Build lại khi `wrangler dev` đang chạy có thể để lại 404 bị cache (header Cache-Control áp cả cho 404) → tải lại trang trước khi kết luận lỗi.
