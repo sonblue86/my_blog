@@ -47,6 +47,15 @@ export const GISCUS = {
 } as const;
 
 /**
+ * Trang viết bài (/viet-bai/): repo và nhánh GitHub mà trang sẽ commit bài viết vào.
+ * Phải trùng với biến GITHUB_REPO trong wrangler.jsonc (Worker dùng nó để xác minh chủ blog khi gọi AI).
+ */
+export const STUDIO = {
+  repo: 'sonblue86/my_blog',
+  branch: 'main',
+} as const;
+
+/**
  * Cloudflare Web Analytics — thống kê lượt truy cập không cookie, không theo dõi cá nhân.
  * Lấy token tại dash.cloudflare.com → Analytics & Logs → Web Analytics → Add a site.
  * Để trống để tắt. Script chỉ được chèn vào bản build production (không chạy khi `astro dev`).

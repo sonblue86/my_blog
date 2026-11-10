@@ -11,7 +11,7 @@
  *   ns-search-v1         Pagefind (hashed fragments cache-first, entry/js network-first) + search-index.json
  *   ns-saved-v1          articles the reader bookmarked + their CSS/JS/images — never evicted;
  *                        changed only by messages from the page (cache-post / uncache-post / sync-saved)
- * Never touched: non-GET, other origins, /api/*, /admin/*, /cdn-cgi/*, range requests.
+ * Never touched: non-GET, other origins, /api/*, /admin/*, /viet-bai/*, /cdn-cgi/*, range requests.
  *
  * HTML is ALWAYS network-first, so a deploy is visible on the next online navigation; cached HTML
  * is only used when the network fails, answers 5xx, or takes longer than NAV_TIMEOUT.
@@ -44,7 +44,7 @@ const MATCH = { ignoreVary: true };
 /* ------------------------------------------------------------------ */
 
 function isBlocked(path) {
-  return /^\/(?:api|admin|cdn-cgi)(?:\/|$)/.test(path) || path === '/sw.js';
+  return /^\/(?:api|admin|viet-bai|cdn-cgi)(?:\/|$)/.test(path) || path === '/sw.js';
 }
 
 const HAS_EXT = /\.[a-z0-9]+$/i;

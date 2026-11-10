@@ -67,3 +67,22 @@ export function isValidEmail(value: unknown): value is string {
   if (value.includes('..')) return false;
   return EMAIL_RE.test(value);
 }
+
+/* ---------------------------------------------------------------- /api/ai */
+
+export type RewriteMode = 'improve' | 'shorter' | 'longer' | 'fix' | 'simpler' | 'custom';
+export type DraftLength = 'short' | 'medium' | 'long';
+
+export type AiRequest =
+  | { action: 'outline'; topic: string; notes: string; category: string }
+  | { action: 'draft'; topic: string; notes: string; category: string; outline: string; length: DraftLength }
+  | { action: 'rewrite'; text: string; mode: RewriteMode; instruction: string; title: string }
+  | { action: 'meta'; title: string; body: string };
+
+export interface AiMeta {
+  titles: string[];
+  description: string;
+  tags: string[];
+  summary: string;
+  takeaways: string[];
+}

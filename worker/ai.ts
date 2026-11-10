@@ -11,6 +11,9 @@
  */
 import type { Env } from './env';
 import { HttpError, TtlCache, json, sha256Hex } from './lib';
+import type { AiMeta, AiRequest, DraftLength, RewriteMode } from './shared';
+
+export type { AiMeta, AiRequest, DraftLength, RewriteMode };
 
 export const AI_MAX_BODY = 80_000;
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
@@ -28,15 +31,6 @@ export const AI_MESSAGES = {
   upstreamBusy: 'DeepSeek đang quá tải hoặc giới hạn tần suất. Bạn thử lại sau ít phút nhé.',
   upstream: 'DeepSeek đang gặp trục trặc. Bạn thử lại sau nhé.',
 } as const;
-
-export type RewriteMode = 'improve' | 'shorter' | 'longer' | 'fix' | 'simpler' | 'custom';
-export type DraftLength = 'short' | 'medium' | 'long';
-
-export type AiRequest =
-  | { action: 'outline'; topic: string; notes: string; category: string }
-  | { action: 'draft'; topic: string; notes: string; category: string; outline: string; length: DraftLength }
-  | { action: 'rewrite'; text: string; mode: RewriteMode; instruction: string; title: string }
-  | { action: 'meta'; title: string; body: string };
 
 const CATEGORY_NAMES: Record<string, string> = { ai: 'AI', 'cong-nghe': 'Công nghệ', 'doi-song': 'Đời sống' };
 const REWRITE_MODES: RewriteMode[] = ['improve', 'shorter', 'longer', 'fix', 'simpler', 'custom'];
@@ -174,13 +168,6 @@ export function buildAiCall(req: AiRequest): AiCall {
   }
 }
 
-export interface AiMeta {
-  titles: string[];
-  description: string;
-  tags: string[];
-  summary: string;
-  takeaways: string[];
-}
 
 /** Defensive parse of the model's JSON answer: wrong shapes become empty values, never exceptions. */
 export function parseAiMeta(raw: string): AiMeta {

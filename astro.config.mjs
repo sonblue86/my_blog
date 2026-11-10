@@ -31,8 +31,9 @@ export default defineConfig({
         "img-src 'self' data: blob: https:",
         "font-src 'self'",
         "media-src 'self'",
-        // /api/* is same-origin; cloudflareinsights = optional Web Analytics beacon.
-        "connect-src 'self' https://cloudflareinsights.com",
+        // /api/* is same-origin; cloudflareinsights = optional Web Analytics beacon;
+        // api.github.com = the writing studio (/viet-bai/) commits posts straight from the browser.
+        "connect-src 'self' https://cloudflareinsights.com https://api.github.com",
         // Comments (Giscus), newsletter captcha (Turnstile), <YouTube> player.
         "frame-src https://giscus.app https://challenges.cloudflare.com https://www.youtube-nocookie.com",
         "worker-src 'self'",
@@ -77,7 +78,7 @@ export default defineConfig({
     mdx(),
     sitemap({
       // Private/utility pages. Anything else marked noindex is dropped by sitemapTidy() after the build.
-      filter: (page) => !page.includes('/thu-vien/') && !page.includes('/tim-kiem/') && !page.includes('/admin/'),
+      filter: (page) => !page.includes('/thu-vien/') && !page.includes('/tim-kiem/') && !page.includes('/admin/') && !page.includes('/viet-bai/'),
     }),
     sitemapTidy(),
     // Adds the hashes of <script is:inline> blocks to each page's CSP (Astro only hashes bundled scripts).
