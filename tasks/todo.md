@@ -27,7 +27,7 @@ viết bài bằng Markdown/MDX trên GitHub, deploy miễn phí trên Cloudflar
 - [x] 7. Báo cáo + hướng dẫn deploy (README + docs/CLOUDFLARE.md)
 
 ## Review
-**Kết quả:** blog hoàn chỉnh — 9 bài mẫu, ~25 trang, 222 unit test,  0 lỗi, Worker typecheck OK, build ~10 s.
+**Kết quả:** blog hoàn chỉnh — 9 bài mẫu, ~25 trang, 222 unit test, `astro check` 0 lỗi, Worker typecheck OK, build ~10 s.
 
 **Đã kiểm chứng:** build + Pagefind; unit test; Worker API end-to-end (scripts/test-api.mjs 40/40 với wrangler dev + D1 local);
 trình duyệt thật ở 375/390 và 1280/1440 px, sáng/tối (mục lục, thanh công cụ, đọc tiếp, tìm kiếm, offline, OG image).
