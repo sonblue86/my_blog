@@ -3,6 +3,7 @@ title: 'Bài đăng số 1'
 description: 'nội dung của bài đăng số 1 là ....'
 pubDate: 2026-11-10
 category: ai
+draft: true
 ---
 
 ahiihih, đây là tiêu đề
