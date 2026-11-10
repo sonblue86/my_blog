@@ -29,3 +29,15 @@ describe('readingTime', () => {
     expect(readingTime(md).minutes).toBe(5);
   });
 });
+
+describe('slugify edge cases', () => {
+  it('keeps C, C++ and C# apart', () => {
+    expect(new Set([slugify('C'), slugify('C++'), slugify('C#')]).size).toBe(3);
+    expect(slugify('C++')).toBe('c-plus-plus');
+    expect(slugify('C#')).toBe('c-sharp');
+  });
+  it('never returns an empty slug', () => {
+    expect(slugify('🤖')).toMatch(/^t-[a-z0-9]+$/);
+    expect(slugify('日本語')).not.toBe('');
+  });
+});

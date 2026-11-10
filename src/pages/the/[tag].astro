@@ -20,7 +20,7 @@ const { name, posts } = Astro.props;
   noindex={posts.length < 2 /* a one-post tag page only duplicates that post */}
 >
   <PageHeader eyebrow={`Thẻ · ${posts.length} bài viết`} title={`#${name}`}>
-    <a href="/the/" class="link mt-5 inline-block text-sm font-semibold">← Tất cả thẻ</a>
+    <a href="/the/" class="link mt-3 inline-flex min-h-11 items-center text-sm font-semibold">← Tất cả thẻ</a>
   </PageHeader>
   <section class="container-page mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
     {posts.map((p) => <PostCard post={p} />)}

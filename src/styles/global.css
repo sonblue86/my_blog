@@ -26,7 +26,7 @@
   --accent-fg: #ffffff;
   --accent-soft: #eceafe;
   --hot: #f0562e;
-  --success: #0f8a5f;
+  --success: #047857;
   --warning: #b45309;
   --danger: #c2410c;
 
@@ -338,6 +338,16 @@
     color: var(--chip-color, var(--fg-muted));
     background: color-mix(in oklab, var(--chip-color, var(--fg-muted)) 11%, transparent);
     transition: background-color 150ms var(--ease-out);
+  }
+  /* Invisible hit area so 28px chips are still ≥ 44px tall to a finger. */
+  a.chip {
+    position: relative;
+  }
+  a.chip::after,
+  .hit-expand::after {
+    content: '';
+    position: absolute;
+    inset: -8px -2px;
   }
   a.chip:hover {
     background: color-mix(in oklab, var(--chip-color, var(--fg-muted)) 18%, transparent);

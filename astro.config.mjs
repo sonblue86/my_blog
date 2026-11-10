@@ -19,7 +19,7 @@ export default defineConfig({
   build: { format: 'directory' },
   // Project-local caches: worktrees can share one node_modules (junction) without clobbering each other.
   cacheDir: './.cache/astro',
-  prefetch: { prefetchAll: false, defaultStrategy: 'hover' },
+  prefetch: { prefetchAll: true, defaultStrategy: 'tap' },
   integrations: [
     // Expressive Code must come before MDX so code blocks in .mdx are handled too.
     expressiveCode({

@@ -138,7 +138,7 @@ async function main() {
   r = await call('/api/subscribe', { method: 'POST', body: { email, website: '' } });
   check("new email → subscribed (honeypot call didn't store it)", r.status === 200 && r.data?.ok === true && r.data?.status === 'subscribed', r.text);
   r = await call('/api/subscribe', { method: 'POST', body: { email: `  ${email.toUpperCase()} `, website: '' } });
-  check('same email (case/space differ) → exists (idempotent)', r.status === 200 && r.data?.ok === true && r.data?.status === 'exists', r.text);
+  check('same email (case/space differ) → same neutral answer (no subscription probing)', r.status === 200 && r.data?.ok === true && r.data?.status === 'subscribed', r.text);
   for (const bad of ['khong-phai-email', 'a@b', 'a b@c.com', 'x@y..com', '']) {
     r = await call('/api/subscribe', { method: 'POST', body: { email: bad, website: '' } });
     check(`invalid email ${JSON.stringify(bad)} → 400 { ok:false, error }`, r.status === 400 && r.data?.ok === false && typeof r.data?.error === 'string', r.text);

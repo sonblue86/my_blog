@@ -816,7 +816,7 @@ const ico = (svg: string, size = 20) =>
 
     // Leaving the page (or going into bfcache) must silence the voice.
     addEventListener('pagehide', () => {
-      reader?.destroy();
+      reader?.pause(); // pause() emits, so the UI shows "Đã tạm dừng" if the page comes back from bfcache
       highlightRange();
     });
 

@@ -92,8 +92,9 @@ export function relatedPosts(post: Post, all: Post[], limit = 3): Post[] {
 
 /** Posts in the same series, ordered by seriesOrder then date. */
 export function seriesPosts(series: string, all: Post[]): Post[] {
+  const slug = slugify(series);
   return all
-    .filter((p) => p.data.series === series)
+    .filter((p) => !!p.data.series && slugify(p.data.series) === slug)
     .sort(
       (a, b) =>
         (a.data.seriesOrder ?? 999) - (b.data.seriesOrder ?? 999) ||
@@ -103,6 +104,8 @@ export function seriesPosts(series: string, all: Post[]): Post[] {
 
 export async function getSeries(): Promise<{ name: string; slug: string; posts: Post[] }[]> {
   const all = await getPosts();
-  const names = [...new Set(all.map((p) => p.data.series).filter((s): s is string => !!s))];
-  return names.map((name) => ({ name, slug: slugify(name), posts: seriesPosts(name, all) }));
+  // One entry per slug (the first spelling wins), so spelling variants can't produce two pages for one URL.
+  const bySlug = new Map<string, string>();
+  for (const p of all) if (p.data.series && !bySlug.has(slugify(p.data.series))) bySlug.set(slugify(p.data.series), p.data.series);
+  return [...bySlug].map(([slug, name]) => ({ name, slug, posts: seriesPosts(name, all) }));
 }

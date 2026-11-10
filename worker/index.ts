@@ -262,12 +262,12 @@ async function handleSubscribe(c: Ctx): Promise<Response> {
   const source = typeof body.source === 'string' ? body.source.slice(0, 64) : null;
   const res = await c.db
     .prepare(
-      `INSERT INTO subscribers (email, status, source, created_at) VALUES (?1, 'active', ?2, ?3)
-       ON CONFLICT (email) DO UPDATE SET status = 'active' WHERE subscribers.status <> 'active'`,
+      `INSERT OR IGNORE INTO subscribers (email, status, source, created_at) VALUES (?1, 'active', ?2, ?3)`,
     )
     .bind(email, source, new Date().toISOString())
     .run();
 
-  const status = (res.meta.changes ?? 0) > 0 ? 'subscribed' : 'exists';
-  return json({ ok: true, status } satisfies SubscribeResult);
+  // Same answer whether or not the address was already on the list: no probing who subscribed.
+  void res;
+  return json({ ok: true, status: 'subscribed' } satisfies SubscribeResult);
 }

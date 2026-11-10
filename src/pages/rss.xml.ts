@@ -9,15 +9,14 @@ export const GET: APIRoute = async (context) => {
     title: SITE.title,
     description: SITE.description,
     site: context.site!,
-    customData: `<language>vi</language>`,
+    xmlns: { atom: 'http://www.w3.org/2005/Atom' },
+    customData: `<language>vi</language><atom:link href="${new URL('rss.xml', context.site)}" rel="self" type="application/rss+xml"/>`,
     items: posts.map((p) => ({
       title: p.data.title,
       description: p.data.description,
       pubDate: p.data.pubDate,
       link: postUrl(p),
       categories: [getCategory(p.data.category).name, ...p.data.tags],
-      // Full HTML for .md posts (MDX has no pre-rendered HTML here).
-      content: p.rendered?.html || undefined,
     })),
   });
 };

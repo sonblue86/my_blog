@@ -107,8 +107,15 @@ describe('seriesPosts', () => {
     expect(ids(seriesPosts('S', all))).toEqual(['a', 'b']);
   });
 
-  it('phân biệt chính xác tên series', () => {
-    expect(seriesPosts('s', [post('x', { series: 'S' })])).toEqual([]);
+  // Series are identified by their URL slug: spelling variants ("Nhập môn AI" / "Nhập Môn AI") share one page,
+  // so they must be one series — otherwise the page for that URL listed only one variant's posts.
+  it('gom các cách viết khác nhau của cùng một series (cùng slug)', () => {
+    const a = post('a', { series: 'Nhập môn AI', seriesOrder: 1 });
+    const b = post('b', { series: 'Nhập Môn AI', seriesOrder: 2 });
+    expect(seriesPosts('nhap mon ai', [b, a]).map((p) => p.id)).toEqual(['a', 'b']);
+  });
+  it('không gom các series khác slug', () => {
+    expect(seriesPosts('s', [post('x', { series: 'S2' })])).toEqual([]);
   });
 });
 

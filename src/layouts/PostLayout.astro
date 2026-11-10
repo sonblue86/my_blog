@@ -288,7 +288,7 @@ const jsonLd = [
               <ul class="flex flex-wrap gap-2" aria-label="Thẻ">
                 {tags.map((t) => (
                   <li>
-                    <a href={tagUrl(t)} class="tag">
+                    <a href={tagUrl(t)} class="tag hit-expand">
                       #{t}
                     </a>
                   </li>
@@ -408,7 +408,9 @@ const jsonLd = [
     color: var(--fg-subtle);
   }
   .breadcrumbs a {
-    padding: 4px 0;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     transition: color 150ms var(--ease-out);
   }
   .breadcrumbs a:hover {
@@ -687,7 +689,7 @@ const jsonLd = [
     width: 1.5em;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: var(--fg-subtle);
+    color: var(--fg-muted);
   }
 
   .post-end {
@@ -698,6 +700,7 @@ const jsonLd = [
     border-top: 1px solid var(--border);
   }
   .tag {
+    position: relative;
     display: inline-flex;
     align-items: center;
     height: 34px;

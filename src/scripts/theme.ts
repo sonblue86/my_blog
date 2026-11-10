@@ -16,9 +16,18 @@ export function resolved(pref: ThemePref = getPref()): 'light' | 'dark' {
   return pref === 'system' ? (media.matches ? 'dark' : 'light') : pref;
 }
 
+/** The browser toolbar / PWA status bar colour must match the chosen theme, not the OS one. */
+function syncThemeColor(theme: 'light' | 'dark') {
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => {
+    m.media = 'all';
+    m.content = theme === 'dark' ? '#0c0d11' : '#fbfaf7';
+  });
+}
+
 function apply(pref: ThemePref) {
   const root = document.documentElement;
   const theme = resolved(pref);
+  syncThemeColor(theme);
   root.dataset.theme = theme;
   root.dataset.themePref = pref;
   document.dispatchEvent(new CustomEvent('ns:theme-changed', { detail: { theme, pref } }));
@@ -63,6 +72,7 @@ let wired = false;
 export function initTheme() {
   if (wired) return;
   wired = true;
+  syncThemeColor(resolved());
   media.addEventListener('change', () => {
     if (getPref() === 'system') apply('system');
   });

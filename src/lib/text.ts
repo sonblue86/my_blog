@@ -5,7 +5,9 @@
 
 /** "Đây là Tiêu đề!" -> "day-la-tieu-de" (bỏ dấu, đ -> d, ký tự lạ -> "-"). */
 export function slugify(input: string): string {
-  return input
+  const slug = input
+    .replace(/\+/g, ' plus ')
+    .replace(/#/g, ' sharp ')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/đ/g, 'd')
@@ -13,6 +15,13 @@ export function slugify(input: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+  return slug || `t-${shortHash(input)}`; // e.g. a tag written only in emoji or CJK
+}
+
+function shortHash(s: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return (h >>> 0).toString(36);
 }
 
 /** Vietnamese reading speed, measured in space-separated syllables per minute. */

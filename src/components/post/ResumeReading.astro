@@ -11,16 +11,39 @@ import Icon from '../ui/Icon.astro';
 </div>
 
 <style>
+  /* Fixed snackbar above the mobile action bar (bottom-center on desktop), so it is visible on arrival. */
   .resume {
+    position: fixed;
+    left: 50%;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    z-index: 46;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-    padding: 8px 8px 8px 14px;
+    gap: 8px;
+    width: min(520px, calc(100vw - 24px));
+    padding: 6px 6px 6px 16px;
     border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--border));
     border-radius: 999px;
-    background: var(--accent-soft);
+    background: color-mix(in oklab, var(--bg-elevated) 94%, var(--accent));
     color: var(--fg);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-50%);
+  }
+  @media (min-width: 1024px) {
+    .resume {
+      bottom: 24px;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .resume:not([hidden]) {
+      animation: resume-in 360ms var(--ease-spring);
+    }
+  }
+  @keyframes resume-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 16px);
+    }
   }
   .resume:not([hidden]) {
     display: flex;
@@ -30,7 +53,7 @@ import Icon from '../ui/Icon.astro';
     color: var(--accent);
   }
   .resume-go {
-    height: 36px;
+    height: 44px;
     padding: 0 14px;
     border-radius: 999px;
     background: var(--accent);
@@ -42,8 +65,8 @@ import Icon from '../ui/Icon.astro';
   .resume-x {
     display: grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 999px;
     color: var(--fg-subtle);
   }
@@ -68,5 +91,13 @@ import Icon from '../ui/Icon.astro';
       scrollTo({ top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     });
     box.querySelector('[data-resume-x]')!.addEventListener('click', () => (box.hidden = true));
+    // Reading on from the top means "no thanks": get out of the way.
+    const onScroll = () => {
+      if (scrollY > innerHeight * 1.2) {
+        box.hidden = true;
+        removeEventListener('scroll', onScroll);
+      }
+    };
+    addEventListener('scroll', onScroll, { passive: true });
   }
 </script>
