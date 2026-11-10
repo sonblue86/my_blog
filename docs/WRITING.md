@@ -37,7 +37,9 @@ Cách thuận tiện nhất để soạn và đăng bài, không cần mở mã 
 ## Khối nội dung (callout, các bước, biểu đồ…)
 
 Bài `.md` dùng được các khối trình bày phong phú mà không cần MDX. Trong trang `/viet-bai/`, bấm **Chèn khối** để chọn
-từ thư viện (có hình thu nhỏ); khối hiện ngay trong trình soạn đúng như trên blog, bấm **Sửa nội dung** trên khối để thay chữ.
+từ thư viện (có hình thu nhỏ). Mỗi khối được soạn bằng **biểu mẫu riêng** — ô tiêu đề, danh sách thêm/xoá/sắp xếp, bảng số liệu —
+với phần xem trước cập nhật ngay bên cạnh; không cần nhớ cú pháp. Khối hiện trong bài đúng như trên blog; rê chuột vào khối rồi bấm
+**Sửa …** (hoặc bấm đúp) để mở lại biểu mẫu, bấm một lần rồi nhấn Delete để xoá.
 
 Về bản chất, mỗi khối là một khối mã có "ngôn ngữ" là tên khối, nên cũng gõ tay được trong file Markdown:
 
@@ -75,7 +77,7 @@ Mở `http://localhost:4321`.
 
 Trong nội dung khối dùng được `**in đậm**`, `*nghiêng*`, `` `mã` `` và `[liên kết](https://…)`. Mọi thứ khác được hiển thị nguyên văn
 (không chạy HTML). Bộ dựng hình nằm ở `src/lib/blocks.ts`, kiểu dáng ở `src/styles/blocks.css`; thêm khối mới = thêm một mục
-vào `BLOCKS`. Bài `.mdx` không dùng cú pháp này — ở đó đã có component `<Callout>`, `<Steps>`, `<ProsCons>`…
+vào `BLOCKS` và một biểu mẫu vào `src/lib/block-forms.ts`. Bài `.mdx` không dùng cú pháp này — ở đó đã có component `<Callout>`, `<Steps>`, `<ProsCons>`…
 
 ## Bắt đầu nhanh
 

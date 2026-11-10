@@ -69,7 +69,7 @@ export function inline(text: string): string {
 }
 
 const lines = (src: string) => src.replace(/\r\n?/g, '\n').split('\n');
-const clean = (src: string) => lines(src).map((l) => l.trimEnd());
+export const clean = (src: string) => lines(src).map((l) => l.trimEnd());
 
 /** Paragraphs (blank-line separated) and "- " bullet lists → HTML. */
 export function rich(input: string[]): string {
@@ -99,7 +99,7 @@ export function rich(input: string[]): string {
 }
 
 /** "# Title" sections: [{ title, body[] }]. Lines before the first "# " go to a section without title. */
-function sections(src: string): { title: string; body: string[] }[] {
+export function sections(src: string): { title: string; body: string[] }[] {
   const out: { title: string; body: string[] }[] = [];
   for (const line of clean(src)) {
     const h = /^#{1,3}\s+(.*)$/.exec(line.trim());
@@ -111,7 +111,7 @@ function sections(src: string): { title: string; body: string[] }[] {
 }
 
 /** "a | b | c" rows (blank lines ignored). */
-const rows = (src: string) =>
+export const rows = (src: string) =>
   clean(src)
     .filter((l) => l.trim())
     .map((l) => l.split('|').map((c) => c.trim()));

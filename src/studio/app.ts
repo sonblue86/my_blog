@@ -6,10 +6,11 @@
  * textContent / attributes — never innerHTML — except the Markdown preview, which is rendered by
  * markdown-it with raw HTML disabled (src/studio/preview.ts).
  */
-import { BLOCKS, blockMarkdown } from '../lib/blocks';
+import { BLOCKS } from '../lib/blocks';
 import { initTheme, toggleTheme } from '../scripts/theme';
 import { aiAvailable, aiMeta, aiStream, type AiRequest } from './ai-client';
-import { createEditor, type Range, type StudioEditor } from './editor';
+import { openBlockForm } from './block-form';
+import { createEditor, type BlockRef, type Range, type StudioEditor } from './editor';
 import { GitHub, GitHubError } from './github';
 import { mimeFromName, prepareImage, type PendingImage } from './images';
 import {
@@ -492,6 +493,7 @@ async function buildEditor(text: string): Promise<StudioEditor> {
     markdown: text,
     onUpload: addImage,
     resolveImage,
+    onEditBlock: (block) => void editBlock(block),
     onChange(md) {
       if (!ready || md === markdown) return;
       markdown = md;
@@ -743,10 +745,31 @@ $('[data-gallery-body]').addEventListener('click', (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>('[data-block]');
   if (!card || !editor) return;
   gallery().close();
-  editor.insertAtCursor(blockMarkdown(card.dataset.block!));
-  markDirty();
-  toast('Đã chèn khối — bấm “Sửa nội dung” trên khối để thay chữ.');
+  void insertBlockViaForm(card.dataset.block!);
 });
+
+const confirmDiscard = () =>
+  confirmDialog({ title: 'Bỏ thay đổi?', text: 'Những gì bạn vừa sửa trong khối này sẽ không được giữ lại.', ok: 'Bỏ thay đổi', danger: true });
+
+/** Gallery → form (pre-filled with an example) → block in the post. */
+async function insertBlockViaForm(name: string) {
+  const def = BLOCKS.find((b) => b.name === name);
+  if (!def || !editor) return;
+  const result = await openBlockForm({ name, source: def.template, mode: 'insert', confirmDiscard });
+  if (result?.action !== 'apply' || !editor) return;
+  editor.insertBlock(result.name, result.source);
+  markDirty();
+}
+
+/** "Sửa khối" on a block (or a double-click) → form → the block is updated in place. */
+async function editBlock(block: BlockRef) {
+  if (!editor) return;
+  const result = await openBlockForm({ name: block.name, source: block.source, mode: 'edit', confirmDiscard });
+  if (!result || !editor) return;
+  if (result.action === 'delete') editor.deleteBlock(block.pos);
+  else editor.updateBlock(block.pos, result.name, result.source);
+  markDirty();
+}
 // Click on the backdrop closes the gallery.
 gallery().addEventListener('click', (e) => {
   if (e.target === gallery()) gallery().close();

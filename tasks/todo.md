@@ -81,3 +81,15 @@ dựng prompt, xác thực, chuyển SSE); kéo-thả/dán ảnh vào thân bài
 quy trình, thẻ, biểu đồ thanh/cột); chèn khối trong trình soạn, sửa nội dung, xem trước, nội dung lưu ra đúng cú pháp.
 **Chưa nhìn tận mắt:** biểu đồ tròn/vành, số liệu, FAQ, YouTube, nút trên trang blog (công cụ chụp màn hình trả ảnh trắng
 ở cuối trang dài; DOM và kích thước đúng, hình học có unit test) và giao diện tối của các khối.
+
+## Sửa khối bằng biểu mẫu (2026-11-10, nhánh feat/viet-bai)
+Nguyên nhân lỗi "không thấy con trỏ, số dòng rớt lên đầu": CodeMirror (ô soạn mã của Crepe) chèn <style> lúc chạy, bị CSP chặn.
+Không nới CSP; thay vào đó bỏ CodeMirror và tự vẽ khối mã bằng node view riêng (src/studio/editor.ts).
+- [x] src/lib/block-forms.ts: mô hình biểu mẫu cho 17 khối (parse ⇄ serialize), 10 unit test (khứ hồi, ký tự phá cấu trúc)
+- [x] src/studio/block-form.ts: hộp thoại biểu mẫu + xem trước trực tiếp; thêm/xoá/đổi thứ tự; Enter = dòng mới; Ctrl+Enter = xong;
+      đổi loại hộp callout; hỏi lại khi đóng mà chưa lưu
+- [x] Khối trong bài: hiện đúng như blog, nút "Sửa …" khi rê chuột, bấm đúp để sửa; khối mã thường là <pre><code> có con trỏ thật
+
+**Đã kiểm chứng (trình duyệt, 1280px, giao diện sáng):** chèn biểu đồ qua biểu mẫu, đổi kiểu, thêm dòng, đổi thứ tự, mở lại để sửa;
+chèn "các bước"; gõ trong khối mã thường; khôi phục bản dở có khối; không còn vi phạm CSP sau khi tải lại trang. 286 unit test.
+**Chưa kiểm chứng:** biểu mẫu trên màn hình điện thoại và giao diện tối; kéo-thả khối bằng tay nắm; phím Tab trong khối mã.

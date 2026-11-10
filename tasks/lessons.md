@@ -33,3 +33,5 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Đo kích thước phần tử (scrollHeight…) khi view còn `display:none` luôn ra 0 → ô tiêu đề tự co về 0px. Đo sau khi hiện view.
 - Sửa nhiều file bằng một script thay chuỗi: script dừng ở chuỗi đầu tiên không khớp và bỏ dở phần sau → kiểm lại từng thay đổi, hoặc dùng Edit.
 - Nội dung tự dựng chèn vào `.prose` sẽ dính kiểu danh sách của bài (số thứ tự, chấm tròn, khoảng cách li). Khối tự vẽ marker phải tắt các kiểu đó bằng selector đủ mạnh (`ol.nb.nb-steps`), không dựa vào thứ tự file CSS.
+- Thư viện chèn `<style>` lúc chạy (CodeMirror/style-mod, nhiều UI kit) sẽ vỡ giao diện âm thầm dưới CSP băm style. Kiểm tra console CSP ngay khi thêm thư viện UI; ưu tiên bỏ/thay thư viện hơn là nới CSP.
+- Bộ đệm console của công cụ trình duyệt giữ lỗi qua các lần tải trang: muốn biết lỗi có còn không thì ghi một mốc (console.error) rồi chỉ xét các dòng sau mốc.
