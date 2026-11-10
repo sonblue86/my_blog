@@ -537,16 +537,17 @@ const ico = (svg: string, size = 20) =>
   ::highlight(tts-sentence) {
     background-color: color-mix(in oklab, var(--accent) 22%, transparent);
   }
-  /* Toasts (Toaster.astro, bottom: 16px + --toast-offset) stack above the mini player instead of covering it. */
-  html:has([data-listen-player]:not([hidden])) {
+  /* Toasts (Toaster.astro, bottom: 16px + --toast-offset) stack above the mini player instead of covering it.
+     html[data-listen] is synced from the script — html:has(...) here made every DOM change restyle the whole page. */
+  html[data-listen='open'] {
     --toast-offset: 137px; /* player: bottom 80px + 65px tall, 8px gap */
   }
-  html:has([data-listen-player][data-bar-hidden]:not([hidden])) {
+  html[data-listen='mini'] {
     --toast-offset: 71px;
   }
   @media (min-width: 1024px) {
-    html:has([data-listen-player]:not([hidden])),
-    html:has([data-listen-player][data-bar-hidden]:not([hidden])) {
+    html[data-listen='open'],
+    html[data-listen='mini'] {
       --toast-offset: 81px; /* bottom 24px, no action bar */
     }
   }
@@ -574,6 +575,15 @@ const ico = (svg: string, size = 20) =>
   const RATES = [0.8, 1, 1.2, 1.5];
 
   const player = document.querySelector<HTMLElement>('[data-listen-player]');
+  if (player) {
+    const syncListen = () => {
+      const html = document.documentElement;
+      if (player.hidden) delete html.dataset.listen;
+      else html.dataset.listen = player.hasAttribute('data-bar-hidden') ? 'mini' : 'open';
+    };
+    new MutationObserver(syncListen).observe(player, { attributes: true, attributeFilter: ['hidden', 'data-bar-hidden'] });
+    syncListen();
+  }
   const postBody = document.getElementById('post-body');
   const noVoice = document.getElementById('tts-novoice') as HTMLDialogElement | null;
 

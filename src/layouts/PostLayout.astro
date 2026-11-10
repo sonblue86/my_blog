@@ -347,7 +347,7 @@ const jsonLd = [
       </div>
 
       <aside class="post-toc" aria-label="Mục lục">
-        <Toc headings={tocHeadings} />
+        <Toc headings={tocHeadings} variant="panel" />
       </aside>
     </div>
 
@@ -386,7 +386,8 @@ const jsonLd = [
     </section>
   </article>
 
-  <ActionBar variant="bar" post={post} minutes={minutes} />
+  <ActionBar variant="bar" post={post} minutes={minutes} hasToc={tocHeadings.length >= 2} />
+  <Toc headings={tocHeadings} variant="sheet" />
   <ReaderSettings />
   <ListenPlayer />
   <SelectionShare />
@@ -581,8 +582,8 @@ const jsonLd = [
       display: block;
     }
   }
-  .post-rail > :global(*),
-  .post-toc > :global(*) {
+  .post-rail > :global(.rail),
+  .post-toc > :global(nav) {
     position: sticky;
     top: calc(var(--header-h) + 24px);
   }

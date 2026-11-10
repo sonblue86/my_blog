@@ -72,7 +72,7 @@ import Icon from './Icon.astro';
     const update = () => {
       ticking = false;
       const max = document.documentElement.scrollHeight - innerHeight;
-      document.documentElement.style.setProperty('--page-progress', String(max > 0 ? scrollY / max : 0));
+      btn.style.setProperty('--page-progress', String(max > 0 ? scrollY / max : 0));
       btn.toggleAttribute('data-show', scrollY > innerHeight * 1.5);
     };
     addEventListener(

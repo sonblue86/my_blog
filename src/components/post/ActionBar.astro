@@ -16,20 +16,24 @@ interface Props {
   minutes: number;
   /** Show the "jump to comments" button (only when the page has a comments section). */
   comments?: boolean;
+  /** The article has a table of contents (≥ 2 headings) — otherwise the TOC button would open nothing. */
+  hasToc?: boolean;
 }
-const { variant, post, comments = false } = Astro.props;
+const { variant, post, comments = false, hasToc = false } = Astro.props;
 const url = postUrl(post);
 ---
 
 {
   variant === 'bar' ? (
     <div class="action-bar" data-action-bar role="toolbar" aria-label="Công cụ đọc">
-      <button type="button" class="ab-btn" data-open-toc aria-label="Mục lục">
-        <Icon name="list-tree" />
-        <span class="ab-label" data-ab-left>
-          Mục lục
-        </span>
-      </button>
+      {hasToc && (
+        <button type="button" class="ab-btn" data-open-toc aria-label="Mục lục">
+          <Icon name="list-tree" />
+          <span class="ab-label" data-ab-left>
+            Mục lục
+          </span>
+        </button>
+      )}
       <button type="button" class="ab-btn" data-open-settings aria-label="Tuỳ chỉnh đọc">
         <Icon name="text-size" />
       </button>
@@ -250,11 +254,5 @@ const url = postUrl(post);
       },
       { passive: true },
     );
-    // Show "Còn ~N phút" next to the TOC icon.
-    const left = bar.querySelector<HTMLElement>('[data-ab-left]');
-    document.addEventListener('ns:progress', (e) => {
-      const { remaining, progress } = (e as CustomEvent<{ remaining: number; progress: number }>).detail;
-      if (left) left.textContent = progress > 0.02 && progress < 0.98 ? `~${Math.max(1, remaining)}′` : 'Mục lục';
-    });
   }
 </script>

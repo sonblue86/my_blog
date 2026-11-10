@@ -34,6 +34,7 @@ const { minutes } = Astro.props;
   const body = document.getElementById('post-body');
   if (bar && body) {
     const minutes = Number(bar.dataset.minutes) || 1;
+    const targets = document.querySelectorAll<HTMLElement>('.read-progress, .rail-ring, .sheet-progress');
     let ticking = false;
     let last = -1;
     const update = () => {
@@ -43,7 +44,9 @@ const { minutes } = Astro.props;
       const p = Math.min(1, Math.max(0, (innerHeight * 0.4 - rect.top) / Math.max(1, total)));
       if (Math.abs(p - last) < 0.002) return;
       last = p;
-      document.documentElement.style.setProperty('--read-progress', p.toFixed(4));
+      // Set the variable only on the few elements that read it — on <html> it restyled the whole page every frame.
+      const v = p.toFixed(4);
+      for (const el of targets) el.style.setProperty('--read-progress', v);
       const remaining = Math.max(0, Math.ceil(minutes * (1 - p)));
       document.dispatchEvent(new CustomEvent('ns:progress', { detail: { progress: p, remaining } }));
     };
