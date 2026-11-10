@@ -11,7 +11,7 @@ export const SITE = {
   description:
     'Blog tiếng Việt về trí tuệ nhân tạo, công nghệ và đời sống số: giải thích dễ hiểu, hướng dẫn thực hành và những suy ngẫm chậm rãi.',
   /** Đổi thành domain thật khi deploy (cũng có thể đặt qua biến môi trường SITE_URL). */
-  url: 'https://nhipso.pages.dev',
+  url: 'https://my-blog.phamhongson5151.workers.dev/',
   lang: 'vi',
   locale: 'vi_VN',
   /** Tác giả mặc định (id trong src/content/authors). */
@@ -38,10 +38,10 @@ export const SOCIAL = {
  * Để trống `repo` để tắt bình luận.
  */
 export const GISCUS = {
-  repo: '', // ví dụ: 'ten-ban/nhip-so'
-  repoId: '',
+  repo: 'sonblue86/my_blog', // ví dụ: 'ten-ban/nhip-so'
+  repoId: 'R_kgDOVo5cXQ',
   category: 'Announcements',
-  categoryId: '',
+  categoryId: 'DIC_kwDOVo5cXc4DKys7',
   mapping: 'pathname',
   lang: 'vi',
 } as const;
