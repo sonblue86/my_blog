@@ -173,6 +173,11 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
     overscroll-behavior: contain;
     padding: 8px;
   }
+  @media (max-width: 639.98px), (hover: none) {
+    .pal-foot {
+      display: none !important; /* keyboard hints are useless on touch; scoped CSS beats Tailwind's max-sm:hidden */
+    }
+  }
   .pal-foot {
     display: flex;
     align-items: center;
@@ -215,6 +220,10 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
     background: var(--bg-subtle);
     color: var(--fg-muted);
     font-size: 0.9rem;
+  }
+  .pal-body :global(.pal-item-title),
+  .pal-body :global(.pal-item-meta) {
+    display: block;
   }
   .pal-body :global(.pal-item-title) {
     font-weight: 600;
@@ -264,6 +273,8 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
 
 <script>
   import { instantSearch, mergeHits, terms, escapeHtml, type IndexItem, type Hit } from '../../scripts/search-core';
+  import { loadPagefind, fullTextSearch } from '../../scripts/search-full';
+  import { TIME_ZONE } from '../../lib/date';
   import { toggleTheme } from '../../scripts/theme';
   import { read, write } from '../../lib/storage';
 
@@ -279,12 +290,6 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
   let active = 0;
   let seq = 0;
 
-  type PF = {
-    options: (o: object) => Promise<void>;
-    init: () => void;
-    debouncedSearch: (q: string, o: object, ms: number) => Promise<null | { results: { data: () => Promise<any> }[] }>;
-  };
-  let pagefind: PF | null | undefined;
 
   async function loadIndex() {
     if (index) return index;
@@ -295,21 +300,9 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
     }
     return index!;
   }
-  async function loadPagefind() {
-    if (pagefind !== undefined) return pagefind;
-    try {
-      const url = '/pagefind/pagefind.js';
-      pagefind = (await import(/* @vite-ignore */ url)) as PF;
-      await pagefind.options({ excerptLength: 22, ranking: { metaWeights: { title: 5, ascii: 3 } } });
-      pagefind.init();
-    } catch {
-      pagefind = null; // not built yet (astro dev) — instant search still works
-    }
-    return pagefind;
-  }
 
   const fmtDate = (iso: string) =>
-    iso ? new Date(iso).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    iso ? new Date(iso).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: TIME_ZONE }) : '';
 
   function itemHtml(h: Hit, i: number) {
     const cat = catOf(h.category);
@@ -377,23 +370,8 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
     if (!q) return renderEmpty();
     const instant = instantSearch(index!, q, category);
     render(instant, q);
-    const pf = await loadPagefind();
-    if (!pf || my !== seq) return;
-    const catName = catOf(category)?.name;
-    const res = await pf.debouncedSearch(q, catName ? { filters: { category: catName } } : {}, 160);
-    if (!res || my !== seq) return;
-    const data = await Promise.all(res.results.slice(0, 8).map((r) => r.data()));
-    if (my !== seq) return;
-    const fullHits: Hit[] = data.map((d, k) => ({
-      url: d.url,
-      title: d.meta?.title ?? d.url,
-      excerpt: d.excerpt ?? '',
-      category: d.meta?.category ?? '',
-      minutes: Number(d.meta?.minutes) || 0,
-      date: d.meta?.date ?? '',
-      score: 9 - k * 0.6,
-      sub: (d.sub_results ?? []).filter((s: { url: string }) => s.url.includes('#')).map((s: { title: string; url: string }) => ({ title: s.title, url: s.url })),
-    }));
+    const fullHits = await fullTextSearch(q, catOf(category)?.name, 8, 160);
+    if (!fullHits || my !== seq) return;
     render(mergeHits(instant, fullHits), q);
   }
 
@@ -436,6 +414,12 @@ const cats = CATEGORIES.map((c) => ({ id: c.id, name: c.name, color: c.color }))
 
   input.addEventListener('input', search);
   input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      // <input type=search> eats the first Esc to clear itself; close the palette right away instead.
+      e.preventDefault();
+      dlg.close();
+      return;
+    }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       setActive(active + (e.key === 'ArrowDown' ? 1 : -1));

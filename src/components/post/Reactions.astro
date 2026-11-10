@@ -293,6 +293,7 @@ const REACTIONS = [
     type Stats,
   } from '../../scripts/api';
   import { toast } from '../../scripts/share';
+  import { read as readStore, write as writeStore } from '../../lib/storage';
 
   const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -314,6 +315,20 @@ const REACTIONS = [
       button.append(p);
       setTimeout(() => p.remove(), 1200); // safety net if animations are throttled
     }
+  }
+
+  /** UTC day, the same unit the Worker dedupes on. */
+  const utcDay = () => new Date().toISOString().slice(0, 10);
+  type Days = Record<string, Partial<Record<ReactionKind, string>>>;
+  /** When each of my reactions was counted ('ns:reactions-day'); unknown (older data) counts as "not today". */
+  const reactionDay = (slug: string, kind: ReactionKind) => readStore<Days>('reactions-day', {})[slug]?.[kind];
+  function setReactionDay(slug: string, kind: ReactionKind, day: string | null) {
+    const all = readStore<Days>('reactions-day', {});
+    const forPost = { ...all[slug] };
+    if (day) forPost[kind] = day;
+    else delete forPost[kind];
+    all[slug] = forPost;
+    writeStore('reactions-day', all);
   }
 
   function restart(el: HTMLElement, cls: string) {
@@ -377,6 +392,7 @@ const REACTIONS = [
         const res = await sendReaction(slug, kind, !want);
         s.server = want;
         base = res.reactions;
+        setReactionDay(slug, kind, want ? utcDay() : null);
       } catch (err) {
         s.desired = s.server; // roll back
         persist();
@@ -397,6 +413,12 @@ const REACTIONS = [
       if (!b || !base || !isReactionKind(b.dataset.kind)) return;
       const kind = b.dataset.kind;
       const s = state.get(kind)!;
+      // The server can only undo a reaction made today (its per-day dedupe row). Undoing an older one would be
+      // a silent no-op, and re-adding it would count again — so older reactions stay put.
+      if (s.desired && s.server && reactionDay(slug, kind) !== utcDay()) {
+        toast('Cảm xúc này đã được ghi nhận từ hôm trước nên không bỏ chọn được nữa.', { tone: 'info' });
+        return;
+      }
       s.desired = !s.desired;
       persist();
       render();

@@ -91,6 +91,7 @@ import { CATEGORIES } from '../../config';
 
 <script>
   import { instantSearch, mergeHits, escapeHtml, type IndexItem, type Hit } from '../../scripts/search-core';
+  import { fullTextSearch, loadPagefind } from '../../scripts/search-full';
 
   const input = document.querySelector<HTMLInputElement>('input[name=q]')!;
   const list = document.querySelector<HTMLElement>('[data-results]')!;
@@ -98,10 +99,19 @@ import { CATEGORIES } from '../../config';
   const names: Record<string, string> = { ai: 'AI', 'cong-nghe': 'Công nghệ', 'doi-song': 'Đời sống' };
   let category = 'all';
   let index: IndexItem[] = [];
-  let pf: any = null;
   let seq = 0;
 
   input.value = new URLSearchParams(location.search).get('q') ?? '';
+
+  function render(hits: Hit[], q: string) {
+    count.textContent = hits.length ? `${hits.length} kết quả cho “${q}”` : `Không có kết quả cho “${q}”. Thử bỏ bớt từ hoặc gõ không dấu.`;
+    list.innerHTML = hits
+      .map(
+        (h) =>
+          `<li><a href="${escapeHtml(h.url)}"><p class="r-title">${escapeHtml(h.title)}</p><p class="r-ex">${h.excerpt}</p><p class="r-meta">${[names[h.category], h.minutes ? `${h.minutes} phút đọc` : ''].filter(Boolean).join(' · ')}</p></a></li>`,
+      )
+      .join('');
+  }
 
   async function run() {
     const q = input.value.trim();
@@ -112,48 +122,21 @@ import { CATEGORIES } from '../../config';
       count.textContent = 'Nhập từ khoá để bắt đầu tìm.';
       return;
     }
-    let hits: Hit[] = instantSearch(index, q, category, 30);
-    if (pf) {
-      const res = await pf.debouncedSearch(q, category !== 'all' ? { filters: { category: names[category] } } : {}, 150);
-      if (my !== seq) return;
-      if (res) {
-        const data = await Promise.all(res.results.slice(0, 30).map((r: any) => r.data()));
-        hits = mergeHits(
-          hits,
-          data.map((d: any, k: number) => ({
-            url: d.url,
-            title: d.meta?.title ?? d.url,
-            excerpt: d.excerpt ?? '',
-            category: d.meta?.category ?? '',
-            minutes: Number(d.meta?.minutes) || 0,
-            date: d.meta?.date ?? '',
-            score: 9 - k * 0.3,
-          })),
-          30,
-        );
-      }
-    }
-    if (my !== seq) return;
-    count.textContent = hits.length ? `${hits.length} kết quả cho “${q}”` : `Không có kết quả cho “${q}”. Thử bỏ bớt từ hoặc gõ không dấu.`;
-    list.innerHTML = hits
-      .map(
-        (h) =>
-          `<li><a href="${escapeHtml(h.url)}"><p class="r-title">${escapeHtml(h.title)}</p><p class="r-ex">${h.excerpt}</p><p class="r-meta">${[names[h.category], h.minutes ? `${h.minutes} phút đọc` : ''].filter(Boolean).join(' · ')}</p></a></li>`,
-      )
-      .join('');
+    // Title/tag matches render right away — and still work offline when Pagefind can't load.
+    const instant = instantSearch(index, q, category, 30);
+    render(instant, q);
+    const full = await fullTextSearch(q, category !== 'all' ? names[category] : undefined, 30, 150);
+    if (!full || my !== seq) return;
+    render(mergeHits(instant, full, 30), q);
   }
 
   (async () => {
     try {
       index = await (await fetch('/search-index.json')).json();
-    } catch {}
-    try {
-      const url = '/pagefind/pagefind.js';
-      pf = await import(/* @vite-ignore */ url);
-      await pf.options({ excerptLength: 30 });
     } catch {
-      pf = null;
+      index = [];
     }
+    await loadPagefind(30);
     run();
   })();
   input.addEventListener('input', run);

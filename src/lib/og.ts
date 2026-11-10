@@ -1,6 +1,6 @@
 /**
  * Open Graph images (1200×630 PNG), rendered at build time: satori lays out the card as SVG,
- * sharp rasterises it to PNG. Used by src/pages/og/*.png.ts.
+ * sharp rasterises it to JPEG. Used by src/pages/og/*.jpg.ts.
  *
  * Font notes (satori 0.63):
  * - Variable fonts only render their default instance → we load static Be Vietnam Pro weights.
@@ -411,5 +411,7 @@ export async function renderOgImage(input: OgCardInput): Promise<Buffer> {
     height: OG_HEIGHT,
     fonts,
   });
-  return sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toBuffer();
+  // JPEG: the cards are opaque gradients, so alpha is wasted; PNGs were 230–390 KB (WhatsApp/Zalo drop previews
+  // above ~300 KB), JPEG q82 is ~50 KB with no visible banding.
+  return sharp(Buffer.from(svg)).flatten({ background: OG_COLORS.ink }).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
 }

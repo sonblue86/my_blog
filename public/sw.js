@@ -104,12 +104,35 @@ function trim(name) {
   const p = (async () => {
     const cache = await caches.open(name);
     const keys = await cache.keys();
-    for (let i = 0; i < keys.length - max; i++) await cache.delete(keys[i]);
+    let excess = keys.length - max;
+    if (excess <= 0) return;
+    // Assets still listed by a cached page (X-NS-Assets) are protected — evicting them made
+    // previously visited pages render unstyled offline after a few deploys.
+    const keep = name === ASSETS ? await referencedAssets([PAGES, STATIC]) : new Set();
+    for (const req of keys) {
+      if (excess <= 0) break;
+      if (keep.has(new URL(req.url).pathname)) continue;
+      await cache.delete(req);
+      excess--;
+    }
   })()
     .catch(() => {})
     .finally(() => trimming.delete(name));
   trimming.set(name, p);
   return p;
+}
+
+/** Paths listed in the X-NS-Assets header of every page stored in the given caches. */
+async function referencedAssets(cacheNames) {
+  const out = new Set();
+  for (const cacheName of cacheNames) {
+    const cache = await caches.open(cacheName);
+    for (const req of await cache.keys()) {
+      const res = await cache.match(req, MATCH);
+      for (const a of (res?.headers.get('X-NS-Assets') || '').split(',')) if (a) out.add(a);
+    }
+  }
+  return out;
 }
 
 async function put(name, key, res) {
@@ -313,7 +336,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (path.startsWith('/pagefind/')) {
-    event.respondWith(isHashedPagefind(path) ? cacheFirst(event, SEARCH) : networkFirst(event, SEARCH));
+    event.respondWith(isHashedPagefind(path) ? cacheFirst(event, SEARCH) : networkFirst(event, SEARCH, url.origin + path));
     return;
   }
   if (path === '/search-index.json') {
@@ -341,9 +364,16 @@ async function matchPage(urlString) {
   const key = pageKey(path);
   for (const cacheName of [PAGES, SAVED, STATIC]) {
     const hit = await caches.match(key, { cacheName, ignoreSearch: true, ...MATCH });
-    if (hit) return hit;
+    if (hit && (await hasStyles(hit))) return hit;
   }
   return undefined;
+}
+
+/** A cached page is only useful offline if its CSS is still cached too. */
+async function hasStyles(res) {
+  const css = (res.headers.get('X-NS-Assets') || '').split(',').filter((a) => a.endsWith('.css'));
+  for (const a of css) if (!(await caches.match(new URL(a, ORIGIN).href, MATCH))) return false;
+  return true;
 }
 
 async function offlineFallback() {
@@ -389,9 +419,9 @@ async function navigate(event) {
 async function afterNavigation(urlString, res) {
   try {
     const path = pagePath(urlString);
-    if (!path) return;
+    if (!path || path === '/ngau-nhien/') return; // a JS redirect stub — useless (and misleading) offline
     const html = await res.text();
-    await put(PAGES, pageKey(path), htmlResponse(html, res));
+    await put(PAGES, pageKey(path), htmlResponse(html, res, { 'X-NS-Assets': extractAssets(html, { images: false }).join(',') }));
     const savedCache = await caches.open(SAVED);
     const saved = await savedCache.match(pageKey(path), MATCH);
     if (saved) {
@@ -450,14 +480,15 @@ async function staleWhileRevalidate(event, name) {
   }
 }
 
-async function networkFirst(event, name) {
+/** `key` lets requests with cache-busting queries (pagefind-entry.json?ts=…) share one cache entry. */
+async function networkFirst(event, name, key = event.request) {
   const req = event.request;
   try {
     const res = await fetch(req);
-    if (cacheable(res)) event.waitUntil(put(name, req, res.clone()));
+    if (cacheable(res)) event.waitUntil(put(name, key, res.clone()));
     return res;
   } catch {
-    return (await caches.match(req, MATCH)) || Response.error();
+    return (await caches.match(key, MATCH)) || Response.error();
   }
 }
 

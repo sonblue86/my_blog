@@ -125,7 +125,7 @@ describe('fitTitle', () => {
 });
 
 describe('renderOgImage', () => {
-  it('renders a 1200×630 PNG with Vietnamese text', async () => {
+  it('renders a 1200×630 JPEG with Vietnamese text', async () => {
     const png = await renderOgImage({
       title: 'Những ữ ự ỡ Đ ẳ — thử dấu tiếng Việt',
       chips: [{ label: 'Đời sống', color: '#34d399' }],
@@ -135,7 +135,7 @@ describe('renderOgImage', () => {
       art: { svg: coverSvg({ seed: 'og-test', category: 'doi-song' }) },
     });
     const meta = await sharp(png).metadata();
-    expect(meta.format).toBe('png');
+    expect(meta.format).toBe('jpeg');
     expect(meta.width).toBe(OG_WIDTH);
     expect(meta.height).toBe(OG_HEIGHT);
   }, 20_000);

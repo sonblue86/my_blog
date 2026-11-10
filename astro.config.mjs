@@ -8,6 +8,7 @@ import tailwindcss from '@tailwindcss/vite';
 import rehypeHeadingIds from './src/lib/rehype-heading-ids.mjs';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeExternalLinks from 'rehype-external-links';
+import sitemapTidy from './integrations/sitemap-tidy.mjs';
 import { SITE } from './src/config.ts';
 
 export default defineConfig({
@@ -43,8 +44,10 @@ export default defineConfig({
     }),
     mdx(),
     sitemap({
-      filter: (page) => !page.includes('/thu-vien/') && !page.includes('/tim-kiem/') && !page.includes('/admin/') && !page.includes('/offline/'),
+      // Private/utility pages. Anything else marked noindex is dropped by sitemapTidy() after the build.
+      filter: (page) => !page.includes('/thu-vien/') && !page.includes('/tim-kiem/') && !page.includes('/admin/'),
     }),
+    sitemapTidy(),
   ],
   markdown: {
     processor: unified({

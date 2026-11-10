@@ -167,6 +167,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-padding-top: calc(var(--header-h) + 16px);
+    /* Reserve the scrollbar gutter so locking scroll (modal open) causes no layout shift. */
+    scrollbar-gutter: stable;
     hanging-punctuation: first last;
   }
 
@@ -174,6 +176,11 @@
     html {
       scroll-behavior: smooth;
     }
+  }
+
+  /* Set by src/scripts/modal-lock.ts while a modal <dialog> is open. */
+  html[data-modal-open] {
+    overflow: hidden;
   }
 
   body {

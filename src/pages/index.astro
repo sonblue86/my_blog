@@ -224,26 +224,38 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
     max-width: 860px;
   }
   .live-dot {
+    position: relative;
     width: 8px;
     height: 8px;
     border-radius: 99px;
     background: var(--success);
-    box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 60%, transparent);
+  }
+  /* Pulse ring: transform + opacity only (composited). The old box-shadow animation kept the main thread ~50% busy. */
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--success);
+    opacity: 0;
   }
   @media (prefers-reduced-motion: no-preference) {
-    .live-dot {
-      animation: live 2.4s infinite;
+    .live-dot::after {
+      animation: live-ring 2.4s 4 var(--ease-out);
     }
   }
-  @keyframes live {
+  @keyframes live-ring {
     0% {
-      box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 55%, transparent);
+      transform: scale(1);
+      opacity: 0.55;
     }
     70%,
     100% {
-      box-shadow: 0 0 0 10px transparent;
+      transform: scale(2.4);
+      opacity: 0;
     }
   }
+
   .intro-title {
     margin-top: 16px;
     font-size: clamp(2.1rem, 1.2rem + 4.2vw, 4.25rem);

@@ -91,7 +91,7 @@ const jsonLd = [
     keywords: tags.join(', '),
     wordCount: words,
     timeRequired: `PT${minutes}M`,
-    image: new URL(`/og/${post.id}.png`, Astro.site).toString(),
+    image: new URL(`/og/${post.id}.jpg`, Astro.site).toString(),
     mainEntityOfPage: new URL(url, Astro.site).toString(),
     author: { '@type': 'Person', name: authorName },
     publisher: { '@type': 'Organization', name: SITE.title, logo: { '@type': 'ImageObject', url: new URL('/icon-512.png', Astro.site).toString() } },
@@ -111,7 +111,7 @@ const jsonLd = [
 <BaseLayout
   title={title}
   description={description}
-  image={`/og/${post.id}.png`}
+  image={`/og/${post.id}.jpg`}
   imageAlt={title}
   type="article"
   publishedTime={pubDate}

@@ -14,7 +14,11 @@ export async function getStaticPaths() {
 const { name, posts } = Astro.props;
 ---
 
-<BaseLayout title={`#${name}`} description={`Các bài viết về ${name} trên Nhịp Số.`}>
+<BaseLayout
+  title={`#${name}`}
+  description={`Các bài viết về ${name} trên Nhịp Số.`}
+  noindex={posts.length < 2 /* a one-post tag page only duplicates that post */}
+>
   <PageHeader eyebrow={`Thẻ · ${posts.length} bài viết`} title={`#${name}`}>
     <a href="/the/" class="link mt-5 inline-block text-sm font-semibold">← Tất cả thẻ</a>
   </PageHeader>

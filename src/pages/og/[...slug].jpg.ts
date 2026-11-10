@@ -1,5 +1,5 @@
 /**
- * Social share image for every published post: /og/<id>.png (1200×630).
+ * Social share image for every published post: /og/<id>.jpg (1200×630).
  * Referenced by PostLayout (og:image, twitter:image, JSON-LD). Design + rendering live in src/lib/og.ts.
  */
 import type { APIRoute, GetStaticPaths } from 'astro';
@@ -24,7 +24,7 @@ function artFor(post: Post): OgArt {
 export const GET: APIRoute = async ({ props, site }) => {
   const post = props.post as Post;
   const category = getCategory(post.data.category);
-  const png = await renderOgImage({
+  const img = await renderOgImage({
     title: post.data.title,
     chips: [{ label: category.name, color: OG_COLORS.category[category.id] ?? OG_COLORS.fg }],
     meta: [`${getReadingTime(post).minutes} phút đọc`, formatDate(post.data.pubDate)],
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ props, site }) => {
     siteName: SITE.title,
     art: artFor(post),
   });
-  return new Response(new Uint8Array(png), {
-    headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' },
+  return new Response(new Uint8Array(img), {
+    headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=86400' },
   });
 };
