@@ -7,54 +7,55 @@
  * - `name` MUST match the Worker name you pick in Workers Builds (GitHub integration).
  */
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "nhip-so",
-  "main": "./worker/index.ts",
-  "compatibility_date": "2026-11-01",
-
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*"]
-  },
-
-  "observability": {
-    "enabled": true
-  },
-
-  // D1 (SQLite) for view counts, reactions and newsletter sign-ups.
-  // Create it once with:  npx wrangler d1 create blog-db --location apac --binding DB --update-config
-  // (that command fills in the real database_id below).
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "blog-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
-  ],
-
-  // Optional write rate limit (per IP, per endpoint). Remove this block to disable it;
-  // the Worker keeps working without it. `namespace_id` is any positive integer unique in your account.
-  "ratelimits": [
-    {
-      "name": "RL_WRITE",
-      "namespace_id": "1001",
-      "simple": { "limit": 20, "period": 60 }
-    }
-  ],
-
-  // Daily clean-up of the de-duplication table (03:17 UTC ≈ 10:17 giờ Việt Nam).
-  "triggers": {
-    "crons": ["17 3 * * *"]
-  },
-
-  // Non-secret settings. Secrets (HASH_SALT, TURNSTILE_SECRET) go in `.dev.vars` locally
-  // and `npx wrangler secret put <NAME>` in production.
-  "vars": {
-    // Extra origins allowed to POST (comma-separated), e.g. a preview domain. The Worker's own origin is always allowed.
-    "ALLOWED_ORIGINS": ""
-  }
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "nhip-so",
+	"main": "./worker/index.ts",
+	"compatibility_date": "2026-11-01",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"html_handling": "auto-trailing-slash",
+		"not_found_handling": "404-page",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"observability": {
+		"enabled": true
+	},
+	// D1 (SQLite) for view counts, reactions and newsletter sign-ups.
+	// Create it once with:  npx wrangler d1 create blog-db --location apac --binding DB --update-config
+	// (that command fills in the real database_id below).
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "blog-db",
+			"database_id": "e76c993d-da41-4a53-be1d-0368a85e3abc",
+			"migrations_dir": "migrations"
+		}
+	],
+	// Optional write rate limit (per IP, per endpoint). Remove this block to disable it;
+	// the Worker keeps working without it. `namespace_id` is any positive integer unique in your account.
+	"ratelimits": [
+		{
+			"name": "RL_WRITE",
+			"namespace_id": "1001",
+			"simple": {
+				"limit": 20,
+				"period": 60
+			}
+		}
+	],
+	// Daily clean-up of the de-duplication table (03:17 UTC ≈ 10:17 giờ Việt Nam).
+	"triggers": {
+		"crons": [
+			"17 3 * * *"
+		]
+	},
+	// Non-secret settings. Secrets (HASH_SALT, TURNSTILE_SECRET) go in `.dev.vars` locally
+	// and `npx wrangler secret put <NAME>` in production.
+	"vars": {
+		// Extra origins allowed to POST (comma-separated), e.g. a preview domain. The Worker's own origin is always allowed.
+		"ALLOWED_ORIGINS": ""
+	}
 }
