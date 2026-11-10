@@ -16,3 +16,6 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Vite 8 / Lightning CSS: viết `-webkit-backdrop-filter` TRƯỚC `backdrop-filter`. Ngược lại, minifier giữ mỗi bản có
   tiền tố và Chrome bỏ qua nó → header/thanh công cụ mất hiệu ứng mờ. Lý do: lỗi chỉ lộ ra ở bản build, không thấy khi dev.
 - Kiểm thử offline cho service worker: tắt server thật. `setOffline`/`network-state-set offline` của Playwright không chặn fetch của chính SW.
+- Gỡ worktree có junction `node_modules`: xoá junction bằng PowerShell `(Get-Item … -Force).Delete()` và KIỂM TRA nó đã mất,
+  rồi mới `git worktree remove`. Lý do: `cmd //c rmdir` từ Git Bash thất bại âm thầm, `git worktree remove --force` xoá
+  xuyên qua junction → hỏng node_modules của repo chính (phải `npm ci` lại).
