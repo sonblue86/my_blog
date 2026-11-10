@@ -12,8 +12,8 @@
 
 backend:
   name: github
-  # TODO: đổi thành "tên-tài-khoản/tên-repo" của bạn trên GitHub, ví dụ: nguyenvana/nhip-so
-  repo: OWNER/REPO
+  # "tên-tài-khoản/tên-repo" trên GitHub.
+  repo: sonblue86/my_blog
   branch: main
   # Đăng nhập — chọn MỘT trong hai cách:
   #   1. Đơn giản nhất: ở màn hình đăng nhập bấm "Sign In with Token" và dán một
@@ -22,7 +22,10 @@ backend:
   #   2. Đăng nhập bằng nút "Sign In with GitHub": deploy Worker xác thực
   #      https://github.com/sveltia/sveltia-cms-auth lên Cloudflare (miễn phí),
   #      rồi bỏ dấu # ở dòng dưới và thay bằng URL Worker của bạn.
+  #      Khi đó cũng xoá dòng auth_methods bên dưới để hiện lại nút GitHub.
   # base_url: https://sveltia-cms-auth.<tên-tài-khoản>.workers.dev
+  # Chỉ đăng nhập bằng token: nút "Sign In with GitHub" cần Worker OAuth ở cách 2, chưa cài thì nút đó báo lỗi.
+  auth_methods: [token]
   commit_messages:
     create: 'Thêm {{collection}} "{{slug}}"'
     update: 'Cập nhật {{collection}} "{{slug}}"'
@@ -33,8 +36,8 @@ backend:
 
 app_title: Nhịp Số · Quản trị
 # Lấy từ SITE.url trong src/config.ts — đổi cả hai khi bạn có domain riêng.
-site_url: https://nhipso.pages.dev
-display_url: https://nhipso.pages.dev
+site_url: https://my-blog.phamhongson5151.workers.dev
+display_url: https://my-blog.phamhongson5151.workers.dev
 
 # Ảnh dùng chung (ít dùng). Ảnh trong bài viết được lưu cạnh bài — xem collection "posts".
 media_folder: public/images
