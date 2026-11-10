@@ -1,14 +1,7 @@
 @import 'tailwindcss';
 
-/* Fonts: fontsource ships unicode-range subsets, so browsers only download latin + vietnamese files they need. */
-@import '@fontsource-variable/inter/wght.css';
-@import '@fontsource-variable/inter/wght-italic.css';
-@import '@fontsource/be-vietnam-pro/600.css';
-@import '@fontsource/be-vietnam-pro/700.css';
-@import '@fontsource/be-vietnam-pro/800.css';
-@import '@fontsource-variable/literata/wght.css';
-@import '@fontsource-variable/literata/wght-italic.css';
-@import '@fontsource-variable/jetbrains-mono/wght.css';
+/* Fonts: latin + vietnamese subsets only (see fonts.css for why). */
+@import './fonts.css';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
