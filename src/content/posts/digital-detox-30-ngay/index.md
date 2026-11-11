@@ -157,3 +157,113 @@ Từ những gì đã thấy hiệu quả, thiết kế lại thói quen buổi 
 Sau 30 ngày, bạn không cần bỏ điện thoại. Bạn chỉ cần bỏ thói quen phản xạ mở nó vô thức. Đó là toàn bộ tinh thần của thử thách này.
 
 Nếu muốn bắt đầu, đừng làm cả dàn ý cùng lúc. Chọn một thay đổi — ví dụ 30 phút đầu ngày không mở máy — và làm trong 7 ngày trước khi mở rộng. Kết quả sẽ khác nhau ở mỗi người, và việc có hôm quay lại thói quen cũ không phải thất bại. Đó chỉ là dữ liệu để bạn biết mình cần điều chỉnh ở đâu.
+
+<br />
+
+```note
+# Ghi chú
+Thông tin bổ sung cho người đọc. Dùng **in đậm** hoặc [liên kết](https://example.com) nếu cần.
+```
+
+```tip
+# Mẹo nhỏ
+Một mẹo giúp người đọc làm nhanh hoặc dễ hơn.
+```
+
+```warning
+# Lưu ý
+Điều người đọc cần biết trước khi làm theo.
+```
+
+```danger
+# Cảnh báo
+Việc có thể gây mất dữ liệu hoặc hậu quả khó sửa.
+```
+
+```success
+# Kết quả
+Điều bạn sẽ có sau khi làm xong.
+```
+
+```keypoint
+Viết ở đây **một ý quan trọng nhất** mà bạn muốn người đọc nhớ.
+```
+
+```quote
+Sự đơn giản là đỉnh cao của tinh tế.
+— Leonardo da Vinci
+```
+
+```steps
+# Bước đầu tiên
+Mô tả việc cần làm ở bước này.
+
+# Bước thứ hai
+Mô tả tiếp theo. Có thể dùng `mã` hoặc **in đậm**.
+
+# Hoàn tất
+Kết quả người đọc nhận được.
+```
+
+```proscons
++ Ưu điểm thứ nhất
++ Ưu điểm thứ hai
+- Nhược điểm thứ nhất
+- Nhược điểm thứ hai
+```
+
+```timeline
+2017 | Mốc thứ nhất | Mô tả ngắn về sự kiện.
+2020 | Mốc thứ hai | Mô tả ngắn về sự kiện.
+2024 | Mốc thứ ba | Mô tả ngắn về sự kiện.
+```
+
+```flow
+Đầu vào | Dữ liệu người dùng gửi lên
+Xử lý | Hệ thống phân tích
+Kết quả | Trả lời cho người dùng
+```
+
+```cards
+# Thẻ thứ nhất
+Mô tả ngắn.
+
+# Thẻ thứ hai
+Mô tả ngắn.
+
+# Thẻ thứ ba
+Mô tả ngắn.
+```
+
+```faq
+? Câu hỏi thứ nhất?
+Câu trả lời cho câu hỏi thứ nhất.
+
+? Câu hỏi thứ hai?
+Câu trả lời cho câu hỏi thứ hai.
+```
+
+```chart
+type: bar
+title: Tiêu đề biểu đồ
+unit: %
+Mục A: 62
+Mục B: 45
+Mục C: 28
+```
+
+```stats
+98% | Người dùng hài lòng | khảo sát 2026
+3× | Nhanh hơn | so với cách cũ
+0đ | Chi phí vận hành
+```
+
+```button
+Xem mã nguồn | https://github.com/
+Đọc thêm | /luu-tru/
+```
+
+```youtube
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
+Tiêu đề video
+```
