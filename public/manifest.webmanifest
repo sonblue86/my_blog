@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Nhịp Số",
-  "short_name": "Nhịp Số",
-  "description": "Blog tiếng Việt về AI, công nghệ và đời sống số — viết chậm, đọc sâu. Lưu bài để đọc cả khi không có mạng.",
+  "name": "Gì thế nhỉ",
+  "short_name": "Gì thế nhỉ",
+  "description": "Blog tiếng Việt giải đáp thắc mắc về AI, công nghệ và đời sống số — dễ hiểu, có kiểm chứng. Lưu bài để đọc cả khi không có mạng.",
   "lang": "vi",
   "dir": "ltr",
   "start_url": "/",

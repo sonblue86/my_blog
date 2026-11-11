@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
 #
-# Cấu hình Sveltia CMS cho blog Nhịp Số — trình soạn bài trên web.
+# Cấu hình Sveltia CMS cho blog Gì thế nhỉ — trình soạn bài trên web.
 #   • Trên site đã deploy: https://<domain>/admin/
 #   • Khi chạy `npm run dev`: http://localhost:4321/admin/index.html
 #     (dev server của Astro không tự mở index.html khi vào /admin/).
@@ -34,10 +34,10 @@ backend:
     deleteMedia: 'Xoá tệp "{{path}}"'
     openAuthoring: '{{message}}'
 
-app_title: Nhịp Số · Quản trị
-# Lấy từ SITE.url trong src/config.ts — đổi cả hai khi bạn có domain riêng.
-site_url: https://my-blog.phamhongson5151.workers.dev
-display_url: https://my-blog.phamhongson5151.workers.dev
+app_title: Gì thế nhỉ · Quản trị
+# Trùng với SITE.url trong src/config.ts — đổi domain thì sửa cả hai nơi.
+site_url: https://githenhi.com
+display_url: https://githenhi.com
 
 # Ảnh dùng chung (ít dùng). Ảnh trong bài viết được lưu cạnh bài — xem collection "posts".
 media_folder: public/images

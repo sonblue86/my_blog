@@ -5,13 +5,14 @@
 
 export const SITE = {
   /** Tên blog hiển thị trên header, tiêu đề tab, RSS, OG image. */
-  title: 'Nhịp Số',
-  /** Khẩu hiệu ngắn. */
-  tagline: 'AI, công nghệ & đời sống — viết chậm, đọc sâu.',
+  title: 'Gì thế nhỉ',
+  /** Khẩu hiệu ngắn (header menu, tiêu đề tab trang chủ). */
+  tagline: 'Hỏi cho ra lẽ về AI, công nghệ và đời sống.',
+  /** Mô tả mặc định cho SEO/chia sẻ (≤ 160 ký tự). */
   description:
-    'Blog tiếng Việt về trí tuệ nhân tạo, công nghệ và đời sống số: giải thích dễ hiểu, hướng dẫn thực hành và những suy ngẫm chậm rãi.',
-  /** Đổi thành domain thật khi deploy (cũng có thể đặt qua biến môi trường SITE_URL). */
-  url: 'https://my-blog.phamhongson5151.workers.dev/',
+    'Gì thế nhỉ? Blog tiếng Việt giải đáp những thắc mắc về AI, công nghệ và đời sống số — dễ hiểu, có kiểm chứng, dùng được ngay.',
+  /** Domain thật của site (cũng có thể đặt qua biến môi trường SITE_URL lúc build). */
+  url: 'https://githenhi.com',
   lang: 'vi',
   locale: 'vi_VN',
   /** Tác giả mặc định (id trong src/content/authors). */
@@ -38,7 +39,7 @@ export const SOCIAL = {
  * Để trống `repo` để tắt bình luận.
  */
 export const GISCUS = {
-  repo: 'sonblue86/my_blog', // ví dụ: 'ten-ban/nhip-so'
+  repo: 'sonblue86/my_blog', // dạng 'chu-repo/ten-repo'
   repoId: 'R_kgDOVo5cXQ',
   category: 'Announcements',
   categoryId: 'DIC_kwDOVo5cXc4DKys7',
@@ -71,7 +72,7 @@ export const ANALYTICS: { cloudflareToken: string } = {
  * Để trống để tắt (form vẫn có honeypot chống bot đơn giản). Xem docs/CLOUDFLARE.md.
  */
 export const TURNSTILE: { siteKey: string } = {
-  siteKey: '',
+  siteKey: '0x4AAAAAAF87EHw_vL-mhBeB',
 };
 
 export type CategoryId = 'ai' | 'cong-nghe' | 'doi-song';
