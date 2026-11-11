@@ -1,10 +1,12 @@
 ---
 import { getEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/listing/PageHeader.astro';
 import Newsletter from '../../components/widgets/Newsletter.astro';
 import Icon from '../../components/ui/Icon.astro';
 import { SITE, CATEGORIES, SOCIAL } from '../../config';
+import aboutArt from '../../assets/brand/about.webp';
 
 const author = await getEntry('authors', SITE.defaultAuthor);
 const initials = (author?.data.name ?? SITE.title)
@@ -47,11 +49,24 @@ const faq = [
 ---
 
 <BaseLayout title="Giới thiệu" description={description}>
-  <PageHeader
-    eyebrow="Giới thiệu"
-    title={`Chào bạn, đây là ${SITE.title}.`}
-    description="Một góc nhỏ để hỏi cho ra lẽ về AI, công nghệ và đời sống số — và nhận về câu trả lời dễ hiểu, có kiểm chứng."
-  />
+  <div class="about-head">
+    <PageHeader
+      eyebrow="Giới thiệu"
+      title={`Chào bạn, đây là ${SITE.title}.`}
+      description="Một góc nhỏ để hỏi cho ra lẽ về AI, công nghệ và đời sống số — và nhận về câu trả lời dễ hiểu, có kiểm chứng."
+    >
+      <Image
+        src={aboutArt}
+        alt="Một người ngồi bên bàn làm việc ấm cúng với sổ tay, laptop và tách cà phê; phía trên, dấu hỏi hoá thành dấu tích và bóng đèn."
+        widths={[480, 720, 960, 1400]}
+        sizes="(min-width: 1024px) 460px, (min-width: 640px) 440px, calc(100vw - 32px)"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        class="about-art"
+      />
+    </PageHeader>
+  </div>
 
   <section class="container-page mt-14 max-w-4xl!" aria-labelledby="name-title">
     <h2 id="name-title" class="sec-title">Vì sao lại là “Gì thế nhỉ”?</h2>
@@ -167,6 +182,44 @@ const faq = [
 </BaseLayout>
 
 <style>
+  /*
+   * Header art: below the description on phones/tablets, beside the header text on lg+. It is the LCP element at
+   * 390px and 1440px alike (measured), so it loads eagerly with high priority rather than lazily.
+   */
+  .about-art {
+    display: block;
+    width: 100%;
+    max-width: 440px;
+    height: auto;
+    margin-top: 24px;
+  }
+  @media (min-width: 1024px) {
+    /*
+     * PageHeader renders eyebrow, title, description, then this slot. Text goes in column 1 (rows 2–4), the art
+     * spans every row of column 2, and the two 1fr rows split any spare height so the text sits centred beside it.
+     */
+    .about-head :global(.page-header > .container-page) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+      grid-template-rows: 1fr auto auto auto 1fr;
+      column-gap: 56px;
+    }
+    .about-head :global(.page-header .eyebrow) {
+      grid-area: 2 / 1;
+    }
+    .about-head :global(.page-header .ph-title) {
+      grid-area: 3 / 1;
+    }
+    .about-head :global(.page-header .ph-desc) {
+      grid-area: 4 / 1;
+    }
+    .about-head .about-art {
+      grid-area: 1 / 2 / -1 / 3;
+      align-self: center;
+      max-width: none;
+      margin: 0;
+    }
+  }
   .pillar {
     display: block;
     padding: 26px;

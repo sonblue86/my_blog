@@ -1,19 +1,26 @@
 ---
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/post/PostCard.astro';
 import Icon from '../components/ui/Icon.astro';
 import { CATEGORIES } from '../config';
 import { getPosts } from '../lib/posts';
+import notFoundArt from '../assets/brand/not-found.webp';
 const latest = (await getPosts()).slice(0, 3);
 ---
 
 <BaseLayout title="Không tìm thấy trang" noindex>
-  <section class="container-page pt-12 text-center sm:pt-20">
-    <svg class="mx-auto" width="220" height="140" viewBox="0 0 220 140" aria-hidden="true">
-      <path d="M10 80h40l12-30 20 52 14-36 9 16h105" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
-      <path d="M150 82h60" stroke="var(--border-strong)" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"></path>
-    </svg>
-    <p class="eyebrow mt-6">Lỗi 404</p>
+  <section class="container-page pt-8 text-center sm:pt-12">
+    <Image
+      src={notFoundArt}
+      alt="Một người cầm bản đồ, gãi đầu bối rối trên con đường vắng cạnh cột biển chỉ đường, phía trên là một dấu hỏi lớn."
+      widths={[320, 480, 640, 900]}
+      sizes="(min-width: 640px) 320px, 240px"
+      loading="lazy"
+      decoding="async"
+      class="nf-art"
+    />
+    <p class="eyebrow mt-4">Lỗi 404</p>
     <h1 class="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Ủa, trang này đi đâu rồi nhỉ?</h1>
     <p class="mx-auto mt-4 max-w-lg text-lg text-fg-muted">
       Có thể đường dẫn đã đổi, hoặc trang không còn nữa. Nhưng thắc mắc của bạn vẫn đáng một câu trả lời — thử tìm kiếm, hoặc
@@ -47,3 +54,17 @@ const latest = (await getPosts()).slice(0, 3);
     )
   }
 </BaseLayout>
+
+<style>
+  .nf-art {
+    display: block;
+    width: 240px;
+    height: auto;
+    margin-inline: auto;
+  }
+  @media (min-width: 640px) {
+    .nf-art {
+      width: 320px;
+    }
+  }
+</style>

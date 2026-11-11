@@ -1,10 +1,15 @@
 ---
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/post/PostCard.astro';
 import Icon from '../components/ui/Icon.astro';
 import Newsletter from '../components/widgets/Newsletter.astro';
 import { CATEGORIES } from '../config';
 import { getPosts, getTags, getSeries, categoryUrl, tagUrl, seriesUrl, postUrl } from '../lib/posts';
+import heroArt from '../assets/brand/hero.webp';
+
+/** 1×1 transparent GIF: on phones the <picture> picks this, so the hidden hero art is never downloaded. */
+const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 const posts = await getPosts();
 const featuredPool = posts.filter((p) => p.data.featured);
@@ -20,7 +25,7 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
 
 <BaseLayout>
   <!-- Intro -->
-  <section class="container-page pt-8 sm:pt-14">
+  <section class="container-page intro-grid pt-8 sm:pt-14">
     <div class="intro">
       <p class="eyebrow flex items-center gap-2">
         <span class="live-dot" aria-hidden="true"></span>
@@ -30,7 +35,7 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
         Thắc mắc về <span class="hl hl-ai">AI</span>, <span class="hl hl-tech">công nghệ</span> hay <span class="hl hl-life">đời sống</span>? <span class="intro-answer">Cùng hỏi cho ra lẽ.</span>
       </h1>
       <p class="intro-sub">
-        Mỗi bài bắt đầu từ một câu hỏi thật — kiểu “cái này là gì thế nhỉ?” — và trả lời bằng lời lẽ dễ hiểu, dữ kiện đã kiểm chứng
+        Mỗi bài bắt đầu từ một câu hỏi thật — kiểu <span class="whitespace-nowrap">“cái này là gì thế nhỉ?”</span> — và trả lời bằng lời lẽ dễ hiểu, dữ kiện đã kiểm chứng
         cùng ví dụ dùng được ngay.
       </p>
 
@@ -60,6 +65,25 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
         }
       </ul>
     </div>
+
+    <!--
+      Hero art: beside the copy on lg+ (where it is the LCP, hence eager + high priority), after the topic
+      pills on tablets, hidden on phones (portrait and landscape) so the featured post stays in the first screen.
+      Keep this media query in sync with the one in <style>.
+    -->
+    <picture class="intro-art">
+      <source media="(max-width: 639.98px), (max-height: 519.98px)" srcset={BLANK_GIF} />
+      <Image
+        src={heroArt}
+        alt="Một người tò mò ngước nhìn những dấu hỏi đang hoá thành bóng đèn, chip AI, điện thoại, tách cà phê và chậu cây."
+        widths={[520, 760, 1040, 1400]}
+        sizes="(min-width: 1200px) 545px, (min-width: 1024px) 45vw, 360px"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        class="intro-art-img"
+      />
+    </picture>
   </section>
 
   <!-- Featured -->
@@ -226,6 +250,48 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
   .intro {
     max-width: 860px;
   }
+  .intro-art {
+    display: block;
+    width: min(100%, 360px);
+    margin: 12px 0 0 auto;
+  }
+  .intro-art-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  /* Phones (and short landscape phones): no art — matches the <source> media in the markup. */
+  @media (max-width: 639.98px), (max-height: 519.98px) {
+    .intro-art {
+      display: none;
+    }
+  }
+  /* Desktop: copy left, art right, vertically centred (only where the art is shown, see above). */
+  @media (min-width: 1024px) and (min-height: 520px) {
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+      column-gap: 48px;
+    }
+    .intro-art {
+      width: 100%;
+      margin: 0;
+      /* Faint brand glow so the cut-out art sits on the page instead of floating on it. */
+      background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 10%, transparent), transparent);
+    }
+  }
+  /* A slow, small drift that settles after a few cycles (transform only). */
+  @media (prefers-reduced-motion: no-preference) {
+    .intro-art-img {
+      animation: art-float 4.5s ease-in-out 6 alternate;
+    }
+  }
+  @keyframes art-float {
+    to {
+      transform: translateY(-8px);
+    }
+  }
   .live-dot {
     position: relative;
     width: 8px;
@@ -265,6 +331,12 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
     font-weight: 800;
     line-height: 1.06;
     letter-spacing: -0.04em;
+  }
+  /* Two columns: scale with the copy column so "Cùng hỏi cho ra lẽ." (nowrap) always fits. */
+  @media (min-width: 1024px) and (min-height: 520px) {
+    .intro-title {
+      font-size: clamp(2.75rem, 1rem + 2.9vw, 3.75rem);
+    }
   }
   .hl {
     position: relative;
