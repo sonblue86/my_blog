@@ -1,6 +1,6 @@
 ---
 title: 'Dựng blog miễn phí với Astro, GitHub và Cloudflare'
-description: 'Cách chính blog Nhịp Số được dựng: Astro tạo trang tĩnh, GitHub lưu bài, Cloudflare phân phối toàn cầu, Worker nhỏ cùng D1 lo lượt xem — gần như miễn phí.'
+description: 'Cách chính blog Gì thế nhỉ được dựng: Astro tạo trang tĩnh, GitHub lưu bài, Cloudflare phân phối toàn cầu, Worker nhỏ cùng D1 lo lượt xem — gần như miễn phí.'
 pubDate: 2026-11-03
 category: cong-nghe
 tags: ['Astro', 'Cloudflare', 'GitHub', 'Web tĩnh']
@@ -13,7 +13,7 @@ takeaways:
   - 'Đánh đổi chính: cần làm quen Git và mỗi thay đổi phải build lại.'
 ---
 
-Có rất nhiều cách để bắt đầu viết blog: nền tảng có sẵn, WordPress trên hosting thuê, hay một trang tĩnh tự dựng. Với Nhịp Số, chúng mình chọn cách cuối cùng — và bài này kể lại chính xác cách blog bạn đang đọc được xây dựng, để bạn có thể làm một trang tương tự cho riêng mình.
+Có rất nhiều cách để bắt đầu viết blog: nền tảng có sẵn, WordPress trên hosting thuê, hay một trang tĩnh tự dựng. Với blog Gì thế nhỉ, chúng mình chọn cách cuối cùng — và bài này kể lại chính xác cách blog bạn đang đọc được xây dựng, để bạn có thể làm một trang tương tự cho riêng mình.
 
 ## Kiến trúc trong một đoạn văn
 
@@ -49,7 +49,7 @@ Một trang tĩnh là tập hợp các file HTML, CSS, ảnh đã được tạo
   ]}
 />
 
-Astro đặc biệt hợp với blog vì mặc định không gửi JavaScript xuống trình duyệt. Những tương tác nhỏ như thanh tiến độ đọc, mục lục, lưu bài hay chế độ tối ở Nhịp Số đều viết bằng TypeScript thuần, không cần framework giao diện nào.
+Astro đặc biệt hợp với blog vì mặc định không gửi JavaScript xuống trình duyệt. Những tương tác nhỏ như thanh tiến độ đọc, mục lục, lưu bài hay chế độ tối ở blog này đều viết bằng TypeScript thuần, không cần framework giao diện nào.
 
 ## Dựng lại từng bước
 
@@ -86,7 +86,7 @@ Repo kèm sẵn tài liệu tiếng Việt cho từng phần: cấu hình Cloudf
 
 ## Phần động: Worker nhỏ và D1
 
-Trang tĩnh không tự đếm được lượt xem. Ở Nhịp Số, phần này do một Worker xử lý: Cloudflare phục vụ file tĩnh trước, chỉ những yêu cầu tới `/api/*` mới chạy mã Worker. Worker ghi dữ liệu vào D1 — một cơ sở dữ liệu SQLite được Cloudflare quản lý.
+Trang tĩnh không tự đếm được lượt xem. Ở blog Gì thế nhỉ, phần này do một Worker xử lý: Cloudflare phục vụ file tĩnh trước, chỉ những yêu cầu tới `/api/*` mới chạy mã Worker. Worker ghi dữ liệu vào D1 — một cơ sở dữ liệu SQLite được Cloudflare quản lý.
 
 Điểm thiết kế quan trọng: **site vẫn chạy bình thường nếu API chưa bật hoặc gặp sự cố.** Lượt xem và reaction chỉ là lớp trang trí thêm; bài viết, tìm kiếm, mục lục, lưu bài đều hoạt động độc lập. Trong `src/config.ts` có các công tắc `features` để tắt từng tính năng nếu bạn chưa muốn dựng phần backend.
 
