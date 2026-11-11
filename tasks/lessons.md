@@ -35,3 +35,7 @@ Bài học có thể tổng quát hoá (kèm lý do). Giữ ngắn gọn, cập 
 - Nội dung tự dựng chèn vào `.prose` sẽ dính kiểu danh sách của bài (số thứ tự, chấm tròn, khoảng cách li). Khối tự vẽ marker phải tắt các kiểu đó bằng selector đủ mạnh (`ol.nb.nb-steps`), không dựa vào thứ tự file CSS.
 - Thư viện chèn `<style>` lúc chạy (CodeMirror/style-mod, nhiều UI kit) sẽ vỡ giao diện âm thầm dưới CSP băm style. Kiểm tra console CSP ngay khi thêm thư viện UI; ưu tiên bỏ/thay thư viện hơn là nới CSP.
 - Bộ đệm console của công cụ trình duyệt giữ lỗi qua các lần tải trang: muốn biết lỗi có còn không thì ghi một mốc (console.error) rồi chỉ xét các dòng sau mốc.
+- gsk (Genspark CLI): gpt-image-2.5 không xuất nền trong suốt (`--background transparent` bị bỏ qua) → vẽ trên nền xanh #00FF00 rồi tự tách nền;
+  `-o` tải bản JPEG có watermark — lấy PNG sạch bằng `gsk download /api/files/s/<id>` (Git Bash: `MSYS_NO_PATHCONV=1`).
+- Ảnh trang trí chỉ dành cho màn hình lớn: ẩn bằng CSS vẫn bị tải nếu là ảnh eager → dùng `<picture>` với ảnh trống 1×1 cho màn nhỏ.
+- Đổi logo/wordmark dài hơn thì đo lại header ở mọi breakpoint (360, 1024, 1280): menu từng gãy dòng ở 1024px.

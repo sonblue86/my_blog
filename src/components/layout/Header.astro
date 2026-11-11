@@ -18,7 +18,7 @@ const catColor = Object.fromEntries(CATEGORIES.map((c) => [`/chuyen-muc/${c.id}/
   <div class="container-page flex h-[var(--header-h)] items-center gap-3">
     <Logo />
 
-    <nav aria-label="Điều hướng chính" class="ml-6 hidden lg:block">
+    <nav aria-label="Điều hướng chính" class="ml-2 hidden lg:block xl:ml-6">
       <ul class="flex items-center gap-1">
         {
           NAV.map((item) => (
@@ -41,8 +41,8 @@ const catColor = Object.fromEntries(CATEGORIES.map((c) => [`/chuyen-muc/${c.id}/
     <div class="ml-auto flex items-center gap-1">
       <button type="button" class="search-trigger" data-open-search aria-label="Tìm kiếm (Ctrl K)">
         <Icon name="search" size={18} />
-        <span class="hidden md:inline">Tìm kiếm…</span>
-        <span class="ml-4 hidden items-center gap-1 md:inline-flex" aria-hidden="true">
+        <span class="hidden md:inline lg:hidden xl:inline">Tìm kiếm…</span>
+        <span class="ml-4 hidden items-center gap-1 md:inline-flex lg:hidden xl:inline-flex" aria-hidden="true">
           <kbd class="kbd" data-mod-key>Ctrl</kbd><kbd class="kbd">K</kbd>
         </span>
       </button>
@@ -161,6 +161,7 @@ const catColor = Object.fromEntries(CATEGORIES.map((c) => [`/chuyen-muc/${c.id}/
     gap: 7px;
     height: 36px;
     padding: 0 12px;
+    white-space: nowrap; /* "Trang chủ", "Công nghệ" must never break onto two lines */
     border-radius: 999px;
     font-size: 0.9375rem;
     font-weight: 500;
@@ -211,6 +212,16 @@ const catColor = Object.fromEntries(CATEGORIES.map((c) => [`/chuyen-muc/${c.id}/
       background: var(--bg-elevated);
       margin-right: 4px;
       padding: 0 8px 0 14px;
+    }
+  }
+  /* 1024–1279px: the full nav is visible, so the search pill shrinks to a round icon button. */
+  @media (min-width: 1024px) and (max-width: 1279.98px) {
+    .search-trigger {
+      width: 40px;
+      padding: 0;
+    }
+    .nav-link {
+      padding: 0 9px;
     }
   }
 
