@@ -23,9 +23,9 @@ Bạn mở điện thoại để xem giờ, và hai mươi phút sau nhận ra m
 
 Đừng vội thay đổi gì trong hai ba ngày đầu. Hãy chỉ quan sát:
 
-- Mở công cụ thống kê thời gian dùng máy có sẵn trên điện thoại (Thời gian sử dụng trên iPhone, Digital Wellbeing trên Android). Ghi lại tổng thời gian mỗi ngày, ba ứng dụng dùng nhiều nhất và số lần mở khoá.
-- Để ý **lúc nào** bạn cầm máy lên vô thức: khi xếp hàng, khi vừa thức dậy, khi gặp việc khó.
-- Tự hỏi: sau mỗi lần dùng, mình thấy tốt hơn hay tệ hơn?
+* Mở công cụ thống kê thời gian dùng máy có sẵn trên điện thoại (Thời gian sử dụng trên iPhone, Digital Wellbeing trên Android). Ghi lại tổng thời gian mỗi ngày, ba ứng dụng dùng nhiều nhất và số lần mở khoá.
+* Để ý **lúc nào** bạn cầm máy lên vô thức: khi xếp hàng, khi vừa thức dậy, khi gặp việc khó.
+* Tự hỏi: sau mỗi lần dùng, mình thấy tốt hơn hay tệ hơn?
 
 Những con số này không nhằm để bạn tự trách. Chúng là điểm xuất phát để cuối tháng bạn có cái mà so sánh.
 
@@ -59,11 +59,11 @@ Thay vì cố dùng ít đi ở mọi lúc, hãy chọn vài thời điểm và 
 
 Hãy chuẩn bị sẵn vài lựa chọn cho những lúc trống:
 
-- Một cuốn sách giấy để ở nơi bạn hay ngồi.
-- Một bài tập giãn cơ năm phút.
-- Đi bộ quanh khu nhà, không đeo tai nghe.
-- Nấu một món mới, chăm cây, vẽ nguệch ngoạc, chơi nhạc cụ.
-- Gọi điện cho một người bạn lâu không nói chuyện.
+* Một cuốn sách giấy để ở nơi bạn hay ngồi.
+* Một bài tập giãn cơ năm phút.
+* Đi bộ quanh khu nhà, không đeo tai nghe.
+* Nấu một món mới, chăm cây, vẽ nguệch ngoạc, chơi nhạc cụ.
+* Gọi điện cho một người bạn lâu không nói chuyện.
 
 Với mạng xã hội, thử **giới hạn theo giờ thay vì cấm hẳn**: chọn một khung giờ cố định trong ngày, dùng trên máy tính thay vì điện thoại nếu được. Khi phải ngồi vào bàn mới vào được mạng xã hội, bạn sẽ dùng nó có chủ đích hơn nhiều.
 
@@ -84,22 +84,76 @@ Từ đó, viết ra vài quy tắc cá nhân ngắn gọn, ví dụ: "Không đ
 
 ## Lộ trình tóm tắt
 
-| Tuần | Trọng tâm | Việc cụ thể |
-| --- | --- | --- |
-| 0 | Quan sát | Ghi thời gian dùng máy, số lần mở khoá, viết mục tiêu |
-| 1 | Dọn dẹp | Tắt thông báo, sắp xếp màn hình chính, thử thang xám |
-| 2 | Vùng không điện thoại | Phòng ngủ, bữa ăn, giờ đầu tiên của ngày |
-| 3 | Thay thế | Hoạt động ngoại tuyến, giới hạn mạng xã hội theo giờ |
-| 4 | Thiết kế lại | Đánh giá, giữ thứ có giá trị, viết quy tắc dài hạn |
+| Tuần | Trọng tâm             | Việc cụ thể                                           |
+| ---- | --------------------- | ----------------------------------------------------- |
+| 0    | Quan sát              | Ghi thời gian dùng máy, số lần mở khoá, viết mục tiêu |
+| 1    | Dọn dẹp               | Tắt thông báo, sắp xếp màn hình chính, thử thang xám  |
+| 2    | Vùng không điện thoại | Phòng ngủ, bữa ăn, giờ đầu tiên của ngày              |
+| 3    | Thay thế              | Hoạt động ngoại tuyến, giới hạn mạng xã hội theo giờ  |
+| 4    | Thiết kế lại          | Đánh giá, giữ thứ có giá trị, viết quy tắc dài hạn    |
 
 ## Danh sách kiểm tra cho ngày đầu tiên
 
-- [ ] Xem thống kê thời gian dùng máy tuần qua
-- [ ] Viết một câu mục tiêu cụ thể cho 30 ngày
-- [ ] Tắt thông báo của ít nhất năm ứng dụng
-- [ ] Chuyển ứng dụng giải trí ra khỏi màn hình chính
-- [ ] Chọn chỗ sạc điện thoại bên ngoài phòng ngủ
+* [ ] Xem thống kê thời gian dùng máy tuần qua
+* [ ] Viết một câu mục tiêu cụ thể cho 30 ngày
+* [ ] Tắt thông báo của ít nhất năm ứng dụng
+* [ ] Chuyển ứng dụng giải trí ra khỏi màn hình chính
+* [ ] Chọn chỗ sạc điện thoại bên ngoài phòng ngủ
 
 ## Lời kết
 
 Nếu giữa chừng bạn "vấp" — một tối lướt đến khuya, một buổi sáng mở máy ngay khi tỉnh dậy — đừng coi đó là thất bại. Thói quen được xây bằng số lần quay lại, không phải bằng chuỗi ngày hoàn hảo. Ba mươi ngày không biến bạn thành một người khác, nhưng đủ để bạn nhận ra: chiếc điện thoại là một công cụ tuyệt vời, miễn là bạn — chứ không phải nó — quyết định khi nào cần cầm lên.
+
+<br />
+
+Bạn mở điện thoại để "kiểm tra một chút". Bốn mươi phút sau, bạn vẫn đang lướt, và không nhớ mình vừa xem gì. Hoặc: bạn ngồi đọc một trang sách, mắt chạy hết dòng này đến dòng khác, đến cuối trang mới nhận ra mình chẳng tiếp nhận được gì. Những lúc như vậy, ta thường tự nhủ "tại cái điện thoại". Nhưng thật ra, vấn đề không nằm ở chiếc máy trong túi bạn.
+
+Có một hiểu lầm phổ biến về digital detox: nghĩ rằng phải ném điện thoại vào ngăn kéo, xóa hết mạng xã hội, sống như người ngoài hành tinh mới gọi là "detox". Mình không nghĩ vậy. Thử thách 30 ngày dưới đây đặt mục tiêu khiêm tốn hơn nhiều: giành lại quyền quyết định mình chú ý vào đâu. Không khổ hạnh, không cai nghiện, chỉ là tập nhận ra và chọn lại.
+
+## Hiểu đúng về "detox": bỏ thói quen, không bỏ thiết bị
+
+Có hai thứ rất dễ lẫn: sự xao nhãng và công cụ. Điện thoại là công cụ. Việc tay tự động với lấy nó mỗi khi rảnh tay là thói quen. Bỏ công cụ thì dễ, nhưng thói quen vẫn còn đó và sẽ tìm chỗ khác để trú ngụ — máy tính, tivi, hay đơn giản là ngồi thẫn thờ.
+
+Mình hay ví điện thoại như chiếc tủ lạnh. Tủ lạnh không xấu. Nhưng nếu để nó ngay cạnh ghế ngồi, bạn sẽ mở nó liên tục, không vì đói mà vì nó ở đó. Chuyển cái tủ ra xa một chút, số lần mở giảm hẳn mà không cần tốn ý chí.
+
+Cơ chế khiến ta muốn kiểm tra máy liên tục cũng tương tự: phần thưởng đến không theo lịch cố định, lúc có lúc không, nên ta cứ phải thử để biết lần này có gì \[cần kiểm chứng thuật ngữ chuyên môn]. Vì vậy, nguyên tắc xuyên suốt 30 ngày là: thay đổi môi trường và thói quen nhỏ hiệu quả hơn dựa vào ý chí.
+
+## Tuần 1: Nhìn lại thói quen mà không phán xét
+
+Tuần đầu tiên, đừng cắt giảm gì cả. Chỉ quan sát. Mỗi lần cầm máy, bạn ghi lại một câu lý do: "để xem mấy giờ", "chờ thang máy", "sợ bỏ lỡ tin nhắn". Cuối ngày đọc lại, bạn sẽ thấy mình mở máy vì lý do gì nhiều nhất.
+
+Song song, làm hai việc nhỏ: tắt các thông báo không thật sự cần, và dọn màn hình chính chỉ còn những ứng dụng bạn chủ động muốn dùng. Ứng dụng giải trí thì chuyển sang trang thứ hai, hoặc ẩn vào một thư mục. Mỗi lần mở máy, bạn phải đi thêm một bước — đủ để não kịp hỏi "mình đang định làm gì nhỉ".
+
+```tip
+# Đừng xóa ứng dụng, chỉ cần đặt xa
+Xóa ứng dụng dễ khiến bạn cài lại trong lúc yếu lòng. Chuyển nó ra khỏi màn hình chính và tắt thông báo thường nhẹ nhàng và bền hơn.
+```
+
+## Tuần 2–3: Tạo khoảng trống và nghi thức chuyển tiếp
+
+Đây là lúc bắt đầu thay đổi môi trường. Chọn vài "vùng không điện thoại" cố định: bàn ăn, phòng ngủ, và 30 phút đầu ngày. Không cần nhiều, chỉ cần những vùng bạn giữ được đều đặn.
+
+Một mẹo mình thấy hiệu quả là tạo "nghi thức chuyển tiếp" giữa các việc. Trước khi mở máy, hít một hơi thật sâu, uống một ngụm nước, hoặc đi bộ vài bước. Nghe có vẻ nhỏ nhặt, nhưng chính khoảng dừng vài giây đó cắt đứt phản xạ mở máy vô thức.
+
+Thử thêm "một việc một lúc": đọc thì chỉ đọc, họp thì chỉ họp. Khi làm được, ghi lại cảm giác — thường là nhẹ hơn mình tưởng. Còn cơn "ngứa tay" muốn kiểm tra máy thì đừng cấm tuyệt đối, hãy hẹn giờ: cứ 45 phút kiểm tra một lần có chủ đích.
+
+```steps
+# Nhận diện cơn ngứa tay
+Khi thấy tay muốn với máy, gọi tên nó: "à, mình đang muốn kiểm tra". Chỉ cần nhận ra là đã bớt một nửa.
+# Hẹn giờ kiểm tra
+Đặt một khung giờ cố định trong giờ làm việc để xem tin nhắn và thông báo một lượt.
+# Ghi lại điều bạn định tìm
+Trước khi mở, viết ra giấy bạn đang cần gì. Nếu không viết được, có lẽ bạn không thật sự cần mở.
+```
+
+## Tuần 4: Giữ lại thứ có ích, bỏ thứ chỉ gây nhiễu
+
+Lấy nhật ký ba tuần ra đọc lại. Ứng dụng nào thật sự phục vụ bạn — nhắn tin với người thân, tra cứu công việc, nghe nhạc khi chạy bộ? Ứng dụng nào chỉ để giết thời gian chờ? Bạn không cần xóa hết, chỉ cần biết mình đang giữ nó vì lý do gì.
+
+Từ những gì đã thấy hiệu quả, thiết kế lại thói quen buổi sáng và buổi tối. Ví dụ: 30 phút đầu ngày không mở máy, tối để máy sạc ở phòng khác. Chuẩn bị cho giai đoạn sau 30 ngày bằng vài quy tắc cá nhân đơn giản, dễ nhớ — kiểu "không mang máy vào phòng ngủ", "kiểm tra tin nhắn ba lần mỗi ngày". Quy tắc càng đơn giản càng dễ sống cùng, không cần kỷ luật sắt đá.
+
+## Kết: Chú ý là thứ mình chọn, không phải thứ bị lấy đi
+
+Sau 30 ngày, bạn không cần bỏ điện thoại. Bạn chỉ cần bỏ thói quen phản xạ mở nó vô thức. Đó là toàn bộ tinh thần của thử thách này.
+
+Nếu muốn bắt đầu, đừng làm cả dàn ý cùng lúc. Chọn một thay đổi — ví dụ 30 phút đầu ngày không mở máy — và làm trong 7 ngày trước khi mở rộng. Kết quả sẽ khác nhau ở mỗi người, và việc có hôm quay lại thói quen cũ không phải thất bại. Đó chỉ là dữ liệu để bạn biết mình cần điều chỉnh ở đâu.
