@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker "nhip-so": serves the static Astro build (./dist) + a tiny API under /api/*.
+ * Cloudflare Worker "my-blog" (Gì thế nhỉ · githenhi.com): serves the static Astro build (./dist) + a tiny API under /api/*.
  * Hướng dẫn từng bước (tiếng Việt): docs/CLOUDFLARE.md
  *
  * - Static files are served by Workers Static Assets *before* the Worker runs (free, unlimited requests),

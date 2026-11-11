@@ -1,11 +1,11 @@
-# Đưa Nhịp Số lên Cloudflare — từng bước cho người mới
+# Đưa Gì thế nhỉ lên Cloudflare — từng bước cho người mới
 
 Hướng dẫn này đưa blog từ máy bạn lên Internet, **miễn phí**, với Cloudflare. Làm lần đầu mất khoảng 30–45 phút;
 sau đó mỗi lần `git push` là site tự cập nhật.
 
 **Bạn sẽ có gì khi xong:**
 
-- Một Worker tên **`nhip-so`** phục vụ toàn bộ site tĩnh (thư mục `dist/` do Astro build ra) — request tới file tĩnh
+- Một Worker tên **`my-blog`** phục vụ toàn bộ site tĩnh (thư mục `dist/` do Astro build ra) — request tới file tĩnh
   **miễn phí, không giới hạn**.
 - Một API nhỏ dưới `/api/*` (mã trong `worker/`) cho **lượt xem**, **cảm xúc (reactions)** và **đăng ký bản tin**,
   lưu trong database **D1** (SQLite của Cloudflare).
@@ -69,16 +69,16 @@ Bước 0–9 là bắt buộc để có site chạy đủ tính năng; bước 
 2. Mở email xác nhận Cloudflare gửi tới và bấm vào liên kết xác minh.
 3. Gói **Free** là đủ cho blog này — không cần thẻ thanh toán.
 4. Lần đầu mở **Workers & Pages**, Cloudflare có thể hỏi bạn chọn một **subdomain** cho `workers.dev`
-   (ví dụ `ten-ban`). Site sẽ có địa chỉ `https://nhip-so.ten-ban.workers.dev`.
+   (ví dụ `ten-ban`). Site sẽ có địa chỉ `https://my-blog.ten-ban.workers.dev`.
 
 ## 2. Đẩy code lên GitHub
 
-1. Tạo repo mới trên <https://github.com/new> (ví dụ `nhip-so`). **Không** tick "Add a README" — dự án đã có sẵn.
+1. Tạo repo mới trên <https://github.com/new> (ví dụ `my_blog`). **Không** tick "Add a README" — dự án đã có sẵn.
    - Muốn dùng bình luận Giscus thì repo phải **public**. Các phần khác chạy được với repo private.
 2. Trong thư mục dự án:
 
    ```bash
-   git remote add origin https://github.com/<tên-bạn>/nhip-so.git
+   git remote add origin https://github.com/<tên-bạn>/my_blog.git
    git push -u origin main
    ```
 
@@ -144,13 +144,13 @@ Kết quả cần có `page_views`, `reactions`, `dedupe`, `subscribers` (cùng 
 Workers Builds là dịch vụ build của Cloudflare: mỗi lần bạn push lên GitHub, Cloudflare tự build rồi deploy.
 
 1. Vào <https://dash.cloudflare.com> → **Workers & Pages** → **Create** (Create application).
-2. Chọn **Import a repository** → **Connect GitHub** (lần đầu) → cho phép Cloudflare truy cập repo `nhip-so`
+2. Chọn **Import a repository** → **Connect GitHub** (lần đầu) → cho phép Cloudflare truy cập repo blog
    (chỉ chọn repo này là đủ) → chọn repo.
 3. Điền cấu hình:
 
    | Ô | Giá trị |
    |---|---|
-   | **Project name** (tên Worker) | `nhip-so` — **phải trùng** với `"name"` trong `wrangler.jsonc` |
+   | **Project name** (tên Worker) | `my-blog` — **phải trùng** với `"name"` trong `wrangler.jsonc` |
    | **Build command** | `npm run build` |
    | **Deploy command** | `npx wrangler deploy` |
    | Non-production branch deploy command | để mặc định (`npx wrangler versions upload`) |
@@ -162,15 +162,15 @@ Workers Builds là dịch vụ build của Cloudflare: mỗi lần bạn push l�
      secrets*): `SITE_URL` (địa chỉ site, xem [bước 8](#8-cập-nhật-địa-chỉ-site)) và `PUBLIC_CF_ANALYTICS_TOKEN` (xem
      [bước 11](#11-web-analytics)). Đây là biến **lúc build**, khác với secret lúc chạy ở bước 7.
 4. Bấm **Deploy** (Save and Deploy). Lần build đầu mất vài phút; theo dõi log ngay trên trang.
-5. Xong, mở `https://nhip-so.<subdomain>.workers.dev` — site đã lên.
+5. Xong, mở `https://my-blog.<subdomain>.workers.dev` — site đã lên.
 
 Từ giờ: push lên nhánh `main` → tự deploy bản chính thức. Push nhánh khác → Cloudflare tạo một **bản xem trước**
 (preview URL) mà không đụng tới bản chính.
 
 > Bản xem trước dùng **chung database D1** với bản chính: lượt xem, cảm xúc và email gửi từ đó cũng vào database thật.
 
-> **Đã có sẵn Worker `nhip-so`** (ví dụ từng chạy `npm run deploy` hoặc `wrangler secret put` trước)? Đừng tạo mới;
-> vào **Workers & Pages → nhip-so → Settings → Build → Connect** để nối repo vào Worker đó.
+> **Đã có sẵn Worker `my-blog`** (ví dụ từng chạy `npm run deploy` hoặc `wrangler secret put` trước)? Đừng tạo mới;
+> vào **Workers & Pages → my-blog → Settings → Build → Connect** để nối repo vào Worker đó.
 
 ## 7. Đặt secrets
 
@@ -213,12 +213,12 @@ Xem danh sách secret đã đặt (chỉ hiện tên, không hiện giá trị):
 npx wrangler secret list
 ```
 
-> Cũng có thể đặt trên dashboard: **nhip-so → Settings → Variables and Secrets → Add**, chọn kiểu **Secret**.
+> Cũng có thể đặt trên dashboard: **my-blog → Settings → Variables and Secrets → Add**, chọn kiểu **Secret**.
 
 ## 8. Cập nhật địa chỉ site
 
 Địa chỉ site được dùng cho link canonical, sitemap, RSS và ảnh chia sẻ (OG). Khi đã biết địa chỉ thật
-(`https://nhip-so.<subdomain>.workers.dev` hoặc tên miền riêng ở bước 10):
+(`https://my-blog.<subdomain>.workers.dev` hoặc tên miền riêng ở bước 10 — blog này dùng `https://githenhi.com`):
 
 1. Sửa `SITE.url` trong [`src/config.ts`](../src/config.ts) — hoặc đặt build variable `SITE_URL` trong Workers Builds
    (biến này được ưu tiên hơn `SITE.url`).
@@ -256,18 +256,18 @@ npx wrangler d1 execute blog-db --remote --command "SELECT * FROM page_views ORD
 > Thử `POST` bằng `curl` sẽ nhận lỗi **403** — đó là đúng: API chỉ nhận yêu cầu ghi gửi từ chính trang blog
 > (kiểm tra header `Origin`).
 
-**Xem log của Worker:** dashboard → **nhip-so → Observability** (đã bật sẵn trong `wrangler.jsonc`), hoặc xem trực
+**Xem log của Worker:** dashboard → **my-blog → Observability** (đã bật sẵn trong `wrangler.jsonc`), hoặc xem trực
 tiếp từ máy bằng `npx wrangler tail`.
 
 ## 10. Tên miền riêng
 
-Tên miền (ví dụ `nhipso.vn`) **phải được quản lý trên Cloudflare** thì mới gắn vào Worker được.
+Tên miền (ví dụ `githenhi.com`) **phải được quản lý trên Cloudflare** thì mới gắn vào Worker được.
 
 1. Dashboard → **Add a domain** (Add a site) → nhập tên miền → chọn gói **Free**.
 2. Cloudflare đưa cho bạn 2 **nameserver**. Vào trang quản lý tên miền nơi bạn mua (Mắt Bão, PA Việt Nam, iNET,
    Namecheap…) và thay nameserver bằng 2 giá trị đó. Có thể mất vài phút tới 24 giờ; Cloudflare gửi email khi xong.
-3. **Workers & Pages → nhip-so → Settings → Domains & Routes → Add → Custom domain** → nhập `nhipso.vn`
-   (hoặc `blog.nhipso.vn`). Cloudflare tự tạo bản ghi DNS và chứng chỉ HTTPS.
+3. **Workers & Pages → my-blog → Settings → Domains & Routes → Add → Custom domain** → nhập `githenhi.com`
+   (thêm `www.githenhi.com` nếu muốn cả bản có www). Cloudflare tự tạo bản ghi DNS và chứng chỉ HTTPS.
 4. Cập nhật địa chỉ site như [bước 8](#8-cập-nhật-địa-chỉ-site).
 5. Nếu dùng Web Analytics/Turnstile: thêm tên miền mới vào danh sách hostname của chúng.
 6. Tuỳ chọn: ở cùng trang *Domains & Routes*, tắt `workers.dev` để chỉ còn một địa chỉ (link canonical vốn đã trỏ về
@@ -278,7 +278,7 @@ Tên miền (ví dụ `nhipso.vn`) **phải được quản lý trên Cloudflare
 Thống kê lượt truy cập **không cookie**, không theo dõi cá nhân, miễn phí.
 
 1. Dashboard → **Analytics & Logs → Web Analytics → Add a site**.
-2. Nhập hostname (tên miền riêng, hoặc `nhip-so.<subdomain>.workers.dev`) → hoàn tất.
+2. Nhập hostname (tên miền riêng, hoặc `my-blog.<subdomain>.workers.dev`) → hoàn tất.
 3. Cloudflare hiện một đoạn mã JS có dạng `data-cf-beacon='{"token": "abc123…"}'`. Chép **token** (chỉ chuỗi trong
    ngoặc kép).
 4. Dán vào `ANALYTICS.cloudflareToken` trong [`src/config.ts`](../src/config.ts) rồi push — **hoặc** đặt build variable
@@ -296,8 +296,8 @@ Form bản tin đã có sẵn bẫy bot đơn giản (một ô ẩn) và giới 
 thường **vô hình** với người đọc thật — bật khi bắt đầu thấy email rác.
 
 1. Dashboard → **Turnstile → Add widget**.
-   - Widget name: `Nhịp Số bản tin`.
-   - Hostnames: tên miền của bạn và/hoặc `nhip-so.<subdomain>.workers.dev`.
+   - Widget name: `Bản tin Gì thế nhỉ`.
+   - Hostnames: tên miền của bạn (ví dụ `githenhi.com`) và/hoặc `my-blog.<subdomain>.workers.dev`.
    - Widget mode: **Managed**.
 2. Bấm **Create** → nhận **Site Key** (công khai) và **Secret Key** (bí mật).
 3. **Làm theo đúng thứ tự:**
@@ -326,7 +326,7 @@ Bình luận lưu trên **GitHub Discussions** của repo, người đọc đăn
 3. Cài app giscus cho repo: <https://github.com/apps/giscus> → **Install** → chọn **Only select repositories** →
    chọn repo blog.
 4. Vào <https://giscus.app/vi> (nhãn tiếng Anh trong ngoặc, phòng khi trang hiện tiếng Anh):
-   - Ô **Kho lưu trữ** (*Repository*): nhập `<tên-bạn>/nhip-so` → phải báo repo đạt đủ điều kiện.
+   - Ô **Kho lưu trữ** (*Repository*): nhập `<tên-bạn>/<tên-repo>` → phải báo repo đạt đủ điều kiện.
    - **Ánh xạ trang ↔ discussion** (*Page ↔ Discussions Mapping*): chọn `pathname` (khớp với cấu hình sẵn).
    - **Danh mục Discussion** (*Discussion Category*): chọn **Announcements** (chỉ bạn và giscus tạo được discussion
      mới — tránh spam).
@@ -336,7 +336,7 @@ Bình luận lưu trên **GitHub Discussions** của repo, người đọc đăn
 
    ```ts
    export const GISCUS = {
-     repo: 'ten-ban/nhip-so',
+     repo: 'ten-ban/ten-repo',
      repoId: 'R_kgDO…',
      category: 'Announcements',
      categoryId: 'DIC_kwDO…',
@@ -440,23 +440,23 @@ Dữ liệu thử nằm trong `.wrangler/` trên máy, không ảnh hưởng dat
 
 | Triệu chứng | Nguyên nhân | Cách sửa |
 |---|---|---|
-| Build/deploy báo tên trong file cấu hình phải trùng tên Worker (*must match the name of your Worker*) | Tên Worker trên Cloudflare khác `"name": "nhip-so"` trong `wrangler.jsonc` | Tạo lại Worker với tên đúng `nhip-so`, **hoặc** đổi `"name"` trong `wrangler.jsonc` cho trùng tên Worker rồi push (địa chỉ `workers.dev` đổi theo). |
-| Deploy báo thư mục `assets.directory` / `dist` không tồn tại | Thiếu hoặc sai **Build command**, nên chưa có `dist/` | *nhip-so → Settings → Build* → Build command = `npm run build` → build lại. |
+| Build/deploy báo tên trong file cấu hình phải trùng tên Worker (*must match the name of your Worker*) | Tên Worker trên Cloudflare khác `"name": "my-blog"` trong `wrangler.jsonc` | Tạo lại Worker với tên đúng `my-blog`, **hoặc** đổi `"name"` trong `wrangler.jsonc` cho trùng tên Worker rồi push (địa chỉ `workers.dev` đổi theo). |
+| Deploy báo thư mục `assets.directory` / `dist` không tồn tại | Thiếu hoặc sai **Build command**, nên chưa có `dist/` | *my-blog → Settings → Build* → Build command = `npm run build` → build lại. |
 | Build lỗi khi cài package hoặc sai phiên bản Node | Thiếu `package-lock.json` hoặc `.nvmrc` trong repo | Commit cả hai file. Vẫn lỗi: thêm build variable `NODE_VERSION` = `24`. |
 | Deploy báo lỗi về D1 / `database_id` | Chưa làm bước 4, hoặc chưa push `wrangler.jsonc` có `database_id` thật | Làm lại [bước 4](#4-tạo-database-d1), commit, push. |
 | Lệnh migrations trong Workers Builds báo lỗi xác thực / không có quyền | Token mặc định của Workers Builds không có quyền D1 | Bỏ migrations khỏi lệnh build/deploy; chạy `npm run db:migrate:remote` từ máy. |
 | `/api/...` trả về **trang 404** (HTML) | Đang chạy `npm run dev` / `astro preview`, hoặc đưa `dist/` lên host tĩnh (Cloudflare Pages, GitHub Pages…) — không có Worker | Dùng `npm run preview` khi thử trên máy; khi deploy, dùng Worker như hướng dẫn này. Giữ `run_worker_first: ["/api/*"]` trong `wrangler.jsonc`. |
 | `/api/health` trả `{"ok":true,"db":false}` | Worker không có binding D1 tên `DB` | Kiểm tra mục `d1_databases` trong `wrangler.jsonc` (binding phải là `"DB"`), push lại. |
 | API trả **500** "Máy chủ đang gặp trục trặc…", log có `no such table` | Chưa tạo bảng trên database thật | `npm run db:migrate:remote`. |
-| API trả **403** "Yêu cầu bị từ chối vì không đến từ trang Nhịp Số." | Yêu cầu ghi đến từ một địa chỉ khác địa chỉ của Worker (trang mở ở domain khác, `astro dev` ở cổng 4321 thiếu `ALLOWED_ORIGINS`, hoặc `curl` không gửi `Origin`) | Thêm địa chỉ đó (đầy đủ `https://…`, cách nhau bằng dấu phẩy) vào `vars.ALLOWED_ORIGINS` trong `wrangler.jsonc`; trên máy thì thêm vào `.dev.vars`. API cố ý không hỗ trợ CORS. |
+| API trả **403** "Yêu cầu bị từ chối vì không đến từ trang Gì thế nhỉ." | Yêu cầu ghi đến từ một địa chỉ khác địa chỉ của Worker (trang mở ở domain khác, `astro dev` ở cổng 4321 thiếu `ALLOWED_ORIGINS`, hoặc `curl` không gửi `Origin`) | Thêm địa chỉ đó (đầy đủ `https://…`, cách nhau bằng dấu phẩy) vào `vars.ALLOWED_ORIGINS` trong `wrangler.jsonc`; trên máy thì thêm vào `.dev.vars`. API cố ý không hỗ trợ CORS. |
 | API trả **429** "Bạn thao tác hơi nhanh…" | Quá 20 lần ghi trong 60 giây từ cùng một IP (văn phòng, trường học, mạng di động có thể dùng chung IP) | Chờ một phút. Muốn nới: tăng `limit` trong mục `ratelimits` của `wrangler.jsonc` (`period` chỉ nhận 10 hoặc 60), hoặc xoá cả mục để tắt. |
 | Lượt xem không tăng | Chỉ đếm sau ≥10 giây đọc hoặc cuộn ≥30% bài; mỗi người mỗi bài chỉ tính 1 lần/ngày; số liệu được cache 30 giây | Thử bằng trình duyệt/thiết bị khác, hoặc chờ sang ngày. |
 | Form bản tin: "Chưa xác minh được bạn là người thật" | Đã đặt `TURNSTILE_SECRET` nhưng trang chưa có Site Key, hoặc hostname chưa nằm trong widget Turnstile | Xem thứ tự ở [bước 12](#12-turnstile-chống-spam); kiểm tra danh sách Hostnames. |
 | Form bản tin: "Mất kết nối tới máy chủ…" | Trang không gọi được API (chạy `npm run dev`, host tĩnh, hoặc Worker lỗi) | Xem `curl https://<site>/api/health`, rồi xem log ở *Observability*. |
-| Không tạo được Worker `nhip-so` khi Import repository vì tên đã tồn tại | Worker đã được tạo trước đó (`wrangler deploy` / `wrangler secret put` từ máy) | Vào *nhip-so → Settings → Build → Connect* để nối repo vào Worker có sẵn. |
+| Không tạo được Worker `my-blog` khi Import repository vì tên đã tồn tại | Worker đã được tạo trước đó (`wrangler deploy` / `wrangler secret put` từ máy) | Vào *my-blog → Settings → Build → Connect* để nối repo vào Worker có sẵn. |
 | Lệnh `wrangler` báo chưa đăng nhập / chọn sai tài khoản | Hết phiên đăng nhập, hoặc email có nhiều tài khoản Cloudflare | `npx wrangler login`; nhiều tài khoản thì đặt biến môi trường `CLOUDFLARE_ACCOUNT_ID`. |
 
-Vẫn chưa ra? Xem log: dashboard → *nhip-so → Observability*, hoặc `npx wrangler tail` rồi thao tác lại trên trang.
+Vẫn chưa ra? Xem log: dashboard → *my-blog → Observability*, hoặc `npx wrangler tail` rồi thao tác lại trên trang.
 
 ## 18. Không dùng backend
 

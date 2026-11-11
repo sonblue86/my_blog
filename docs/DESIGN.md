@@ -1,4 +1,4 @@
-# Nhịp Số — Design system & quy ước code
+# Gì thế nhỉ — Design system & quy ước code
 
 Tài liệu này là "hợp đồng" chung cho mọi phần của giao diện. Đọc trước khi thêm component.
 
@@ -11,6 +11,17 @@ Tài liệu này là "hợp đồng" chung cho mọi phần của giao diện. �
   Vùng chạm tối thiểu 44×44px. Không hover-only.
 - **Tôn trọng người đọc.** `prefers-reduced-motion`, focus ring rõ ràng, tương phản AA, không pop-up chặn đọc,
   không tracking bên thứ ba.
+
+## Thương hiệu
+- **Tên:** Gì thế nhỉ (tên không có dấu "?"; wordmark ở header thêm một dấu "?" màu `--hot` chỉ để trang trí,
+  `aria-hidden`). Domain: <https://githenhi.com>. Khẩu hiệu: *Hỏi cho ra lẽ về AI, công nghệ và đời sống.*
+- **Giọng văn:** tò mò, thân thiện, thông minh, đáng tin. Mỗi bài bắt đầu từ một câu hỏi người đọc thật sự thắc mắc
+  và trả lời rõ ràng — dữ kiện đã kiểm chứng, ví dụ dùng được ngay. Tránh giật tít và chơi chữ quá đà.
+- **Viết tên giữa câu:** "blog Gì thế nhỉ" hoặc đặt trong ngoặc kép (“Gì thế nhỉ”) — đứng trơ trọi giữa câu, tên dễ bị
+  đọc thành một câu hỏi.
+- **Logo:** ô vuông bo góc gradient indigo → coral (`#6d5dfc → #f0562e`), bong bóng thoại trắng chứa dấu hỏi indigo
+  đậm (`#4a3bd6`) với chấm coral. Hình học nằm duy nhất ở `src/lib/brand-mark.mjs` (dùng chung cho `Logo.astro`, ảnh OG
+  và favicon/icon PWA); sửa xong chạy `npm run icons`.
 
 ## Màu (CSS variables trong `src/styles/global.css`)
 | Token | Ý nghĩa |

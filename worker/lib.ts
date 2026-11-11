@@ -16,7 +16,7 @@ export const MESSAGES = {
   badBody: 'Dữ liệu gửi lên chưa đúng, bạn tải lại trang rồi thử lại nhé.',
   tooLarge: 'Dữ liệu gửi lên quá lớn.',
   notJson: 'Cần gửi dữ liệu dạng JSON.',
-  badOrigin: 'Yêu cầu bị từ chối vì không đến từ trang Nhịp Số.',
+  badOrigin: 'Yêu cầu bị từ chối vì không đến từ trang Gì thế nhỉ.',
   badSlug: 'Không tìm thấy bài viết này.',
   badKind: 'Cảm xúc này không có trong danh sách.',
   tooMany: 'Bạn thao tác hơi nhanh, nghỉ tay một chút rồi thử lại nhé.',

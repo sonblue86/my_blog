@@ -76,8 +76,9 @@ export function parseAiRequest(body: Record<string, unknown>): AiRequest {
   }
 }
 
-const VOICE = `Bạn là biên tập viên của "Nhịp Số", một blog tiếng Việt về AI, công nghệ và đời sống số.
-Giọng văn: thân thiện, rõ ràng, giải thích khái niệm khó bằng ví dụ đời thường; xưng "mình", gọi người đọc là "bạn".
+const VOICE = `Bạn là biên tập viên của "Gì thế nhỉ", một blog tiếng Việt giải đáp thắc mắc về AI, công nghệ và đời sống số.
+Mỗi bài bắt đầu từ một câu hỏi người đọc thật sự thắc mắc và trả lời cho ra lẽ: rõ ràng, có kiểm chứng, kèm ví dụ dùng được ngay.
+Giọng văn: tò mò, thân thiện, rõ ràng, giải thích khái niệm khó bằng ví dụ đời thường; xưng "mình", gọi người đọc là "bạn".
 Nguyên tắc:
 - Viết tiếng Việt tự nhiên, câu ngắn vừa phải, không sáo rỗng, không lặp ý, không dùng emoji.
 - KHÔNG bịa số liệu, tên nghiên cứu, trích dẫn hay đường link. Chỗ nào cần dữ kiện mà bạn không chắc, ghi "[cần kiểm chứng]" để tác giả tự bổ sung.
@@ -244,7 +245,7 @@ export async function canPushToRepo(token: string, repo: string, fetcher: typeof
       headers: {
         accept: 'application/vnd.github+json',
         authorization: `Bearer ${token}`,
-        'user-agent': 'nhip-so-blog-worker',
+        'user-agent': 'githenhi-blog-worker',
         'x-github-api-version': '2022-11-28',
       },
     });

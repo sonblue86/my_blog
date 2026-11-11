@@ -1,15 +1,17 @@
-# Nhịp Số
+# Gì thế nhỉ
 
-**Blog tiếng Việt về AI, công nghệ & đời sống — viết chậm, đọc sâu.**
-Site tĩnh siêu nhanh dựng bằng [Astro](https://astro.build), chạy miễn phí trên Cloudflare, trải nghiệm đọc được chăm chút
-từ điện thoại tới màn hình lớn.
+**Hỏi cho ra lẽ về AI, công nghệ và đời sống.** · <https://githenhi.com>
+
+Blog tiếng Việt nơi mỗi bài bắt đầu từ một câu hỏi thật và kết thúc bằng câu trả lời dễ hiểu, có kiểm chứng, dùng được
+ngay. Site tĩnh siêu nhanh dựng bằng [Astro](https://astro.build), chạy miễn phí trên Cloudflare, trải nghiệm đọc được
+chăm chút từ điện thoại tới màn hình lớn.
 
 [![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
 ![Node 24](https://img.shields.io/badge/node-24-339933)
 ![Chi phí 0đ](https://img.shields.io/badge/chi%20ph%C3%AD-0%C4%91-success)
 ![MIT](https://img.shields.io/badge/license-MIT-blue)
 
-![Ảnh chụp màn hình blog Nhịp Số: trang bài viết trên điện thoại và máy tính, chế độ sáng và tối](docs/screenshot.png)
+![Ảnh chụp màn hình blog Gì thế nhỉ: trang bài viết trên điện thoại và máy tính, chế độ sáng và tối](docs/screenshot.png)
 
 > **Mục lục:** [Tính năng](#tính-năng-nổi-bật) · [Kiến trúc](#kiến-trúc--lý-do-chọn) · [Bắt đầu nhanh](#bắt-đầu-nhanh) ·
 > [Cấu trúc thư mục](#cấu-trúc-thư-mục) · [Viết bài](#viết-bài) · [CMS /admin](#cms-trên-web-admin) ·
@@ -60,7 +62,7 @@ từ điện thoại tới màn hình lớn.
                          Cloudflare Workers Builds: npm run build  (Astro → HTML tĩnh + Pagefind)
                                             │
                                             ▼
- Người đọc ◄── CDN toàn cầu ── Cloudflare Worker "nhip-so"
+ Người đọc ◄── CDN toàn cầu ── Cloudflare Worker "my-blog"
                                  ├─ Static Assets: HTML, CSS, ảnh, chỉ mục tìm kiếm  (miễn phí, không giới hạn request)
                                  └─ /api/*  → Worker nhỏ ──► D1 (SQLite): lượt xem, reactions, đăng ký nhận bài
 ```
@@ -100,8 +102,8 @@ Bạn chỉ tốn tiền nếu muốn mua tên miền riêng (tuỳ chọn).
 ## Bắt đầu nhanh
 
 ```bash
-git clone https://github.com/OWNER/REPO.git nhip-so
-cd nhip-so
+git clone https://github.com/OWNER/REPO.git my-blog
+cd my-blog
 nvm use            # chuyển sang Node 24
 npm install
 npm run dev        # mở http://localhost:4321
@@ -259,6 +261,7 @@ Không đặt secret nào thì workflow tự bỏ qua, không báo lỗi. Cần 
 | Muốn đổi | Sửa ở |
 |---|---|
 | Tên blog, khẩu hiệu, mô tả, URL, số bài mỗi trang | `SITE` trong [`src/config.ts`](src/config.ts) |
+| Logo, favicon, icon PWA | hình vẽ ở [`src/lib/brand-mark.mjs`](src/lib/brand-mark.mjs), rồi chạy `npm run icons` để xuất lại icon trong `public/` |
 | Mạng xã hội, chuyên mục, menu, Giscus, bật/tắt lượt xem · reactions · newsletter | cũng trong `src/config.ts` |
 | Màu sắc (sáng & tối), bo góc, bóng, font | design tokens trong [`src/styles/global.css`](src/styles/global.css) |
 | Kiểu chữ thân bài | [`src/styles/prose.css`](src/styles/prose.css) |
@@ -306,7 +309,7 @@ npm run build      # build production đầy đủ
 <summary><b>Tôi vừa viết bài nhưng không thấy trên site?</b></summary>
 
 Kiểm tra theo thứ tự: `draft: true` (bài nháp chỉ hiện khi `npm run dev`) → `pubDate` có nằm trong tương lai không
-(bài hẹn giờ) → build trên Cloudflare có lỗi không (*Workers & Pages → nhip-so → Deployments*).
+(bài hẹn giờ) → build trên Cloudflare có lỗi không (*Workers & Pages → my-blog → Deployments*).
 </details>
 
 <details>

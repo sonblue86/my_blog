@@ -1,5 +1,5 @@
 /**
- * Worker "nhip-so": the static site is served by Workers Static Assets; only /api/* reaches this code
+ * Worker "my-blog" (githenhi.com): the static site is served by Workers Static Assets; only /api/* reaches this code
  * (assets.run_worker_first in wrangler.jsonc). Endpoints and response shapes: worker/shared.ts.
  *
  * Privacy: no cookies, no IPs stored. A reader is an anonymous daily hash (see lib.ts → visitorId).

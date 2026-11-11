@@ -1,5 +1,5 @@
 /**
- * Bindings + variables of the "nhip-so" Worker (see wrangler.jsonc).
+ * Bindings + variables of the blog's Worker ("my-blog", see wrangler.jsonc).
  *
  * Hand-written on purpose instead of committing the output of `wrangler types`: optional bindings
  * (RL_WRITE) and optional secrets are expressed precisely here, and type-checking the Worker does

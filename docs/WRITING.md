@@ -1,4 +1,4 @@
-# Hướng dẫn viết bài — Nhịp Số
+# Hướng dẫn viết bài — Gì thế nhỉ
 
 Tài liệu cho người viết: tạo bài, frontmatter, ảnh, khối code, các thành phần MDX, series, bản nháp, hẹn giờ, CMS.
 Mọi ví dụ đều sao chép — dán là chạy.
@@ -258,7 +258,7 @@ Thêm/xoá dòng:
 ```js title="astro.config.mjs" del={2} ins={3}
 export default defineConfig({
   site: 'https://example.com',
-  site: 'https://nhipso.pages.dev',
+  site: 'https://githenhi.com',
 });
 ```
 ````
@@ -359,7 +359,7 @@ import ragPipeline from './rag-pipeline.svg';
   src={ragPipeline}
   alt="Sơ đồ RAG: câu hỏi được tìm trong kho tài liệu, các đoạn liên quan được ghép vào prompt rồi gửi cho mô hình."
   caption="Quy trình RAG gồm hai pha: tìm kiếm và sinh câu trả lời."
-  credit="Nhịp Số"
+  credit="Gì thế nhỉ"
   wide
 />
 ```
@@ -481,9 +481,9 @@ Cả hai hiện trong hộp **"Tóm tắt nhanh"** ở đầu bài, giúp ngư�
 
 ## Ảnh chia sẻ (OG) tự sinh
 
-Khi build, mỗi bài có một ảnh 1200×630 tại `/og/<tên-bài>.png` (dùng khi chia sẻ lên Facebook, Zalo, X…): tiêu đề,
+Khi build, mỗi bài có một ảnh 1200×630 tại `/og/<tên-bài>.jpg` (dùng khi chia sẻ lên Facebook, Zalo, X…): tiêu đề,
 chuyên mục, thời gian đọc, ngày đăng, và ảnh bìa của bài (hoặc ảnh bìa tự sinh). Trang không phải bài viết dùng
-`/og/index.png`. Không cần làm gì thêm.
+`/og/index.jpg`. Không cần làm gì thêm.
 
 - Tiêu đề tự thu nhỏ để vừa tối đa 3 dòng; dài quá (~90 ký tự trở lên) sẽ bị cắt bằng "…" → thêm lý do giữ tiêu đề ≤ 70 ký tự.
 - Ảnh bìa nên có vùng bên phải "đẹp" — nửa trái bị phủ tối để chữ dễ đọc.
