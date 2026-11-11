@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../../config';
+import { markInner } from '../../lib/brand-mark.mjs';
 interface Props {
   class?: string;
   /** Hide the wordmark below this breakpoint (mark only). */
@@ -12,44 +13,49 @@ const gid = `logo-g-${(g.__nsLogoCount = (g.__nsLogoCount ?? 0) + 1)}`;
 ---
 
 <a href="/" class:list={['logo group inline-flex items-center gap-2.5 rounded-xl', className]} aria-label={`${SITE.title} — Trang chủ`}>
-  <svg class="logo-mark" width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
-    <defs>
-      <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#6d5dfc"></stop>
-        <stop offset="1" stop-color="#f0562e"></stop>
-      </linearGradient>
-    </defs>
-    <rect width="34" height="34" rx="10" fill={`url(#${gid})`}></rect>
-    <path
-      class="logo-pulse"
-      d="M6 18.5h5.2l2.6-6.5 4.4 11 3.1-8 1.9 3.5H28"
-      fill="none"
-      stroke="#fff"
-      stroke-width="2.6"
-      stroke-linecap="round"
-      stroke-linejoin="round"></path>
-  </svg>
+  <svg class="logo-mark" width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" set:html={markInner({ id: gid, classes: true })} />
   <span class:list={['logo-word font-display text-[1.2rem] font-extrabold tracking-tight text-fg', compact && 'max-sm:hidden']}>
-    {SITE.title}
+    {SITE.title}<span class="logo-qm" aria-hidden="true">?</span>
   </span>
 </a>
 
 <style>
-  .logo-pulse {
-    stroke-dasharray: 48;
-    stroke-dashoffset: 0;
+  .logo-mark {
+    flex-shrink: 0;
   }
+  /* The "?" after the wordmark is decoration only — the site name itself has no question mark. */
+  .logo-qm {
+    margin-left: 0.04em;
+    color: var(--hot);
+  }
+  .logo :global(.logo-bubble) {
+    transform-box: fill-box;
+    transform-origin: 12% 100%; /* the tail */
+  }
+  .logo :global(.logo-q) {
+    transform-box: fill-box;
+    transform-origin: 50% 100%; /* the dot */
+  }
+  /* Hover: the bubble pops and the question mark tilts its head — "gì thế nhỉ?" */
   @media (prefers-reduced-motion: no-preference) {
-    .logo:hover .logo-pulse {
-      animation: pulse-draw 900ms var(--ease-out);
+    .logo:hover :global(.logo-bubble) {
+      animation: logo-pop 520ms var(--ease-out);
+    }
+    .logo:hover :global(.logo-q) {
+      animation: logo-tilt 760ms var(--ease-out);
     }
   }
-  @keyframes pulse-draw {
-    from {
-      stroke-dashoffset: 48;
+  @keyframes logo-pop {
+    40% {
+      transform: scale(1.06);
     }
-    to {
-      stroke-dashoffset: 0;
+  }
+  @keyframes logo-tilt {
+    30% {
+      transform: rotate(-14deg);
+    }
+    65% {
+      transform: rotate(8deg);
     }
   }
 </style>

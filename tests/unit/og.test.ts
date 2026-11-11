@@ -21,6 +21,9 @@ describe('normalizeText', () => {
     expect(normalizeText('ữ'.normalize('NFD'))).toBe('ữ');
     expect(normalizeText('  Đời \n sống\t số  ')).toBe('Đời sống số');
   });
+  it('keeps no-break spaces (they pin words together) but trims them at the ends', () => {
+    expect(normalizeText(' hỏi cho  ra lẽ ')).toBe('hỏi cho ra lẽ');
+  });
   it('turns paired straight quotes into typographic quotes', () => {
     expect(normalizeText('chuyện AI "bịa" và "ting"')).toBe('chuyện AI “bịa” và “ting”');
     expect(normalizeText('5" màn hình')).toBe('5" màn hình');
@@ -56,6 +59,10 @@ describe('charWidthEm / estimateTextWidth', () => {
 });
 
 describe('wrapLines', () => {
+  it('never breaks inside a no-break-space group', () => {
+    const lines = wrapLines('Thắc mắc gì, hỏi cho ra lẽ.', 76, 780);
+    expect(lines).toEqual(['Thắc mắc gì,', 'hỏi cho ra lẽ.']);
+  });
   it('keeps short text on one line', () => {
     expect(wrapLines('RAG là gì?', 60, 800)).toEqual(['RAG là gì?']);
   });

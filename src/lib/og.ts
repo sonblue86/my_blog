@@ -15,6 +15,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import satori from 'satori';
 import sharp from 'sharp';
+import { BRAND, markSvg } from './brand-mark.mjs';
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
@@ -27,8 +28,8 @@ export const OG_COLORS = {
   ink: '#0c0d11', // --bg (dark)
   fg: '#ececf0', // --fg (dark)
   muted: '#a8a8b3', // --fg-muted (dark)
-  brandFrom: '#6d5dfc', // logo gradient
-  brandTo: '#f0562e',
+  brandFrom: BRAND.from, // logo gradient
+  brandTo: BRAND.to,
   category: {
     ai: '#a78bfa', // --cat-ai (dark)
     'cong-nghe': '#38bdf8', // --cat-tech (dark)
@@ -43,12 +44,14 @@ export const OG_COLORS = {
 /**
  * NFC + collapse whitespace + typographic quotes ("bịa" → “bịa”).
  * Satori needs precomposed Vietnamese letters (ữ, not u + ̃ + ̛).
+ * No-break spaces (U+00A0) survive, so a title can pin words together ("hỏi cho ra lẽ");
+ * satori's UAX #14 line breaking never breaks there, and wrapLines() splits on plain spaces only.
  */
 export function normalizeText(input: string): string {
   return input
     .normalize('NFC')
-    .replace(/\s+/g, ' ')
-    .trim()
+    .replace(/[^\S ]+/g, ' ')
+    .replace(/^[\s ]+|[\s ]+$/g, '')
     .replace(/"([^"]*)"/g, '“$1”');
 }
 
@@ -72,7 +75,7 @@ const WIDE_UPPER = new Set(['M', 'W']);
  * underestimating would let satori wrap onto a 4th line.
  */
 export function charWidthEm(ch: string): number {
-  if (ch === ' ') return 0.27;
+  if (ch === ' ' || ch === ' ') return 0.27;
   if (ch === '…' || ch === '—') return 0.92;
   if (ch === '–') return 0.58;
   if (ch === '&') return 0.78;
@@ -221,8 +224,8 @@ function loadFonts(): Promise<SatoriFont[]> {
   return fontsPromise;
 }
 
-/** Same mark as src/components/layout/Logo.astro and public/favicon.svg. */
-const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${OG_COLORS.brandFrom}"/><stop offset="1" stop-color="${OG_COLORS.brandTo}"/></linearGradient></defs><rect width="34" height="34" rx="10" fill="url(#g)"/><path d="M6 18.5h5.2l2.6-6.5 4.4 11 3.1-8 1.9 3.5H28" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** Same mark as src/components/layout/Logo.astro and public/favicon.svg (geometry: src/lib/brand-mark.mjs). */
+const LOGO_SVG = markSvg();
 const LOGO_SIZE = 52;
 
 let logoPromise: Promise<string> | undefined;

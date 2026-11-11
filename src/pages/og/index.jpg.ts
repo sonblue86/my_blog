@@ -9,8 +9,9 @@ import { CATEGORIES, SITE } from '../../config';
 
 export const GET: APIRoute = async ({ site }) => {
   const img = await renderOgImage({
-    title: 'AI, công nghệ & đời sống số',
-    subtitle: 'Blog tiếng Việt — viết chậm, đọc sâu.',
+    // No-break spaces keep "hỏi cho ra lẽ" on one line → "Thắc mắc gì, / hỏi cho ra lẽ."
+    title: 'Thắc mắc gì, hỏi cho ra lẽ.',
+    subtitle: 'Blog tiếng Việt giải đáp dễ hiểu, có kiểm chứng.',
     chips: CATEGORIES.map((c) => ({ label: c.name, color: OG_COLORS.category[c.id] ?? OG_COLORS.fg })),
     host: (site ?? new URL(SITE.url)).host,
     siteName: SITE.title,
