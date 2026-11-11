@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/post/PostCard.astro';
 import Icon from '../components/ui/Icon.astro';
 import Newsletter from '../components/widgets/Newsletter.astro';
-import { SITE, CATEGORIES } from '../config';
+import { CATEGORIES } from '../config';
 import { getPosts, getTags, getSeries, categoryUrl, tagUrl, seriesUrl, postUrl } from '../lib/posts';
 
 const posts = await getPosts();
@@ -24,17 +24,20 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
     <div class="intro">
       <p class="eyebrow flex items-center gap-2">
         <span class="live-dot" aria-hidden="true"></span>
-        Blog tiếng Việt · {posts.length} bài viết
+        Blog hỏi – đáp tiếng Việt · {posts.length} bài viết
       </p>
       <h1 class="intro-title">
-        Hiểu <span class="hl hl-ai">AI</span>, dùng <span class="hl hl-tech">công nghệ</span> khéo hơn, và <span class="hl hl-life">sống</span> chậm lại một chút.
+        Thắc mắc về <span class="hl hl-ai">AI</span>, <span class="hl hl-tech">công nghệ</span> hay <span class="hl hl-life">đời sống</span>? Cùng hỏi cho ra lẽ.
       </h1>
-      <p class="intro-sub">{SITE.description}</p>
+      <p class="intro-sub">
+        Mỗi bài bắt đầu từ một câu hỏi thật — kiểu “cái này là gì thế nhỉ?” — và trả lời bằng lời lẽ dễ hiểu, dữ kiện đã kiểm chứng
+        cùng ví dụ dùng được ngay.
+      </p>
 
       <div class="intro-actions">
         <button type="button" class="intro-search" data-open-search>
           <Icon name="search" size={18} />
-          <span>Bạn muốn đọc về điều gì?</span>
+          <span>Bạn đang thắc mắc điều gì?</span>
           <span class="ml-auto hidden items-center gap-1 sm:inline-flex" aria-hidden="true">
             <kbd class="kbd" data-mod-key>Ctrl</kbd><kbd class="kbd">K</kbd>
           </span>

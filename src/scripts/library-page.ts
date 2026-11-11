@@ -511,7 +511,7 @@ export function initLibraryPage(doc: Document = document): void {
     fileInput.value = '';
     if (!file) return;
     if (file.size > 2_000_000) {
-      toast('File quá lớn — đây có vẻ không phải file thư viện của Nhịp Số.', { tone: 'error' });
+      toast('File quá lớn — có vẻ đây không phải file thư viện của blog Gì thế nhỉ.', { tone: 'error' });
       return;
     }
     try {
@@ -523,7 +523,7 @@ export function initLibraryPage(doc: Document = document): void {
       if (!res.bookmarks && !res.history) toast('Không có gì mới — thư viện đã có đủ các bài trong file này.', { tone: 'info' });
       else toast(`Đã nhập ${res.bookmarks} bài đã lưu và ${res.history} mục lịch sử.`);
     } catch (err) {
-      toast(`${(err as Error).message} Bạn thử lại với file đã xuất từ Nhịp Số nhé.`, { tone: 'error', duration: 5000 });
+      toast(`${(err as Error).message} Bạn thử lại với file đã xuất từ trang Thư viện nhé.`, { tone: 'error', duration: 5000 });
     }
   });
 

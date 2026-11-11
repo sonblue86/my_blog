@@ -72,17 +72,17 @@ describe('clientIp', () => {
 });
 
 describe('isAllowedOrigin', () => {
-  const self = 'https://nhipso.dev';
+  const self = 'https://githenhi.com';
   it('allows the same origin and configured extras only', () => {
     expect(isAllowedOrigin(self, self)).toBe(true);
-    expect(isAllowedOrigin('http://localhost:4321', self, 'http://localhost:4321/, https://preview.nhipso.dev')).toBe(true);
-    expect(isAllowedOrigin('https://preview.nhipso.dev', self, 'http://localhost:4321/, https://preview.nhipso.dev')).toBe(true);
+    expect(isAllowedOrigin('http://localhost:4321', self, 'http://localhost:4321/, https://preview.githenhi.com')).toBe(true);
+    expect(isAllowedOrigin('https://preview.githenhi.com', self, 'http://localhost:4321/, https://preview.githenhi.com')).toBe(true);
   });
   it('rejects missing, opaque and foreign origins', () => {
     expect(isAllowedOrigin(null, self)).toBe(false);
     expect(isAllowedOrigin('null', self)).toBe(false);
     expect(isAllowedOrigin('https://evil.example', self, '')).toBe(false);
-    expect(isAllowedOrigin('https://nhipso.dev.evil.example', self)).toBe(false);
+    expect(isAllowedOrigin('https://githenhi.com.evil.example', self)).toBe(false);
   });
 });
 

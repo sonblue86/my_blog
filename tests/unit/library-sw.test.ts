@@ -17,7 +17,7 @@ type SW = {
 function loadSW(): SW {
   const code = readFileSync(new URL('../../public/sw.js', import.meta.url), 'utf8');
   const ctx: Record<string, unknown> = {
-    self: { location: { origin: 'https://nhipso.test' }, addEventListener() {}, registration: {} },
+    self: { location: { origin: 'https://githenhi.test' }, addEventListener() {}, registration: {} },
     URL,
     Headers,
     Response,
@@ -40,7 +40,7 @@ describe('sw.js — paths', () => {
 
   it('keeps only same-origin pathnames (query and hash dropped)', () => {
     expect(sw.localPath('/bai-viet/a/?utm=x#h')).toBe('/bai-viet/a/');
-    expect(sw.localPath('https://nhipso.test/covers/a.svg')).toBe('/covers/a.svg');
+    expect(sw.localPath('https://githenhi.test/covers/a.svg')).toBe('/covers/a.svg');
     expect(sw.localPath('https://evil.example/bai-viet/a/')).toBeNull();
     expect(sw.localPath('/api/reactions')).toBeNull();
     expect(sw.localPath(42)).toBeNull();

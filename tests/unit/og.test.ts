@@ -131,7 +131,7 @@ describe('renderOgImage', () => {
       chips: [{ label: 'Đời sống', color: '#34d399' }],
       meta: ['5 phút đọc', '9 tháng 11, 2026'],
       host: 'example.com',
-      siteName: 'Nhịp Số',
+      siteName: 'Gì thế nhỉ',
       art: { svg: coverSvg({ seed: 'og-test', category: 'doi-song' }) },
     });
     const meta = await sharp(png).metadata();

@@ -4,7 +4,7 @@
  * The page is also what the service worker shows for any navigation it can't serve offline.
  * All rendering is textContent / attributes only (cached HTML is parsed, never inserted).
  */
-import { CATEGORIES } from '../config';
+import { CATEGORIES, SITE } from '../config';
 import { getBookmarks, getHistory, safePath, FINISHED, type Bookmark, type HistoryItem } from './library-store';
 import { offlineIndex } from './library-offline';
 
@@ -34,11 +34,20 @@ export interface PageMeta {
   minutes: number;
 }
 
-/** "Bài X · Nhịp Số" → "Bài X". */
+/**
+ * Site-name suffixes to strip from cached page titles. Pages cached before the rebrand still carry
+ * the old name ("Nhịp Số") in their <title>, so keep it here for as long as old caches may exist.
+ */
+const SITE_SUFFIX = new RegExp(
+  `\\s*·\\s*(?:${[SITE.title, 'Nhịp Số'].map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\s*$`,
+  'u',
+);
+
+/** "Bài X · Gì thế nhỉ" → "Bài X". */
 export function cleanTitle(raw: string | null | undefined): string {
   return (raw ?? '')
     .replace(/\s+/g, ' ')
-    .replace(/\s*·\s*Nhịp Số\s*$/u, '')
+    .replace(SITE_SUFFIX, '')
     .trim();
 }
 

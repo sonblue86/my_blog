@@ -23,8 +23,8 @@ const siteKey = TURNSTILE.siteKey.trim();
       {variant === 'card' && (
         <div class="mb-4">
           <p class="eyebrow mb-2 text-accent!">Bản tin</p>
-          <h2 class="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Bài mới, gửi thẳng vào hộp thư.</h2>
-          <p class="mt-2 text-fg-muted">Để lại email, bạn sẽ nhận thư khi có bài mới. Không spam, không chia sẻ email của bạn cho bên thứ ba.</p>
+          <h2 class="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Thắc mắc mới, lời giải mới — gửi thẳng vào hộp thư.</h2>
+          <p class="mt-2 text-fg-muted">Để lại email để nhận bài mới ngay khi lên sóng. Tối đa một thư mỗi tuần, không spam, không chia sẻ email của bạn cho bất kỳ ai.</p>
         </div>
       )}
       {variant === 'footer' && <p class="mb-3 font-semibold">Nhận thư khi có bài mới.</p>}
@@ -380,7 +380,7 @@ const siteKey = TURNSTILE.siteKey.trim();
           say(
             fresh
               ? 'Hẹn gặp bạn trong hộp thư — tối đa một email mỗi tuần.'
-              : 'Cảm ơn bạn vẫn luôn đồng hành cùng Nhịp Số!',
+              : 'Cảm ơn bạn vẫn luôn cùng blog hỏi cho ra lẽ!',
             'ok',
           );
           form.reset();

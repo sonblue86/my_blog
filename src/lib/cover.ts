@@ -1,5 +1,5 @@
 /**
- * Deterministic generative cover art ("nhịp" = rhythm): every post without a cover image gets a unique,
+ * Deterministic generative cover art: every post without a cover image gets a unique,
  * on-brand SVG derived from its slug + category. Same input -> same picture, so builds are stable.
  */
 

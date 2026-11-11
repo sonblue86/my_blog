@@ -170,12 +170,12 @@ describe('sanitize', () => {
 describe('parseLibraryFile', () => {
   it('rejects non-JSON and foreign files with a friendly message', () => {
     expect(() => parseLibraryFile('{oops')).toThrow(/JSON/);
-    expect(() => parseLibraryFile('{"bookmarks": []}')).toThrow(/Nhịp Số/);
-    expect(() => parseLibraryFile('[]')).toThrow(/Nhịp Số/);
+    expect(() => parseLibraryFile('{"bookmarks": []}')).toThrow(/Gì thế nhỉ/);
+    expect(() => parseLibraryFile('[]')).toThrow(/Gì thế nhỉ/);
   });
   it('keeps valid rows and drops invalid ones', () => {
     const text = JSON.stringify({
-      app: 'nhip-so',
+      app: 'nhip-so', // internal format id, unchanged by the rebrand so older backups still import
       version: 1,
       bookmarks: [bm('a', 1), { id: 'bad', url: 'http://x' }, null],
       history: [hi('b', 2, 0.5)],
@@ -217,7 +217,7 @@ describe('merge', () => {
 
 describe('exportFileName', () => {
   it('is dated', () => {
-    expect(exportFileName(Date.UTC(2026, 10, 9))).toBe('nhip-so-thu-vien-2026-11-09.json');
+    expect(exportFileName(Date.UTC(2026, 10, 9))).toBe('githenhi-thu-vien-2026-11-09.json');
   });
 });
 

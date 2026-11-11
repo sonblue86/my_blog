@@ -13,27 +13,69 @@ const initials = (author?.data.name ?? SITE.title)
   .map((w) => w[0])
   .join('');
 
+const description =
+  '“Gì thế nhỉ” là blog tiếng Việt bắt đầu từ những câu hỏi thật về AI, công nghệ và đời sống số — rồi trả lời cho dễ hiểu, có kiểm chứng.';
+
+/** Question → answer: how every post is made. */
+const steps = [
+  ['Một câu hỏi thật', 'Điều bạn — hay chính người viết — từng thắc mắc, không phải từ khoá câu lượt xem.'],
+  ['Tìm hiểu và kiểm chứng', 'Đọc tài liệu gốc, thử tận tay, đối chiếu nhiều nguồn trước khi đặt bút.'],
+  ['Câu trả lời dùng được', 'Giải thích gọn gàng, ví dụ cụ thể, có bước làm để bạn áp dụng ngay.'],
+];
 const principles = [
-  ['Viết chậm', 'Ít bài nhưng kỹ: mỗi bài được kiểm chứng, biên tập và cập nhật khi có thay đổi.'],
-  ['Dễ hiểu', 'Giải thích khái niệm khó bằng ví dụ đời thường, không làm màu bằng thuật ngữ.'],
+  ['Nói rõ điều chưa chắc', 'Chỗ nào còn tranh cãi hay chưa đủ dữ kiện, bài sẽ nói thẳng thay vì khẳng định cho xong.'],
+  ['Cập nhật khi mọi thứ thay đổi', 'AI và công nghệ đổi rất nhanh — bài cũ được sửa lại và ghi ngày cập nhật khi có thông tin mới.'],
   ['Không quảng cáo', 'Không banner, không pop-up, không bài PR trá hình.'],
   ['Tôn trọng quyền riêng tư', 'Không cookie theo dõi. Thư viện đọc của bạn chỉ lưu trên trình duyệt của bạn.'],
 ];
 const faq = [
+  [
+    'Mình có một thắc mắc, gửi ở đâu?',
+    'Để lại bình luận dưới bài viết gần chủ đề nhất, hoặc nhắn qua các kênh bên dưới. Câu hỏi được nhiều người quan tâm sẽ được ưu tiên viết thành bài.',
+  ],
+  [
+    'Thông tin trong bài có đáng tin không?',
+    'Số liệu và nhận định quan trọng đều kèm nguồn để bạn tự kiểm chứng. Thấy chỗ nào sai hoặc đã cũ, bạn cứ báo — bài sẽ được sửa.',
+  ],
   ['Tôi có thể đăng lại bài viết không?', 'Bạn có thể trích dẫn ngắn kèm liên kết về bài gốc. Muốn đăng lại toàn bài, hãy liên hệ trước.'],
   [
     'Blog có thu thập dữ liệu của tôi không?',
     'Không có cookie theo dõi. Lượt xem được đếm ẩn danh (không lưu IP). Bài đã lưu và lịch sử đọc chỉ nằm trong trình duyệt của bạn.',
   ],
   ['Làm sao để nhận bài mới?', 'Đăng ký bản tin ở cuối trang, hoặc theo dõi qua RSS bằng bất kỳ ứng dụng đọc tin nào.'],
-  ['Tôi muốn góp ý hoặc báo lỗi?', 'Hãy để lại bình luận dưới bài viết hoặc liên hệ qua các kênh bên dưới. Mọi góp ý đều được trân trọng.'],
 ];
 ---
 
-<BaseLayout title="Giới thiệu" description={SITE.description}>
-  <PageHeader eyebrow="Giới thiệu" title={`Chào bạn, đây là ${SITE.title}.`} description={SITE.description} />
+<BaseLayout title="Giới thiệu" description={description}>
+  <PageHeader
+    eyebrow="Giới thiệu"
+    title={`Chào bạn, đây là ${SITE.title}.`}
+    description="Một góc nhỏ để hỏi cho ra lẽ về AI, công nghệ và đời sống số — và nhận về câu trả lời dễ hiểu, có kiểm chứng."
+  />
 
-  <section class="container-page mt-14 grid gap-4 md:grid-cols-3">
+  <section class="container-page mt-14 max-w-4xl!" aria-labelledby="name-title">
+    <h2 id="name-title" class="sec-title">Vì sao lại là “Gì thế nhỉ”?</h2>
+    <p class="name-story">
+      “Gì thế nhỉ?” là câu ai cũng từng buột miệng khi gặp một điều mới: một thuật ngữ AI bỗng xuất hiện khắp nơi, một cài đặt
+      lạ trên điện thoại, một thói quen ai cũng nhắc tới. Mỗi bài ở đây bắt đầu từ đúng một câu hỏi như thế, rồi tìm cho ra câu
+      trả lời — bằng ngôn ngữ đời thường, có nguồn để bạn tự kiểm chứng, kèm ví dụ để áp dụng ngay.
+    </p>
+    <ol class="qa-flow">
+      {
+        steps.map(([t, d], i) => (
+          <li class="qa-step">
+            <span class="qa-num" aria-hidden="true">
+              {i + 1}
+            </span>
+            <span class="mt-3 block font-bold">{t}</span>
+            <span class="mt-1 block text-fg-muted">{d}</span>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="container-page mt-20 grid gap-4 md:grid-cols-3" aria-label="Chuyên mục">
     {
       CATEGORIES.map((c) => (
         <a href={`/chuyen-muc/${c.id}/`} class="pillar" style={`--c:${c.color}`}>
@@ -48,7 +90,7 @@ const faq = [
   </section>
 
   <section class="container-page mt-20 max-w-4xl!">
-    <h2 class="sec-title">Những điều chúng tôi giữ</h2>
+    <h2 class="sec-title">Cam kết với người đọc</h2>
     <div class="mt-6 grid gap-6 sm:grid-cols-2">
       {
         principles.map(([t, d]) => (
@@ -155,6 +197,54 @@ const faq = [
     font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
     font-weight: 800;
     letter-spacing: -0.03em;
+  }
+  .name-story {
+    margin-top: 14px;
+    max-width: 68ch;
+    font-size: 1.075rem;
+    line-height: 1.75;
+    color: var(--fg-muted);
+  }
+  .qa-flow {
+    display: grid;
+    gap: 12px;
+    margin-top: 28px;
+    list-style: none;
+    padding: 0;
+  }
+  @media (min-width: 640px) {
+    .qa-flow {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .qa-step {
+    position: relative;
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+  .qa-num {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 800;
+    background: linear-gradient(135deg, #6d5dfc, #f0562e);
+  }
+  /* "→" between the steps on wide screens: question leads to answer. */
+  @media (min-width: 640px) {
+    .qa-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -12px;
+      width: 12px;
+      height: 2px;
+      background: var(--border-strong);
+    }
   }
   .author-card {
     display: flex;

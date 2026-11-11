@@ -224,6 +224,7 @@ export function restoreMany(kind: 'bookmarks' | 'history', items: Bookmark[] | H
 /* ---------- Export / import (move the library between devices) ---------- */
 
 export interface LibraryExport {
+  /** Internal file-format id from before the rebrand — keep it, older backups are checked against it. */
   app: 'nhip-so';
   kind: 'library';
   version: 1;
@@ -243,9 +244,9 @@ export function exportLibrary(now: number = Date.now()): LibraryExport {
   };
 }
 
-/** `nhip-so-thu-vien-2026-11-09.json` */
+/** `githenhi-thu-vien-2026-11-09.json` (only the download name — the `app` id inside stays 'nhip-so'). */
 export function exportFileName(now: number = Date.now()): string {
-  return `nhip-so-thu-vien-${new Date(now).toISOString().slice(0, 10)}.json`;
+  return `githenhi-thu-vien-${new Date(now).toISOString().slice(0, 10)}.json`;
 }
 
 /**
@@ -304,7 +305,7 @@ export function sanitizeHistory(x: unknown, now: number = Date.now()): HistoryIt
 
 /**
  * Parse an exported file. Throws an Error with a friendly Vietnamese message when the file
- * isn't a Nhịp Số library. Invalid rows are dropped silently.
+ * isn't a library exported from this blog. Invalid rows are dropped silently.
  */
 export function parseLibraryFile(text: string, now: number = Date.now()): { bookmarks: Bookmark[]; history: HistoryItem[] } {
   let data: unknown;
@@ -314,7 +315,7 @@ export function parseLibraryFile(text: string, now: number = Date.now()): { book
     throw new Error('File này không phải JSON hợp lệ.');
   }
   if (!isObj(data) || data.app !== 'nhip-so' || (!Array.isArray(data.bookmarks) && !Array.isArray(data.history))) {
-    throw new Error('Đây không phải file thư viện của Nhịp Số.');
+    throw new Error('Đây không phải file thư viện xuất từ blog Gì thế nhỉ.');
   }
   const bookmarks = (Array.isArray(data.bookmarks) ? data.bookmarks : [])
     .map((b) => sanitizeBookmark(b, now))

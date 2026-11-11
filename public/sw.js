@@ -1,4 +1,4 @@
-/* Nhịp Số — service worker
+/* Gì thế nhỉ — service worker
  *
  * Caches (all prefixed "ns-"; any other "ns-" cache is deleted on activate):
  *   ns-static-<VERSION>  precache: /offline/ and / (+ the CSS/JS they need), icons, manifest.
@@ -381,7 +381,7 @@ async function offlineFallback() {
   if (hit) return hit;
   return new Response(
     '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-      '<title>Bạn đang offline · Nhịp Số</title><style>:root{color-scheme:light dark}body{font:17px/1.6 system-ui,sans-serif;max-width:34rem;margin:15vh auto;padding:0 20px}button{font:inherit;min-height:44px;padding:0 18px}</style>' +
+      '<title>Bạn đang offline · Gì thế nhỉ</title><style>:root{color-scheme:light dark}body{font:17px/1.6 system-ui,sans-serif;max-width:34rem;margin:15vh auto;padding:0 20px}button{font:inherit;min-height:44px;padding:0 18px}</style>' +
       '<h1>Bạn đang offline</h1><p>Không tải được trang này. Kiểm tra kết nối mạng rồi thử lại nhé.</p><p><button onclick="location.reload()">Thử lại</button></p></html>',
     { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } },
   );

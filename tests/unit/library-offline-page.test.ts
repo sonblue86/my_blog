@@ -29,19 +29,24 @@ const hi = (id: string, lastReadAt: number, progress = 0.4): HistoryItem => ({
 
 describe('cleanTitle / pageLabel', () => {
   it('drops the site suffix and squashes whitespace', () => {
-    expect(cleanTitle('RAG là gì?  ·  Nhịp Số')).toBe('RAG là gì?');
-    expect(cleanTitle('  Thư viện\n của bạn · Nhịp Số ')).toBe('Thư viện của bạn');
+    expect(cleanTitle('RAG là gì?  ·  Gì thế nhỉ')).toBe('RAG là gì?');
+    expect(cleanTitle('  Thư viện\n của bạn · Gì thế nhỉ ')).toBe('Thư viện của bạn');
     expect(cleanTitle(null)).toBe('');
   });
+  it('also drops the pre-rebrand suffix (pages cached before the rename)', () => {
+    expect(cleanTitle('RAG là gì? · Nhịp Số')).toBe('RAG là gì?');
+    // Only a trailing site name counts as the suffix.
+    expect(cleanTitle('Gì thế nhỉ · mẹo nhỏ')).toBe('Gì thế nhỉ · mẹo nhỏ');
+  });
   it('names the home page and falls back to the path', () => {
-    expect(pageLabel('/', 'Nhịp Số — AI')).toBe('Trang chủ');
+    expect(pageLabel('/', 'Gì thế nhỉ — AI')).toBe('Trang chủ');
     expect(pageLabel('/thu-vien/', 'Thư viện của bạn')).toBe('Thư viện của bạn');
     expect(pageLabel('/chuyen-muc/ai/', '')).toBe('chuyen muc ai');
   });
 });
 
 describe('metaFromHtml', () => {
-  const html = `<!doctype html><html><head><title>Ghi chép &amp; suy nghĩ · Nhịp Số</title></head><body>
+  const html = `<!doctype html><html><head><title>Ghi chép &amp; suy nghĩ · Gì thế nhỉ</title></head><body>
     <button data-bookmark data-url="/bai-viet/khac/" data-title="Bài khác"></button>
     <button type="button" class="bookmark-btn" data-bookmark data-id="x" data-title="Ghi chép &amp; “suy nghĩ”" data-url="/bai-viet/x/" data-category="doi-song" data-minutes="5" data-cover="/_astro/cover.AbCdEfGh.webp" onclick="alert(1)"></button>
     <script>window.__ran = true</script></body></html>`;
