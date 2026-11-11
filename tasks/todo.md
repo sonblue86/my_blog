@@ -93,3 +93,17 @@ Không nới CSP; thay vào đó bỏ CodeMirror và tự vẽ khối mã bằng
 **Đã kiểm chứng (trình duyệt, 1280px, giao diện sáng):** chèn biểu đồ qua biểu mẫu, đổi kiểu, thêm dòng, đổi thứ tự, mở lại để sửa;
 chèn "các bước"; gõ trong khối mã thường; khôi phục bản dở có khối; không còn vi phạm CSP sau khi tải lại trang. 286 unit test.
 **Chưa kiểm chứng:** biểu mẫu trên màn hình điện thoại và giao diện tối; kéo-thả khối bằng tay nắm; phím Tab trong khối mã.
+
+## Đổi thương hiệu "Nhịp Số" → "Gì thế nhỉ" · githenhi.com (2026-11-11, agent brand)
+- [x] `SITE` (tên, khẩu hiệu "Hỏi cho ra lẽ về AI, công nghệ và đời sống.", mô tả ≤ 160 ký tự, url), CMS, manifest, tác giả, `<title>`/JSON-LD/RSS
+- [x] Lời văn: hero trang chủ, Giới thiệu (vì sao tên, quy trình câu hỏi → câu trả lời, cam kết, FAQ), 404, bản tin, thư viện, offline, 2 bài có nhắc tên blog
+- [x] Logo mới (bong bóng thoại + dấu hỏi, chấm coral) — một nguồn duy nhất `src/lib/brand-mark.mjs` cho Logo, OG và icon; `npm run icons`
+- [x] Ảnh OG mặc định "Thắc mắc gì, hỏi cho ra lẽ."; og.ts giữ dấu cách không ngắt (NBSP) để ghim chữ trong tiêu đề
+- [x] README, docs (đúng tên Worker `my-blog`), LICENSE, chuỗi trong Worker
+- Giữ nguyên định danh nội bộ: id tác giả `nhip-so`, `app: 'nhip-so'` trong file xuất thư viện, khoá `ns:`, tên cache SW,
+  Worker `my-blog`, D1 `blog-db`, tên package. `cleanTitle` bỏ được cả hậu tố cũ " · Nhịp Số" (trang đã cache trước khi đổi tên).
+
+**Review:** build, `astro check` (0 lỗi), 289 unit test đều qua; nhìn tận mắt trang chủ/giới thiệu/404/bài viết ở 390px và 1440px,
+sáng + tối; header vừa khít tới 320px (dưới 380px chữ logo nhỏ lại, dưới 340px chỉ còn biểu tượng). Ảnh OG kiểm tra dấu tiếng Việt.
+**Còn lại:** README trỏ tới `docs/screenshot.png` chưa từng tồn tại; `.gitignore` (thay đổi chưa commit của chủ blog) đang bỏ qua
+`docs/` và `tasks/` — các file đã theo dõi vẫn commit được, file mới thì không.
