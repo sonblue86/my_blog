@@ -2,7 +2,6 @@
 import { SITE, CATEGORIES, SOCIAL } from '../../config';
 import Icon from '../ui/Icon.astro';
 import Logo from './Logo.astro';
-import Newsletter from '../widgets/Newsletter.astro';
 
 const year = new Date().getFullYear();
 ---
@@ -13,9 +12,6 @@ const year = new Date().getFullYear();
       <div class="max-w-md">
         <Logo />
         <p class="mt-4 text-fg-muted">{SITE.description}</p>
-        <div class="mt-6">
-          <Newsletter variant="footer" />
-        </div>
       </div>
 
       <div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -54,8 +50,8 @@ const year = new Date().getFullYear();
     <div class="mt-14 flex flex-col-reverse gap-6 border-t border-border pt-6 text-sm text-fg-subtle sm:flex-row sm:items-center sm:justify-between">
       <p>
         © {year}
-        {SITE.title}. Viết với ♥ bằng Astro · chạy trên Cloudflare.
-        <span class="hidden lg:inline">Nhấn <kbd class="kbd">?</kbd> để xem phím tắt.</span>
+        {SITE.title} · Dev with love <span class="text-hot" aria-hidden="true">♥</span>
+        <span class="hidden lg:inline"> · Nhấn <kbd class="kbd">?</kbd> để xem phím tắt.</span>
       </p>
       <div class="-ml-3 flex items-center gap-1 sm:ml-0">
         <a class="btn-icon" href="/rss.xml" aria-label="RSS"><Icon name="rss" size={18} /></a>

@@ -75,8 +75,9 @@
   opacity: 1;
 }
 
-/* Links */
-.prose a:not(.heading-anchor) {
+/* Links — block-owned anchors (buttons, video cards from src/lib/blocks.ts) style themselves. Without the
+   exclusion this rule ties on specificity with theirs and, loading later, paints accent text on accent buttons. */
+.prose a:not(.heading-anchor, .nb-button, .nb-youtube) {
   color: var(--accent);
   font-weight: 500;
   text-decoration: underline;
@@ -85,7 +86,7 @@
   text-underline-offset: 3px;
   transition: text-decoration-color 150ms var(--ease-out);
 }
-.prose a:not(.heading-anchor):hover {
+.prose a:not(.heading-anchor, .nb-button, .nb-youtube):hover {
   text-decoration-color: var(--accent);
 }
 
