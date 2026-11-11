@@ -27,7 +27,7 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
         Blog hỏi – đáp tiếng Việt · {posts.length} bài viết
       </p>
       <h1 class="intro-title">
-        Thắc mắc về <span class="hl hl-ai">AI</span>, <span class="hl hl-tech">công nghệ</span> hay <span class="hl hl-life">đời sống</span>? Cùng hỏi cho ra lẽ.
+        Thắc mắc về <span class="hl hl-ai">AI</span>, <span class="hl hl-tech">công nghệ</span> hay <span class="hl hl-life">đời sống</span>? <span class="intro-answer">Cùng hỏi cho ra lẽ.</span>
       </h1>
       <p class="intro-sub">
         Mỗi bài bắt đầu từ một câu hỏi thật — kiểu “cái này là gì thế nhỉ?” — và trả lời bằng lời lẽ dễ hiểu, dữ kiện đã kiểm chứng
@@ -279,6 +279,12 @@ const countBy = (id: string) => posts.filter((p) => p.data.category === id).leng
   }
   .hl-life {
     --hl: var(--cat-life);
+  }
+  /* Keep "Cùng hỏi cho ra lẽ." on one line (it fits from 360px up) instead of leaving "Cùng" dangling. */
+  @media (min-width: 360px) {
+    .intro-answer {
+      white-space: nowrap;
+    }
   }
   .intro-sub {
     margin-top: 18px;

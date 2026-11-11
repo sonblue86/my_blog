@@ -23,6 +23,27 @@ const gid = `logo-g-${(g.__nsLogoCount = (g.__nsLogoCount ?? 0) + 1)}`;
   .logo-mark {
     flex-shrink: 0;
   }
+  /* "Gì thế nhỉ?" must never wrap (narrow phones would break it into "Gì thế / nhỉ?"). */
+  .logo-word {
+    white-space: nowrap;
+  }
+  /* Narrow phones (360px): the header row is logo + 4 icon buttons — tighten so nothing overflows. */
+  @media (max-width: 379.98px) {
+    .logo {
+      gap: 8px;
+    }
+    .logo-word {
+      font-size: 1.08rem;
+    }
+    .logo-qm {
+      display: none;
+    }
+  }
+  @media (max-width: 339.98px) {
+    :global(.site-header) .logo-word {
+      display: none;
+    }
+  }
   /* The "?" after the wordmark is decoration only — the site name itself has no question mark. */
   .logo-qm {
     margin-left: 0.04em;
