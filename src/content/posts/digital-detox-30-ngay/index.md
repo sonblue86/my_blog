@@ -7,6 +7,7 @@ category: doi-song
 tags: ['Digital detox', 'Thói quen', 'Sức khoẻ tinh thần']
 cover: './cover.webp'
 coverAlt: 'Hình minh hoạ mặt trời lặn trên mặt biển, phía trước là đường viền mờ của một chiếc điện thoại.'
+draft: true
 summary: 'Digital detox không có nghĩa là vứt điện thoại vào ngăn kéo. Đó là 30 ngày để bạn quan sát, dọn dẹp và thiết kế lại cách mình dùng công nghệ — sao cho thiết bị phục vụ bạn, chứ không phải ngược lại.'
 takeaways:
   - 'Mục tiêu không phải dùng ít công nghệ nhất có thể, mà là dùng có chủ đích.'
